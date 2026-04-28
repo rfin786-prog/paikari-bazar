@@ -1,65 +1,201 @@
-import Image from "next/image";
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function Home() {
+export default function RegisterPage() {
+  const router = useRouter();
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    address: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!form.name || !form.phone || !form.password) {
+      setError('সব তথ্য পূরণ করুন');
+      return;
+    }
+    if (form.phone.length !== 11) {
+      setError('সঠিক ফোন নম্বর দিন');
+      return;
+    }
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      router.push('/dashboard');
+    }, 1000);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <main style={{
+      minHeight: '100vh',
+      background: '#faf7f2',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'Hind Siliguri, sans-serif',
+      padding: '20px',
+    }}>
+      <div style={{
+        background: '#fff',
+        borderRadius: '16px',
+        padding: '40px',
+        width: '100%',
+        maxWidth: '420px',
+        boxShadow: '0 4px 24px rgba(15,36,66,0.10)',
+      }}>
+        <h1 style={{
+          color: '#0f2442',
+          fontSize: '26px',
+          fontWeight: '700',
+          marginBottom: '8px',
+          textAlign: 'center',
+        }}>নতুন অ্যাকাউন্ট</h1>
+        <p style={{
+          color: '#888',
+          fontSize: '14px',
+          textAlign: 'center',
+          marginBottom: '28px',
+        }}>পাইকারি বাজারে যোগ দিন</p>
+
+        {error && (
+          <div style={{
+            background: '#fff0f0',
+            color: '#cc0000',
+            padding: '10px 14px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            fontSize: '14px',
+          }}>{error}</div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', color: '#0f2442', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>
+              পূর্ণ নাম
+            </label>
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="আপনার নাম লিখুন"
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '1.5px solid #e0d8cc',
+                borderRadius: '8px',
+                fontSize: '15px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                fontFamily: 'Hind Siliguri, sans-serif',
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', color: '#0f2442', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>
+              ফোন নম্বর
+            </label>
+            <input
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              placeholder="01XXXXXXXXX"
+              maxLength={11}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '1.5px solid #e0d8cc',
+                borderRadius: '8px',
+                fontSize: '15px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                fontFamily: 'Hind Siliguri, sans-serif',
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', color: '#0f2442', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>
+              ঠিকানা
+            </label>
+            <input
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              placeholder="আপনার ঠিকানা লিখুন"
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '1.5px solid #e0d8cc',
+                borderRadius: '8px',
+                fontSize: '15px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                fontFamily: 'Hind Siliguri, sans-serif',
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', color: '#0f2442', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>
+              পাসওয়ার্ড
+            </label>
+            <input
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="পাসওয়ার্ড দিন"
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '1.5px solid #e0d8cc',
+                borderRadius: '8px',
+                fontSize: '15px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                fontFamily: 'Hind Siliguri, sans-serif',
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '14px',
+              background: loading ? '#aaa' : '#e8a020',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '700',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontFamily: 'Hind Siliguri, sans-serif',
+            }}
           >
-            Documentation
+            {loading ? 'অপেক্ষা করুন...' : 'রেজিস্ট্রেশন করুন'}
+          </button>
+        </form>
+
+        <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: '#888' }}>
+          আগেই অ্যাকাউন্ট আছে?{' '}
+          <a href="/login" style={{ color: '#0f2442', fontWeight: '600', textDecoration: 'none' }}>
+            লগইন করুন
           </a>
-        </div>
-      </main>
-    </div>
+        </p>
+      </div>
+    </main>
   );
 }
