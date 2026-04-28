@@ -33,7 +33,6 @@ export default function AdminDashboard() {
 
   return (
     <main style={{ minHeight: '100vh', background: '#1e1b4b', fontFamily: 'sans-serif' }}>
-      {/* Header */}
       <div style={{ background: '#12103a', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ color: '#e8a020', fontSize: '22px', fontWeight: '800', margin: 0 }}>Admin Dashboard</h1>
         <button onClick={() => router.push('/')} style={{ background: 'transparent', border: '1px solid #e8a020', color: '#e8a020', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}>
@@ -41,7 +40,6 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', padding: '24px' }}>
         <div style={{ background: '#2d2a5e', borderRadius: '12px', padding: '20px', textAlign: 'center' }}>
           <div style={{ color: '#e8a020', fontSize: '32px', fontWeight: '800' }}>{products.length}</div>
@@ -57,7 +55,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Products Table */}
       <div style={{ padding: '0 24px 24px' }}>
         <h2 style={{ color: '#e8a020', marginBottom: '16px' }}>পণ্য ব্যবস্থাপনা</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -65,22 +62,29 @@ export default function AdminDashboard() {
             <div key={p.id} style={{ background: '#2d2a5e', borderRadius: '12px', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', opacity: p.active ? 1 : 0.6 }}>
               <div>
                 <div style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>{p.name}</div>
-                <div style={{ color: '#888', fontSize: '13px' }}>{p.category} · প্রতি {p.unit}</div>
+                <div style={{ color: '#888', fontSize: '13px' }}>{p.category} - প্রতি {p.unit}</div>
               </div>
-
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                {/* Price Edit */}
                 {editId === p.id ? (
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <input
-                      value={editPrice}
-                      onChange={e => setEditPrice(e.target.value)}
-                      style={{ width: '80px', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e8a020', background: '#1e1b4b', color: '#fff', fontSize: '14px' }}
-                    />
+                    <input value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ width: '80px', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e8a020', background: '#1e1b4b', color: '#fff', fontSize: '14px' }} />
                     <button onClick={() => savePrice(p.id)} style={{ padding: '6px 14px', background: '#e8a020', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>সেভ</button>
                     <button onClick={() => setEditId(null)} style={{ padding: '6px 14px', background: '#555', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>বাতিল</button>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#e8a020', fontWeight: '800', fontSize: '18px' }}>৳{p.price}</span>
-                    <button onClick={() => startEdit(p)} style={{ padding: '6px 12px', background: '#3d3a6
+                    <span style={{ color: '#e8a020', fontWeight: '800', fontSize: '18px' }}>Tk {p.price}</span>
+                    <button onClick={() => startEdit(p)} style={{ padding: '6px 12px', background: '#3d3a6b', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>দাম বদলান</button>
+                  </div>
+                )}
+                <button onClick={() => toggleActive(p.id)} style={{ padding: '8px 16px', background: p.active ? '#f87171' : '#4ade80', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+                  {p.active ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
