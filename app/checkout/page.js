@@ -21,16 +21,13 @@ const [orderId, setOrderId] = useState(null);
 const [error, setError] = useState(””);
 
 useEffect(() => {
-// Load cart from localStorage
+// Cart load
 const saved = localStorage.getItem(“paikari_cart”);
-if (saved) {
-const parsed = JSON.parse(saved);
-setCartItems(parsed);
-}
+if (saved) setCartItems(JSON.parse(saved));
 
 ```
-// Load logged-in user from localStorage
-const savedUser = localStorage.getItem("paikari_user");
+// User load — key হলো 'user'
+const savedUser = localStorage.getItem("user");
 if (!savedUser) {
   router.push("/login");
   return;
@@ -38,7 +35,6 @@ if (!savedUser) {
 
 const parsedUser = JSON.parse(savedUser);
 
-// Fetch full user info from Supabase
 async function fetchUser() {
   const { data, error } = await supabase
     .from("users")
@@ -100,7 +96,6 @@ if (insertError) {
   return;
 }
 
-// Clear cart
 localStorage.removeItem("paikari_cart");
 setOrderId(newOrderId);
 setSuccess(true);
@@ -224,7 +219,9 @@ return (
                 <p className="text-sm font-medium text-gray-800 truncate">{item.name}</p>
                 {item.unit && <p className="text-xs text-gray-400">প্রতি {item.unit}</p>}
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-gray-500">{item.qty} × ৳{Number(item.price).toLocaleString("bn-BD")}</p>
+                  <p className="text-xs text-gray-500">
+                    {item.qty} × ৳{Number(item.price).toLocaleString("bn-BD")}
+                  </p>
                   <p className="text-sm font-bold text-indigo-600">
                     ৳{Number(item.price * item.qty).toLocaleString("bn-BD")}
                   </p>
