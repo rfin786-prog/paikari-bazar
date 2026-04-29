@@ -1,116 +1,112 @@
-'use client'
+'use client';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export default function CheckoutPage() {
-  const router = useRouter()
-  const supabase = createClient()
+  const router = useRouter();
 
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [cartItems, setCartItems] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [placing, setPlacing] = useState(false)
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [placing, setPlacing] = useState(false);
 
-  const [editMode, setEditMode] = useState(false)
-  const [editedAddress, setEditedAddress] = useState({})
+  const [editMode, setEditMode] = useState(false);
+  const [editedAddress, setEditedAddress] = useState({});
 
-  const [deliveryMethod, setDeliveryMethod] = useState('standard')
-  const [deliveryDate, setDeliveryDate] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('cod')
-  const [couponCode, setCouponCode] = useState('')
-  const [couponDiscount, setCouponDiscount] = useState(0)
-  const [couponApplied, setCouponApplied] = useState(false)
-  const [useWallet, setUseWallet] = useState(false)
-  const [note, setNote] = useState('')
+  const [deliveryMethod, setDeliveryMethod] = useState('standard');
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [useWallet, setUseWallet] = useState(false);
+  const [note, setNote] = useState('');
 
   const deliveryOptions = [
     { id: 'standard', name: 'স্ট্যান্ডার্ড', info: '৩–৫ কার্যদিবস', price: 60 },
     { id: 'express', name: 'এক্সপ্রেস', info: '১–২ কার্যদিবস', price: 120 },
     { id: 'scheduled', name: 'নির্ধারিত তারিখ', info: 'তারিখ বেছে নিন', price: 80 },
     { id: 'pickup', name: 'সেলফ পিকআপ', info: 'গুদাম থেকে নিন', price: 0 },
-  ]
+  ];
 
   const paymentOptions = [
     { id: 'cod', icon: '💵', name: 'ক্যাশ অন ডেলিভারি' },
     { id: 'mobile', icon: '📱', name: 'বিকাশ / নগদ' },
     { id: 'bank', icon: '🏦', name: 'ব্যাংক ট্রান্সফার' },
-  ]
+  ];
 
-  // Load user, profile, cart
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      setUser(user)
+    const saved = localStorage.getItem('user');
+    if (!saved) { router.push('/login'); return; }
+    const u = JSON.parse(saved);
+    setUser(u);
+    setProfile(u);
+    setEditedAddress({
+      shop_name: u.shop_name || '',
+      phone: u.phone || '',
+      district: u.district || '',
+      thana: u.thana || '',
+      address: u.address || '',
+    });
 
-      const { data: prof } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-      setProfile(prof)
-      setEditedAddress({
-        shop_name: prof?.shop_name || '',
-        phone: prof?.phone || '',
-        district: prof?.district || '',
-        thana: prof?.thana || '',
-        address: prof?.address || '',
-      })
+    const cart = localStorage.getItem('cart');
+    if (cart) setCartItems(JSON.parse(cart));
 
-      // Load cart from localStorage
-      const saved = localStorage.getItem('cart')
-      if (saved) setCartItems(JSON.parse(saved))
+    setLoading(false);
+  }, []);
 
-      setLoading(false)
-    }
-    load()
-  }, [])
-
-  const deliveryCost = deliveryOptions.find(d => d.id === deliveryMethod)?.price || 0
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const walletBalance = profile?.wallet_balance || 0
-  const walletDeduction = useWallet ? Math.min(walletBalance, subtotal + deliveryCost - couponDiscount) : 0
-  const grandTotal = Math.max(0, subtotal + deliveryCost - couponDiscount - walletDeduction)
-  const cashback = Math.round(grandTotal * 0.02)
+  const deliveryCost = deliveryOptions.find(d => d.id === deliveryMethod)?.price || 0;
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const walletBalance = profile?.wallet_balance || 0;
+  const walletDeduction = useWallet ? Math.min(walletBalance, subtotal + deliveryCost - couponDiscount) : 0;
+  const grandTotal = Math.max(0, subtotal + deliveryCost - couponDiscount - walletDeduction);
+  const cashback = Math.round(grandTotal * 0.02);
 
   function applyCoupon() {
-    const code = couponCode.trim().toUpperCase()
+    const code = couponCode.trim().toUpperCase();
     if (code === 'PAIKA10') {
-      setCouponDiscount(Math.round(subtotal * 0.1))
-      setCouponApplied(true)
+      setCouponDiscount(Math.round(subtotal * 0.1));
+      setCouponApplied(true);
     } else {
-      alert('কুপন কোডটি সঠিক নয়।')
-      setCouponDiscount(0)
-      setCouponApplied(false)
+      alert('কুপন কোডটি সঠিক নয়।');
+      setCouponDiscount(0);
+      setCouponApplied(false);
     }
   }
 
   function saveAddress() {
-    setProfile(prev => ({ ...prev, ...editedAddress }))
-    setEditMode(false)
+    setProfile(prev => ({ ...prev, ...editedAddress }));
+    setEditMode(false);
   }
 
   async function placeOrder() {
-    if (cartItems.length === 0) { alert('কার্টে কোনো পণ্য নেই।'); return }
+    if (cartItems.length === 0) { alert('কার্টে কোনো পণ্য নেই।'); return; }
     if (deliveryMethod === 'scheduled' && !deliveryDate) {
-      alert('অনুগ্রহ করে ডেলিভারি তারিখ বেছে নিন।'); return
+      alert('অনুগ্রহ করে ডেলিভারি তারিখ বেছে নিন।'); return;
     }
-    setPlacing(true)
+    setPlacing(true);
     try {
-      const deliveryAddress = editMode ? editedAddress : {
+      const deliveryAddress = {
         shop_name: profile?.shop_name,
         phone: profile?.phone,
         district: profile?.district,
         thana: profile?.thana,
         address: profile?.address,
-      }
+      };
 
-      const { data: order, error } = await supabase
-        .from('orders')
-        .insert({
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify({
           user_id: user.id,
           items: cartItems,
           subtotal,
@@ -126,34 +122,36 @@ export default function CheckoutPage() {
           note,
           delivery_address: deliveryAddress,
           status: 'pending',
-        })
-        .select()
-        .single()
+        }),
+      });
 
-      if (error) throw error
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Error');
 
-      // Update wallet balance if used
-      if (useWallet && walletDeduction > 0) {
-        await supabase
-          .from('users')
-          .update({ wallet_balance: walletBalance - walletDeduction + cashback })
-          .eq('id', user.id)
-      } else if (cashback > 0) {
-        await supabase
-          .from('users')
-          .update({ wallet_balance: walletBalance + cashback })
-          .eq('id', user.id)
+      // Update wallet
+      if (walletBalance > 0 || cashback > 0) {
+        const newBalance = walletBalance - walletDeduction + cashback;
+        await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ wallet_balance: newBalance }),
+        });
+        const updatedUser = { ...user, wallet_balance: newBalance };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
       }
 
-      // Clear cart
-      localStorage.removeItem('cart')
-
-      router.push(`/orders/${order.id}?placed=true`)
+      localStorage.removeItem('cart');
+      const orderId = data[0]?.id;
+      router.push(`/orders/${orderId}?placed=true`);
     } catch (err) {
-      console.error(err)
-      alert('অর্ডার দেওয়া যায়নি। আবার চেষ্টা করুন।')
+      console.error(err);
+      alert('অর্ডার দেওয়া যায়নি। আবার চেষ্টা করুন।');
     } finally {
-      setPlacing(false)
+      setPlacing(false);
     }
   }
 
@@ -161,12 +159,11 @@ export default function CheckoutPage() {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
       <p style={{ color: '#6B7280', fontSize: '14px' }}>লোড হচ্ছে...</p>
     </div>
-  )
+  );
 
   return (
     <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1rem 1rem 3rem', fontFamily: 'sans-serif' }}>
 
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid #E5E7EB' }}>
         <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#1D9E75', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '15px', fontWeight: '600' }}>প</div>
         <div>
@@ -175,7 +172,6 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* Saved Address */}
       <div style={cardStyle}>
         <SectionTitle>ডেলিভারি ঠিকানা</SectionTitle>
         {!editMode ? (
@@ -200,7 +196,7 @@ export default function CheckoutPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <Field label="জেলা">
                 <select style={inputStyle} value={editedAddress.district} onChange={e => setEditedAddress(p => ({ ...p, district: e.target.value }))}>
-                  {['ঢাকা','চট্টগ্রাম','রাজশাহী','সিলেট','খুলনা','বরিশাল','ময়মনসিংহ','রংপুর'].map(d => <option key={d}>{d}</option>)}
+                  {['ঢাকা', 'চট্টগ্রাম', 'রাজশাহী', 'সিলেট', 'খুলনা', 'বরিশাল', 'ময়মনসিংহ', 'রংপুর'].map(d => <option key={d}>{d}</option>)}
                 </select>
               </Field>
               <Field label="উপজেলা / থানা">
@@ -218,7 +214,6 @@ export default function CheckoutPage() {
         )}
       </div>
 
-      {/* Delivery Method */}
       <div style={cardStyle}>
         <SectionTitle>ডেলিভারি পদ্ধতি</SectionTitle>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -240,7 +235,6 @@ export default function CheckoutPage() {
         )}
       </div>
 
-      {/* Order Summary */}
       <div style={cardStyle}>
         <SectionTitle>অর্ডার সারসংক্ষেপ</SectionTitle>
         <div style={{ borderBottom: '1px solid #F3F4F6', marginBottom: '12px', paddingBottom: '12px' }}>
@@ -250,17 +244,16 @@ export default function CheckoutPage() {
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
               <div>
                 <p style={{ fontSize: '13px', color: '#111827', margin: '0 0 1px' }}>{item.name}</p>
-                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.quantity} × ৳ {item.price.toLocaleString('bn-BD')}</p>
+                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.quantity} x ৳ {item.price.toLocaleString()}</p>
               </div>
-              <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>৳ {(item.price * item.quantity).toLocaleString('bn-BD')}</p>
+              <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>৳ {(item.price * item.quantity).toLocaleString()}</p>
             </div>
           ))}
         </div>
 
-        {/* Coupon */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-          <input style={{ ...inputStyle, flex: 1 }} placeholder="কুপন কোড লিখুন..." value={couponCode}
-            onChange={e => { setCouponCode(e.target.value); setCouponApplied(false); setCouponDiscount(0) }}
+          <input style={{ ...inputStyle, flex: 1 }} placeholder="কুপন কোড লিখুন..."
+            value={couponCode} onChange={e => { setCouponCode(e.target.value); setCouponApplied(false); setCouponDiscount(0); }}
             disabled={couponApplied} />
           <button onClick={applyCoupon} disabled={couponApplied}
             style={{ padding: '8px 14px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap', color: couponApplied ? '#1D9E75' : '#374151' }}>
@@ -268,32 +261,27 @@ export default function CheckoutPage() {
           </button>
         </div>
 
-        {/* Totals */}
-        <SummaryRow label="পণ্যের মোট" value={`৳ ${subtotal.toLocaleString('bn-BD')}`} />
+        <SummaryRow label="পণ্যের মোট" value={`৳ ${subtotal.toLocaleString()}`} />
         <SummaryRow label="ডেলিভারি চার্জ" value={deliveryCost === 0 ? 'বিনামূল্যে' : `৳ ${deliveryCost}`} />
-        {couponDiscount > 0 && <SummaryRow label="কুপন ছাড়" value={`- ৳ ${couponDiscount.toLocaleString('bn-BD')}`} green />}
-        {walletDeduction > 0 && <SummaryRow label="ওয়ালেট কর্তন" value={`- ৳ ${walletDeduction.toLocaleString('bn-BD')}`} green />}
+        {couponDiscount > 0 && <SummaryRow label="কুপন ছাড়" value={`- ৳ ${couponDiscount.toLocaleString()}`} green />}
+        {walletDeduction > 0 && <SummaryRow label="ওয়ালেট কর্তন" value={`- ৳ ${walletDeduction.toLocaleString()}`} green />}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: '600', color: '#111827', paddingTop: '10px', borderTop: '1px solid #F3F4F6', marginTop: '6px' }}>
           <span>সর্বমোট</span>
-          <span>৳ {grandTotal.toLocaleString('bn-BD')}</span>
+          <span>৳ {grandTotal.toLocaleString()}</span>
         </div>
       </div>
 
-      {/* Payment */}
       <div style={cardStyle}>
         <SectionTitle>পেমেন্ট</SectionTitle>
-
-        {/* Cashback badge */}
         <div style={{ background: '#E1F5EE', color: '#0F6E56', fontSize: '12px', padding: '5px 12px', borderRadius: '20px', display: 'inline-block', marginBottom: '12px' }}>
-          এই অর্ডারে ৳ {cashback.toLocaleString('bn-BD')} ক্যাশব্যাক পাবেন (২%)
+          এই অর্ডারে ৳ {cashback.toLocaleString()} ক্যাশব্যাক পাবেন (২%)
         </div>
 
-        {/* Wallet toggle */}
         {walletBalance > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', marginBottom: '12px', borderBottom: '1px solid #F3F4F6' }}>
             <div>
               <p style={{ fontSize: '13px', color: '#374151', margin: '0 0 1px' }}>ওয়ালেট ব্যবহার করুন</p>
-              <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>ব্যালেন্স: ৳ {walletBalance.toLocaleString('bn-BD')}</p>
+              <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>ব্যালেন্স: ৳ {walletBalance.toLocaleString()}</p>
             </div>
             <div onClick={() => setUseWallet(!useWallet)}
               style={{ width: '40px', height: '22px', borderRadius: '20px', background: useWallet ? '#1D9E75' : '#D1D5DB', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
@@ -302,7 +290,6 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {/* Payment method */}
         <p style={{ fontSize: '12px', fontWeight: '500', color: '#6B7280', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>পেমেন্ট পদ্ধতি</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
           {paymentOptions.map(opt => (
@@ -314,22 +301,21 @@ export default function CheckoutPage() {
           ))}
         </div>
 
-        {/* Note */}
         <Field label="বিশেষ নোট (ঐচ্ছিক)">
           <textarea style={{ ...inputStyle, height: '60px', resize: 'none' }} placeholder="ডেলিভারি বা অর্ডার সম্পর্কে কিছু জানাতে চাইলে লিখুন..." value={note} onChange={e => setNote(e.target.value)} />
         </Field>
 
-        <button onClick={placeOrder} disabled={placing} style={{ ...greenBtnStyle, width: '100%', padding: '13px', fontSize: '15px', marginTop: '8px', opacity: placing ? 0.7 : 1 }}>
+        <button onClick={placeOrder} disabled={placing}
+          style={{ ...greenBtnStyle, width: '100%', padding: '13px', fontSize: '15px', marginTop: '8px', opacity: placing ? 0.7 : 1 }}>
           {placing ? 'অর্ডার দেওয়া হচ্ছে...' : 'অর্ডার নিশ্চিত করুন →'}
         </button>
       </div>
     </div>
-  )
+  );
 }
 
-// ─── Small helpers ───────────────────────────────────────────────
 function SectionTitle({ children }) {
-  return <p style={{ fontSize: '12px', fontWeight: '500', color: '#6B7280', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{children}</p>
+  return <p style={{ fontSize: '12px', fontWeight: '500', color: '#6B7280', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{children}</p>;
 }
 
 function Field({ label, children }) {
@@ -338,7 +324,7 @@ function Field({ label, children }) {
       <label style={{ display: 'block', fontSize: '12px', color: '#6B7280', marginBottom: '3px' }}>{label}</label>
       {children}
     </div>
-  )
+  );
 }
 
 function SummaryRow({ label, value, green }) {
@@ -346,17 +332,16 @@ function SummaryRow({ label, value, green }) {
     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '4px 0', color: green ? '#1D9E75' : '#6B7280' }}>
       <span>{label}</span><span>{value}</span>
     </div>
-  )
+  );
 }
 
-// ─── Shared styles ───────────────────────────────────────────────
 const cardStyle = {
   background: '#fff',
   border: '1px solid #E5E7EB',
   borderRadius: '12px',
   padding: '1rem 1.25rem',
   marginBottom: '12px',
-}
+};
 
 const inputStyle = {
   width: '100%',
@@ -368,7 +353,7 @@ const inputStyle = {
   background: '#fff',
   outline: 'none',
   boxSizing: 'border-box',
-}
+};
 
 const editBtnStyle = {
   fontSize: '12px',
@@ -380,7 +365,7 @@ const editBtnStyle = {
   background: 'none',
   whiteSpace: 'nowrap',
   flexShrink: 0,
-}
+};
 
 const greenBtnStyle = {
   background: '#1D9E75',
@@ -390,4 +375,4 @@ const greenBtnStyle = {
   fontWeight: '600',
   cursor: 'pointer',
   display: 'block',
-}
+};
