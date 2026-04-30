@@ -16,7 +16,7 @@ const canvas = canvasRef.current;
 const ctx = canvas.getContext(“2d”);
 const BASE_W = 860;
 
-```
+
 function resize() {
   const parent = canvas.parentElement;
   canvas.width = parent.offsetWidth;
