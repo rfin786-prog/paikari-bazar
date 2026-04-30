@@ -52,16 +52,12 @@ export default function CheckoutPage() {
       thana: u.thana || '',
       address: u.address || '',
     });
-
-    // ✅ Fixed: paikari_cart key
     const cart = localStorage.getItem('paikari_cart');
     if (cart) setCartItems(JSON.parse(cart));
-
     setLoading(false);
   }, []);
 
   const deliveryCost = deliveryOptions.find(d => d.id === deliveryMethod)?.price || 0;
-  // ✅ Fixed: item.qty (products page uses qty, not quantity)
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * (item.qty || item.quantity || 1), 0);
   const walletBalance = profile?.wallet_balance || 0;
   const walletDeduction = useWallet ? Math.min(walletBalance, subtotal + deliveryCost - couponDiscount) : 0;
@@ -92,15 +88,6 @@ export default function CheckoutPage() {
     }
     setPlacing(true);
     try {
-      const deliveryAddress = {
-        shop_name: profile?.shop_name,
-        phone: profile?.phone,
-        district: profile?.district,
-        thana: profile?.thana,
-        address: profile?.address,
-      };
-
-      // ✅ normalize items: qty field এর নাম ঠিক করা
       const normalizedItems = cartItems.map(item => ({
         ...item,
         qty: item.qty || item.quantity || 1,
@@ -129,7 +116,6 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error');
 
-      // Update wallet
       if (walletBalance > 0 || cashback > 0) {
         const newBalance = walletBalance - walletDeduction + cashback;
         await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
@@ -145,10 +131,8 @@ export default function CheckoutPage() {
         localStorage.setItem('user', JSON.stringify(updatedUser));
       }
 
-      // ✅ Fixed: paikari_cart key clear
       localStorage.removeItem('paikari_cart');
-      const orderId = data[0]?.id;
-      router.push(`/orders`);
+      router.push('/orders');
     } catch (err) {
       console.error(err);
       alert('অর্ডার দেওয়া যায়নি। আবার চেষ্টা করুন।');
@@ -165,7 +149,6 @@ export default function CheckoutPage() {
 
   return (
     <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1rem 1rem 3rem', fontFamily: 'sans-serif' }}>
-
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid #E5E7EB' }}>
         <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#1D9E75', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '15px', fontWeight: '600' }}>প</div>
         <div>
@@ -189,25 +172,17 @@ export default function CheckoutPage() {
           </div>
         ) : (
           <div style={{ marginTop: '4px' }}>
-            <Field label="দোকানের নাম">
-              <input style={inputStyle} value={editedAddress.shop_name} onChange={e => setEditedAddress(p => ({ ...p, shop_name: e.target.value }))} />
-            </Field>
-            <Field label="মোবাইল নম্বর">
-              <input style={inputStyle} value={editedAddress.phone} onChange={e => setEditedAddress(p => ({ ...p, phone: e.target.value }))} />
-            </Field>
+            <Field label="দোকানের নাম"><input style={inputStyle} value={editedAddress.shop_name} onChange={e => setEditedAddress(p => ({ ...p, shop_name: e.target.value }))} /></Field>
+            <Field label="মোবাইল নম্বর"><input style={inputStyle} value={editedAddress.phone} onChange={e => setEditedAddress(p => ({ ...p, phone: e.target.value }))} /></Field>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <Field label="জেলা">
                 <select style={inputStyle} value={editedAddress.district} onChange={e => setEditedAddress(p => ({ ...p, district: e.target.value }))}>
-                  {['ঢাকা', 'চট্টগ্রাম', 'রাজশাহী', 'সিলেট', 'খুলনা', 'বরিশাল', 'ময়মনসিংহ', 'রংপুর'].map(d => <option key={d}>{d}</option>)}
+                  {['ঢাকা','চট্টগ্রাম','রাজশাহী','সিলেট','খুলনা','বরিশাল','ময়মনসিংহ','রংপুর'].map(d => <option key={d}>{d}</option>)}
                 </select>
               </Field>
-              <Field label="উপজেলা / থানা">
-                <input style={inputStyle} value={editedAddress.thana} onChange={e => setEditedAddress(p => ({ ...p, thana: e.target.value }))} />
-              </Field>
+              <Field label="উপজেলা / থানা"><input style={inputStyle} value={editedAddress.thana} onChange={e => setEditedAddress(p => ({ ...p, thana: e.target.value }))} /></Field>
             </div>
-            <Field label="সম্পূর্ণ ঠিকানা">
-              <textarea style={{ ...inputStyle, height: '64px', resize: 'none' }} value={editedAddress.address} onChange={e => setEditedAddress(p => ({ ...p, address: e.target.value }))} />
-            </Field>
+            <Field label="সম্পূর্ণ ঠিকানা"><textarea style={{ ...inputStyle, height: '64px', resize: 'none' }} value={editedAddress.address} onChange={e => setEditedAddress(p => ({ ...p, address: e.target.value }))} /></Field>
             <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
               <button onClick={saveAddress} style={{ ...greenBtnStyle, padding: '7px 16px', fontSize: '13px' }}>সংরক্ষণ করুন</button>
               <button onClick={() => setEditMode(false)} style={{ padding: '7px 16px', fontSize: '13px', background: 'none', border: '1px solid #D1D5DB', borderRadius: '8px', cursor: 'pointer', color: '#6B7280' }}>বাতিল</button>
@@ -221,7 +196,7 @@ export default function CheckoutPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           {deliveryOptions.map(opt => (
             <div key={opt.id} onClick={() => setDeliveryMethod(opt.id)}
-              style={{ border: deliveryMethod === opt.id ? '2px solid #1D9E75' : '1px solid #E5E7EB', borderRadius: '10px', padding: '10px 12px', cursor: 'pointer', background: deliveryMethod === opt.id ? '#F0FBF7' : 'transparent', transition: 'all 0.15s' }}>
+              style={{ border: deliveryMethod === opt.id ? '2px solid #1D9E75' : '1px solid #E5E7EB', borderRadius: '10px', padding: '10px 12px', cursor: 'pointer', background: deliveryMethod === opt.id ? '#F0FBF7' : 'transparent' }}>
               <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: '0 0 2px' }}>{opt.name}</p>
               <p style={{ fontSize: '11px', color: '#6B7280', margin: '0 0 4px' }}>{opt.info}</p>
               <p style={{ fontSize: '12px', color: '#1D9E75', fontWeight: '600', margin: 0 }}>{opt.price === 0 ? 'বিনামূল্যে' : `৳ ${opt.price}`}</p>
@@ -252,24 +227,20 @@ export default function CheckoutPage() {
             </div>
           ))}
         </div>
-
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-          <input style={{ ...inputStyle, flex: 1 }} placeholder="কুপন কোড লিখুন..."
-            value={couponCode} onChange={e => { setCouponCode(e.target.value); setCouponApplied(false); setCouponDiscount(0); }}
-            disabled={couponApplied} />
+          <input style={{ ...inputStyle, flex: 1 }} placeholder="কুপন কোড লিখুন..." value={couponCode}
+            onChange={e => { setCouponCode(e.target.value); setCouponApplied(false); setCouponDiscount(0); }} disabled={couponApplied} />
           <button onClick={applyCoupon} disabled={couponApplied}
             style={{ padding: '8px 14px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap', color: couponApplied ? '#1D9E75' : '#374151' }}>
             {couponApplied ? 'প্রয়োগ হয়েছে' : 'প্রয়োগ করুন'}
           </button>
         </div>
-
         <SummaryRow label="পণ্যের মোট" value={`৳ ${subtotal.toLocaleString()}`} />
         <SummaryRow label="ডেলিভারি চার্জ" value={deliveryCost === 0 ? 'বিনামূল্যে' : `৳ ${deliveryCost}`} />
         {couponDiscount > 0 && <SummaryRow label="কুপন ছাড়" value={`- ৳ ${couponDiscount.toLocaleString()}`} green />}
         {walletDeduction > 0 && <SummaryRow label="ওয়ালেট কর্তন" value={`- ৳ ${walletDeduction.toLocaleString()}`} green />}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: '600', color: '#111827', paddingTop: '10px', borderTop: '1px solid #F3F4F6', marginTop: '6px' }}>
-          <span>সর্বমোট</span>
-          <span>৳ {grandTotal.toLocaleString()}</span>
+          <span>সর্বমোট</span><span>৳ {grandTotal.toLocaleString()}</span>
         </div>
       </div>
 
@@ -278,7 +249,6 @@ export default function CheckoutPage() {
         <div style={{ background: '#E1F5EE', color: '#0F6E56', fontSize: '12px', padding: '5px 12px', borderRadius: '20px', display: 'inline-block', marginBottom: '12px' }}>
           এই অর্ডারে ৳ {cashback.toLocaleString()} ক্যাশব্যাক পাবেন (২%)
         </div>
-
         {walletBalance > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', marginBottom: '12px', borderBottom: '1px solid #F3F4F6' }}>
             <div>
@@ -291,7 +261,6 @@ export default function CheckoutPage() {
             </div>
           </div>
         )}
-
         <p style={{ fontSize: '12px', fontWeight: '500', color: '#6B7280', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>পেমেন্ট পদ্ধতি</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
           {paymentOptions.map(opt => (
@@ -302,11 +271,9 @@ export default function CheckoutPage() {
             </div>
           ))}
         </div>
-
         <Field label="বিশেষ নোট (ঐচ্ছিক)">
           <textarea style={{ ...inputStyle, height: '60px', resize: 'none' }} placeholder="ডেলিভারি বা অর্ডার সম্পর্কে কিছু জানাতে চাইলে লিখুন..." value={note} onChange={e => setNote(e.target.value)} />
         </Field>
-
         <button onClick={placeOrder} disabled={placing}
           style={{ ...greenBtnStyle, width: '100%', padding: '13px', fontSize: '15px', marginTop: '8px', opacity: placing ? 0.7 : 1 }}>
           {placing ? 'অর্ডার দেওয়া হচ্ছে...' : 'অর্ডার নিশ্চিত করুন →'}
@@ -319,7 +286,6 @@ export default function CheckoutPage() {
 function SectionTitle({ children }) {
   return <p style={{ fontSize: '12px', fontWeight: '500', color: '#6B7280', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{children}</p>;
 }
-
 function Field({ label, children }) {
   return (
     <div style={{ marginBottom: '8px' }}>
@@ -328,7 +294,6 @@ function Field({ label, children }) {
     </div>
   );
 }
-
 function SummaryRow({ label, value, green }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '4px 0', color: green ? '#1D9E75' : '#6B7280' }}>
@@ -337,44 +302,7 @@ function SummaryRow({ label, value, green }) {
   );
 }
 
-const cardStyle = {
-  background: '#fff',
-  border: '1px solid #E5E7EB',
-  borderRadius: '12px',
-  padding: '1rem 1.25rem',
-  marginBottom: '12px',
-};
-
-const inputStyle = {
-  width: '100%',
-  padding: '8px 10px',
-  border: '1px solid #E5E7EB',
-  borderRadius: '8px',
-  fontSize: '13px',
-  color: '#111827',
-  background: '#fff',
-  outline: 'none',
-  boxSizing: 'border-box',
-};
-
-const editBtnStyle = {
-  fontSize: '12px',
-  color: '#1D9E75',
-  border: '1px solid #1D9E75',
-  padding: '5px 12px',
-  borderRadius: '20px',
-  cursor: 'pointer',
-  background: 'none',
-  whiteSpace: 'nowrap',
-  flexShrink: 0,
-};
-
-const greenBtnStyle = {
-  background: '#1D9E75',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '10px',
-  fontWeight: '600',
-  cursor: 'pointer',
-  display: 'block',
-};
+const cardStyle = { background: '#fff', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '12px' };
+const inputStyle = { width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', color: '#111827', background: '#fff', outline: 'none', boxSizing: 'border-box' };
+const editBtnStyle = { fontSize: '12px', color: '#1D9E75', border: '1px solid #1D9E75', padding: '5px 12px', borderRadius: '20px', cursor: 'pointer', background: 'none', whiteSpace: 'nowrap', flexShrink: 0 };
+const greenBtnStyle = { background: '#1D9E75', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer', display: 'block' };
