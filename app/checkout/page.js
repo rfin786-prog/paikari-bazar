@@ -53,14 +53,16 @@ export default function CheckoutPage() {
       address: u.address || '',
     });
 
-    const cart = localStorage.getItem('cart');
+    // ✅ Fixed: paikari_cart key
+    const cart = localStorage.getItem('paikari_cart');
     if (cart) setCartItems(JSON.parse(cart));
 
     setLoading(false);
   }, []);
 
   const deliveryCost = deliveryOptions.find(d => d.id === deliveryMethod)?.price || 0;
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // ✅ Fixed: item.qty (products page uses qty, not quantity)
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * (item.qty || item.quantity || 1), 0);
   const walletBalance = profile?.wallet_balance || 0;
   const walletDeduction = useWallet ? Math.min(walletBalance, subtotal + deliveryCost - couponDiscount) : 0;
   const grandTotal = Math.max(0, subtotal + deliveryCost - couponDiscount - walletDeduction);
@@ -98,6 +100,13 @@ export default function CheckoutPage() {
         address: profile?.address,
       };
 
+      // ✅ normalize items: qty field এর নাম ঠিক করা
+      const normalizedItems = cartItems.map(item => ({
+        ...item,
+        qty: item.qty || item.quantity || 1,
+        quantity: item.qty || item.quantity || 1,
+      }));
+
       const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
         method: 'POST',
         headers: {
@@ -108,19 +117,11 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           user_id: user.id,
-          items: cartItems,
+          shop_name: profile?.shop_name,
+          items: normalizedItems,
           subtotal,
-          delivery_cost: deliveryCost,
-          delivery_method: deliveryMethod,
-          delivery_date: deliveryDate || null,
-          coupon_code: couponApplied ? couponCode.toUpperCase() : null,
-          coupon_discount: couponDiscount,
-          wallet_deduction: walletDeduction,
-          payment_method: paymentMethod,
-          grand_total: grandTotal,
-          cashback,
-          note,
-          delivery_address: deliveryAddress,
+          delivery: deliveryCost,
+          total: grandTotal,
           status: 'pending',
         }),
       });
@@ -144,9 +145,10 @@ export default function CheckoutPage() {
         localStorage.setItem('user', JSON.stringify(updatedUser));
       }
 
-      localStorage.removeItem('cart');
+      // ✅ Fixed: paikari_cart key clear
+      localStorage.removeItem('paikari_cart');
       const orderId = data[0]?.id;
-      router.push(`/orders/${orderId}?placed=true`);
+      router.push(`/orders`);
     } catch (err) {
       console.error(err);
       alert('অর্ডার দেওয়া যায়নি। আবার চেষ্টা করুন।');
@@ -244,9 +246,9 @@ export default function CheckoutPage() {
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
               <div>
                 <p style={{ fontSize: '13px', color: '#111827', margin: '0 0 1px' }}>{item.name}</p>
-                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.quantity} x ৳ {item.price.toLocaleString()}</p>
+                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.qty || item.quantity} x ৳ {item.price.toLocaleString()}</p>
               </div>
-              <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>৳ {(item.price * item.quantity).toLocaleString()}</p>
+              <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>৳ {(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</p>
             </div>
           ))}
         </div>
