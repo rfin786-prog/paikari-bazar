@@ -213,13 +213,18 @@ export default function ProductsPage() {
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
           </div>
-          <button onClick={() => setCartOpen(true)} className="relative flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors flex-shrink-0">
-            🛒
-            <span className="hidden sm:inline">কার্ট</span>
-            {cartCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">{cartCount}</span>
-            )}
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link href="/orders" className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-xl hover:bg-indigo-50 transition-colors">
+              📦 <span className="hidden sm:inline">আমার অর্ডার</span>
+            </Link>
+            <button onClick={() => setCartOpen(true)} className="relative flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+              🛒
+              <span className="hidden sm:inline">কার্ট</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">{cartCount}</span>
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 
