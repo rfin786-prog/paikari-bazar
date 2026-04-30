@@ -5,12 +5,21 @@ import { useRouter } from 'next/navigation';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+const STATUS_OPTIONS = [
+  { value: 'pending',    label: 'অপেক্ষমান',     color: '#f59e0b', bg: '#fef3c7' },
+  { value: 'processing', label: 'প্রক্রিয়াধীন',  color: '#3b82f6', bg: '#dbeafe' },
+  { value: 'shipped',    label: 'পাঠানো হয়েছে',  color: '#6366f1', bg: '#e0e7ff' },
+  { value: 'delivered',  label: 'ডেলিভারি হয়েছে', color: '#10b981', bg: '#d1fae5' },
+  { value: 'cancelled',  label: 'বাতিল',          color: '#ef4444', bg: '#fee2e2' },
+];
+
 export default function AdminPage() {
   const router = useRouter();
   const [tab, setTab] = useState('products');
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
+  const [expandedOrder, setExpandedOrder] = useState(null);
   const [form, setForm] = useState({ name:'', emoji:'📦', category:'', price:'', mrp:'', unit:'কেজি', stock:'', moq:'1' });
   const [msg, setMsg] = useState('');
 
@@ -129,22 +138,72 @@ export default function AdminPage() {
           <div>
             <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>অর্ডার ব্যবস্থাপনা ({orders.length})</h2>
             <div style={{background:'#fff', borderRadius:'14px', padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
-              {orders.map(o=>(
-                <div key={o.id} style={{padding:'16px 0', borderBottom:'1px solid #f3f4f6'}}>
-                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                    <div>
-                      <div style={{fontWeight:'700', fontSize:'14px'}}>{o.id}</div>
-                      <div style={{fontSize:'12px', color:'#6b7280'}}>{o.shop_name} | ৳{o.total}</div>
-                    </div>
-                    <select value={o.status} onChange={e=>updateOrderStatus(o.id, e.target.value)} style={{padding:'6px 10px', borderRadius:'8px', border:'1.5px solid #e5e7eb', fontFamily:'Hind Siliguri, sans-serif', fontSize:'13px', cursor:'pointer'}}>
-                      {['pending','accepted','preparing','transit','delivered','cancelled'].map(s=>(
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              ))}
               {orders.length === 0 && <p style={{color:'#6b7280', fontSize:'13px'}}>কোনো অর্ডার নেই</p>}
+              {orders.map(o => {
+                const items = Array.isArray(o.items) ? o.items : [];
+                const date = new Date(o.created_at).toLocaleDateString('bn-BD', { day:'numeric', month:'long', year:'numeric' });
+                const statusCfg = STATUS_OPTIONS.find(s => s.value === o.status) || STATUS_OPTIONS[0];
+                const isExpanded = expandedOrder === o.id;
+
+                return (
+                  <div key={o.id} style={{borderBottom:'1px solid #f3f4f6', paddingBottom:'12px', marginBottom:'12px'}}>
+                    {/* Order header */}
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'12px'}}>
+                      <div style={{flex:1}}>
+                        <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'4px', flexWrap:'wrap'}}>
+                          <span style={{fontSize:'12px', fontFamily:'monospace', color:'#6b7280'}}>#{o.id?.slice(0,8)?.toUpperCase()}</span>
+                          <span style={{fontSize:'11px', fontWeight:'600', padding:'2px 8px', borderRadius:'20px', background: statusCfg.bg, color: statusCfg.color}}>{statusCfg.label}</span>
+                        </div>
+                        <div style={{fontWeight:'700', fontSize:'14px', color:'#111827'}}>{o.shop_name || 'অজানা'}</div>
+                        <div style={{fontSize:'12px', color:'#6b7280'}}>{date} · {items.length} টি পণ্য · ৳{Number(o.total||0).toLocaleString()}</div>
+                      </div>
+
+                      {/* Status dropdown */}
+                      <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'8px'}}>
+                        <select
+                          value={o.status || 'pending'}
+                          onChange={e => updateOrderStatus(o.id, e.target.value)}
+                          style={{padding:'6px 10px', borderRadius:'8px', border:'1.5px solid #e5e7eb', fontFamily:'Hind Siliguri, sans-serif', fontSize:'13px', cursor:'pointer', outline:'none'}}
+                        >
+                          {STATUS_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => setExpandedOrder(isExpanded ? null : o.id)}
+                          style={{fontSize:'12px', color:'#6366f1', background:'none', border:'none', cursor:'pointer', padding:0}}
+                        >
+                          {isExpanded ? '▲ কম দেখুন' : '▼ বিস্তারিত'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Expanded items */}
+                    {isExpanded && (
+                      <div style={{marginTop:'12px', background:'#f9fafb', borderRadius:'10px', padding:'12px'}}>
+                        {items.map((item, idx) => (
+                          <div key={idx} style={{display:'flex', justifyContent:'space-between', fontSize:'13px', padding:'4px 0', borderBottom: idx < items.length-1 ? '1px solid #f3f4f6' : 'none'}}>
+                            <span style={{color:'#374151'}}>{item.name} × {item.qty || item.quantity || 1}</span>
+                            <span style={{fontWeight:'600', color:'#111827'}}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
+                          </div>
+                        ))}
+                        <div style={{display:'flex', justifyContent:'space-between', fontSize:'13px', paddingTop:'8px', marginTop:'4px', borderTop:'1px solid #e5e7eb'}}>
+                          <span style={{color:'#6b7280'}}>পণ্যমূল্য</span>
+                          <span>৳{Number(o.subtotal||0).toLocaleString()}</span>
+                        </div>
+                        <div style={{display:'flex', justifyContent:'space-between', fontSize:'13px', padding:'2px 0'}}>
+                          <span style={{color:'#6b7280'}}>ডেলিভারি</span>
+                          <span>৳{Number(o.delivery||0).toLocaleString()}</span>
+                        </div>
+                        <div style={{display:'flex', justifyContent:'space-between', fontSize:'14px', fontWeight:'700', paddingTop:'6px', marginTop:'2px', borderTop:'1px solid #e5e7eb', color:'#111827'}}>
+                          <span>মোট</span>
+                          <span>৳{Number(o.total||0).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
