@@ -1,161 +1,212 @@
 'use client';
 
-import { motion } from 'framer-motion';
-
 export default function HeroWholesale() {
   return (
-    <section className="w-full bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+    <section style={{
+      width: '100%',
+      background: 'linear-gradient(135deg, #1e3a5f, #1a5276, #1a6ea8)',
+      color: '#fff',
+      overflow: 'hidden'
+    }}>
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '60px 24px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '40px',
+        alignItems: 'center'
+      }}>
 
         {/* LEFT SIDE */}
-        <div>
-          <p className="inline-block bg-orange-500/20 text-orange-300 px-4 py-1 rounded-full text-sm font-semibold mb-4">
-            রেজিস্টার্ড দোকানদারদের জন্য
+        <div style={{ flex: '1', minWidth: '300px' }}>
+          <p style={{
+            display: 'inline-block',
+            background: 'rgba(232,160,32,0.2)',
+            color: '#e8a020',
+            padding: '4px 16px',
+            borderRadius: '999px',
+            fontSize: '14px',
+            fontWeight: '600',
+            marginBottom: '16px'
+          }}>
+            রেজিস্টর্ড দোকানদারদের জন্য
           </p>
 
-          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
+          <h1 style={{ fontSize: '48px', fontWeight: '800', lineHeight: '1.2', margin: '0 0 16px' }}>
             বাজারে না গিয়েও <br />
-            <span className="text-orange-400">পাইকারি মাল নিন</span>
+            <span style={{ color: '#e8a020' }}>পাইকরি মাল নিন</span>
           </h1>
 
-          <p className="mt-5 text-lg md:text-xl text-blue-100 leading-relaxed max-w-xl">
-            আপনার দোকানের প্রয়োজনীয় পণ্য এখন মোবাইলেই অর্ডার করুন।
-            দ্রুত সরবরাহ, সহজ অর্ডার, নির্ভরযোগ্য সেবা।
+          <p style={{ fontSize: '18px', color: '#bcd6f0', lineHeight: '1.7', maxWidth: '500px' }}>
+            আপনার দোকানের পয়োজনীয় পণ্য এখন মোবাইলই অর্ডার করুন।
+            দ্রুত সরবরাহ, সহজ অর্ডার, নিররযোগ্য সেবা।
           </p>
 
-          <div className="mt-7 flex flex-col sm:flex-row gap-4">
-            <button className="bg-orange-500 hover:bg-orange-600 transition px-7 py-4 rounded-xl text-lg font-bold shadow-lg">
+          <div style={{ marginTop: '28px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <button style={{
+              background: '#e8a020',
+              color: '#fff',
+              border: 'none',
+              padding: '14px 28px',
+              borderRadius: '12px',
+              fontSize: '17px',
+              fontWeight: '700',
+              cursor: 'pointer'
+            }}>
               আজই অর্ডার করুন
             </button>
-
-            <button className="border border-white/30 hover:bg-white/10 transition px-7 py-4 rounded-xl text-lg font-semibold">
+            <button style={{
+              background: 'transparent',
+              color: '#fff',
+              border: '1.5px solid rgba(255,255,255,0.4)',
+              padding: '14px 28px',
+              borderRadius: '12px',
+              fontSize: '17px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}>
               দাম দেখুন
             </button>
           </div>
 
-          <div className="mt-7 space-y-2 text-blue-100 text-sm md:text-base">
+          <div style={{ marginTop: '24px', color: '#bcd6f0', fontSize: '15px', lineHeight: '2' }}>
             <p>✔ দ্রুত সরবরাহ</p>
             <p>✔ সহজ পুনরায় অর্ডার</p>
             <p>✔ নির্ভরযোগ্য পাইকারি সেবা</p>
           </div>
         </div>
 
-        {/* RIGHT SIDE ANIMATION */}
-        <div className="relative h-[420px] md:h-[500px] w-full">
+        {/* RIGHT SIDE - CSS Animation */}
+        <div style={{ flex: '1', minWidth: '300px', position: 'relative', height: '420px' }}>
 
-          {/* shop */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            className="absolute bottom-0 left-6 w-48 h-44 bg-yellow-100 rounded-t-xl shadow-2xl border-4 border-yellow-200"
-          >
-            <div className="bg-red-500 text-center py-2 font-bold text-white text-sm rounded-t-lg">
-              আপনার দোকান
+          {/* Shop */}
+          <div style={{
+            position: 'absolute',
+            bottom: '0',
+            left: '24px',
+            width: '192px',
+            height: '176px',
+            background: '#fef9c3',
+            borderRadius: '12px 12px 0 0',
+            border: '4px solid #fde68a',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            animation: 'fadeUp 1s ease forwards'
+          }}>
+            <div style={{
+              background: '#ef4444',
+              color: '#fff',
+              textAlign: 'center',
+              padding: '8px',
+              fontWeight: '700',
+              fontSize: '13px',
+              borderRadius: '8px 8px 0 0'
+            }}>আপনার দোকান</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', padding: '12px' }}>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} style={{ height: '48px', background: '#fff', borderRadius: '6px' }}></div>
+              ))}
             </div>
+          </div>
 
-            <div className="grid grid-cols-3 gap-2 p-3">
-              <div className="h-12 bg-white rounded"></div>
-              <div className="h-12 bg-white rounded"></div>
-              <div className="h-12 bg-white rounded"></div>
+          {/* Worried owner */}
+          <div style={{
+            position: 'absolute',
+            bottom: '40px',
+            left: '224px',
+            fontSize: '48px',
+            animation: 'bounce 1.6s ease-in-out infinite'
+          }}>😟</div>
 
-              <div className="h-12 bg-white rounded"></div>
-              <div className="h-12 bg-white rounded"></div>
-              <div className="h-12 bg-white rounded"></div>
-            </div>
-          </motion.div>
-
-          {/* worried owner */}
-          <motion.div
-            animate={{
-              y: [0, -6, 0],
-            }}
-            transition={{
-              repeat: Infinity,
-              duration: 1.6,
-            }}
-            className="absolute bottom-10 left-56 text-5xl"
-          >
-            😟
-          </motion.div>
-
-          {/* mobile */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{
-              opacity: [0, 0, 1, 1],
-              scale: [0.6, 0.6, 1, 1],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              repeatDelay: 1,
-            }}
-            className="absolute top-8 left-24 w-28 h-48 bg-white rounded-3xl shadow-2xl border-4 border-gray-200 p-3 text-black"
-          >
-            <div className="text-xs font-bold mb-2 text-center">অর্ডার</div>
-
-            <div className="space-y-2 text-[10px]">
-              <div className="bg-gray-100 rounded p-1">সিগারেট</div>
-              <div className="bg-gray-100 rounded p-1">বিস্কুট</div>
-              <div className="bg-gray-100 rounded p-1">নুডলস</div>
-              <div className="bg-gray-100 rounded p-1">পানীয়</div>
-            </div>
-
-            <div className="mt-3 bg-green-500 text-white text-center text-[10px] py-1 rounded">
+          {/* Mobile */}
+          <div style={{
+            position: 'absolute',
+            top: '32px',
+            left: '96px',
+            width: '112px',
+            height: '192px',
+            background: '#fff',
+            borderRadius: '24px',
+            border: '4px solid #d1d5db',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            padding: '12px',
+            color: '#000',
+            animation: 'pulse 4s ease infinite'
+          }}>
+            <div style={{ fontSize: '11px', fontWeight: '700', textAlign: 'center', marginBottom: '8px' }}>অর্ডার</div>
+            {['সিগারেট', 'বিস্কুট', 'নুডলস', 'পানীয়'].map((item, i) => (
+              <div key={i} style={{ background: '#f3f4f6', borderRadius: '4px', padding: '4px 6px', fontSize: '10px', marginBottom: '6px' }}>{item}</div>
+            ))}
+            <div style={{ background: '#22c55e', color: '#fff', textAlign: 'center', fontSize: '10px', padding: '4px', borderRadius: '4px', marginTop: '8px' }}>
               অর্ডার সম্পন্ন
             </div>
-          </motion.div>
+          </div>
 
-          {/* truck */}
-          <motion.div
-            animate={{
-              x: [-250, 0, 240],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: 'linear',
-            }}
-            className="absolute bottom-6 left-0 flex items-end"
-          >
-            <div className="w-28 h-16 bg-gray-200 rounded-t-lg border-2 border-gray-300"></div>
-            <div className="w-16 h-12 bg-orange-500 rounded-t-lg border-2 border-orange-600"></div>
+          {/* Truck */}
+          <div style={{
+            position: 'absolute',
+            bottom: '24px',
+            left: '0',
+            display: 'flex',
+            alignItems: 'flex-end',
+            animation: 'drive 8s linear infinite'
+          }}>
+            <div style={{ width: '112px', height: '64px', background: '#e5e7eb', borderRadius: '8px 8px 0 0', border: '2px solid #d1d5db', position: 'relative' }}>
+              <div style={{ position: 'absolute', bottom: '-12px', left: '16px', width: '24px', height: '24px', background: '#000', borderRadius: '50%' }}></div>
+              <div style={{ position: 'absolute', bottom: '-12px', left: '72px', width: '24px', height: '24px', background: '#000', borderRadius: '50%' }}></div>
+            </div>
+            <div style={{ width: '64px', height: '48px', background: '#e8a020', borderRadius: '8px 8px 0 0', border: '2px solid #d97706', position: 'relative' }}>
+              <div style={{ position: 'absolute', bottom: '-12px', left: '16px', width: '24px', height: '24px', background: '#000', borderRadius: '50%' }}></div>
+            </div>
+          </div>
 
-            <div className="absolute -bottom-4 left-4 w-6 h-6 bg-black rounded-full"></div>
-            <div className="absolute -bottom-4 left-24 w-6 h-6 bg-black rounded-full"></div>
-            <div className="absolute -bottom-4 left-36 w-6 h-6 bg-black rounded-full"></div>
-          </motion.div>
+          {/* Dashed route */}
+          <div style={{
+            position: 'absolute',
+            bottom: '80px',
+            left: '192px',
+            right: '40px',
+            borderTop: '3px dashed rgba(255,255,255,0.3)'
+          }}></div>
 
-          {/* route dots */}
-          <div className="absolute bottom-20 left-48 right-10 border-t-4 border-dashed border-white/30"></div>
-
-          {/* texts */}
-          <motion.div
-            animate={{ opacity: [1, 0, 0, 1] }}
-            transition={{ duration: 8, repeat: Infinity }}
-            className="absolute top-2 right-2 bg-black/40 px-4 py-2 rounded-xl text-sm"
-          >
+          {/* Floating text */}
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            background: 'rgba(0,0,0,0.4)',
+            padding: '8px 16px',
+            borderRadius: '12px',
+            fontSize: '13px',
+            animation: 'textCycle 8s infinite'
+          }}>
             মাল শেষ হয়ে গেছে?
-          </motion.div>
-
-          <motion.div
-            animate={{ opacity: [0, 1, 0, 0] }}
-            transition={{ duration: 8, repeat: Infinity }}
-            className="absolute top-2 right-2 bg-black/40 px-4 py-2 rounded-xl text-sm"
-          >
-            মোবাইলেই অর্ডার করুন
-          </motion.div>
-
-          <motion.div
-            animate={{ opacity: [0, 0, 1, 0] }}
-            transition={{ duration: 8, repeat: Infinity }}
-            className="absolute top-2 right-2 bg-black/40 px-4 py-2 rounded-xl text-sm"
-          >
-            দ্রুত ডেলিভারি
-          </motion.div>
+          </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(40px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(0.97); }
+        }
+        @keyframes drive {
+          0% { transform: translateX(-250px); }
+          100% { transform: translateX(500px); }
+        }
+        @keyframes textCycle {
+          0%, 30% { opacity: 1; }
+          40%, 100% { opacity: 0; }
+        }
+      `}</style>
     </section>
   );
 }
