@@ -43,16 +43,23 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (data.length === 0) {
-        setError('ফোন নম্বর বা পাসওয়ার্ড ভুল');
+        setError('ফন নম্বর বা পাসওয়ার্ড ভুল');
         setLoading(false);
         return;
       }
 
       const user = data[0];
-      localStorage.setItem('user', JSON.stringify(user));
 
-      if (user.role === 'admin') router.push('/admin');
-      else router.push('/dashboard');
+      // Admin কে user login থেকে ঢুকতে দেওয়া হবে না
+      if (user.role === 'admin') {
+        setError('Admin লগইনের জন্য Admin Panel ব্যবহার করুন');
+        localStorage.removeItem('user');
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem('user', JSON.stringify(user));
+      router.push('/dashboard');
 
     } catch {
       setError('সমস্যা হয়েছে, আবার চেষ্টা করুন');
@@ -111,7 +118,9 @@ export default function LoginPage() {
       border: 'none',
       padding: '13px',
       borderRadius: '9px',
-      fontWeight: '700'
+      fontWeight: '700',
+      cursor: loading ? 'not-allowed' : 'pointer',
+      opacity: loading ? 0.7 : 1
     },
 
     err: {
@@ -130,7 +139,7 @@ export default function LoginPage() {
       {/* LEFT (desktop only) */}
       <div style={s.left}>
         <div style={{ fontSize: '24px', fontWeight: '700' }}>
-          পাইকারি<span style={{ color: '#e8a020' }}>বাজার</span>
+          পাইকারি<span style={{ color: '#e8a020' }}>বজার</span>
         </div>
       </div>
 
@@ -144,7 +153,7 @@ export default function LoginPage() {
 
           <input
             style={s.inp}
-            placeholder="ফোন নম্বর"
+            placeholder="ফোন নমর"
             value={form.phone}
             onChange={e => setForm({ ...form, phone: e.target.value })}
           />
@@ -157,7 +166,7 @@ export default function LoginPage() {
             onChange={e => setForm({ ...form, password: e.target.value })}
           />
 
-          <button style={s.btn} onClick={handleSubmit}>
+          <button style={s.btn} onClick={handleSubmit} disabled={loading}>
             {loading ? 'অপেক্ষা করুন...' : 'লগইন করুন'}
           </button>
 
