@@ -5,78 +5,117 @@ import { useRouter } from 'next/navigation';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+const STATUS = {
+  pending:    { label: 'অপেক্ষমান',      color: '#d97706', bg: '#fef3c7' },
+  processing: { label: 'প্রক্রিয়াধীন',   color: '#2563eb', bg: '#dbeafe' },
+  shipped:    { label: 'পাঠানো হয়েছে',   color: '#7c3aed', bg: '#ede9fe' },
+  delivered:  { label: 'ডেলিভারি হয়েছে', color: '#059669', bg: '#d1fae5' },
+  cancelled:  { label: 'বাতিল',           color: '#dc2626', bg: '#fee2e2' },
+};
+
+const headers = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+};
+
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState([]);
-  const [category, setCategory] = useState('সব');
-  const [categories, setCategories] = useState(['সব']);
-  const [loading, setLoading] = useState(true);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [toast, setToast] = useState('');
+  const [tab, setTab] = useState('orders');
+  const [orders, setOrders] = useState([]);
+  const [expandedOrder, setExpandedOrder] = useState(null);
+  const [ordersLoading, setOrdersLoading] = useState(true);
 
-  // Auth check
+  // Address form
+  const [address, setAddress] = useState({});
+  const [addressMsg, setAddressMsg] = useState('');
+  const [addressLoading, setAddressLoading] = useState(false);
+
+  // Password form
+  const [passwords, setPasswords] = useState({ current: '', newPass: '', confirm: '' });
+  const [passMsg, setPassMsg] = useState('');
+  const [passLoading, setPassLoading] = useState(false);
+
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (!stored) { router.push('/login'); return; }
     const u = JSON.parse(stored);
     if (u.role === 'admin') { router.push('/admin'); return; }
     setUser(u);
-
-    // Load cart from localStorage
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) setCart(JSON.parse(savedCart));
-
-    loadProducts();
+    setAddress({
+      shop_name: u.shop_name || '',
+      phone: u.phone || '',
+      district: u.district || '',
+      thana: u.thana || '',
+      address: u.address || '',
+    });
+    loadOrders(u.id);
   }, []);
 
-  const loadProducts = async () => {
-    setLoading(true);
+  const loadOrders = async (userId) => {
+    setOrdersLoading(true);
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?active=eq.true&order=created_at.asc`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+      `${SUPABASE_URL}/rest/v1/orders?user_id=eq.${userId}&order=created_at.desc`,
+      { headers }
     );
     const data = await res.json();
-    setProducts(data);
-    const cats = ['সব', ...new Set(data.map(p => p.category).filter(Boolean))];
-    setCategories(cats);
-    setLoading(false);
+    setOrders(Array.isArray(data) ? data : []);
+    setOrdersLoading(false);
   };
 
-  const saveCart = (newCart) => {
-    setCart(newCart);
-    localStorage.setItem('cart', JSON.stringify(newCart));
-  };
-
-  const addToCart = (product) => {
-    const existing = cart.find(c => c.id === product.id);
-    let newCart;
-    if (existing) {
-      newCart = cart.map(c => c.id === product.id ? { ...c, qty: c.qty + 1 } : c);
+  const saveAddress = async () => {
+    setAddressLoading(true);
+    setAddressMsg('');
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: { ...headers, Prefer: 'return=representation' },
+      body: JSON.stringify(address),
+    });
+    if (res.ok) {
+      const updated = { ...user, ...address };
+      localStorage.setItem('user', JSON.stringify(updated));
+      setUser(updated);
+      setAddressMsg('✅ ঠিকানা সেভ হয়েছে');
     } else {
-      newCart = [...cart, { ...product, qty: 1 }];
+      setAddressMsg('❌ সমস্যা হয়েছে');
     }
-    saveCart(newCart);
-    showToast(`${product.name} কার্টে যোগ হয়েছে`);
+    setAddressLoading(false);
+    setTimeout(() => setAddressMsg(''), 3000);
   };
 
-  const updateQty = (id, delta) => {
-    const newCart = cart
-      .map(c => c.id === id ? { ...c, qty: c.qty + delta } : c)
-      .filter(c => c.qty > 0);
-    saveCart(newCart);
+  const changePassword = async () => {
+    setPassMsg('');
+    if (!passwords.current || !passwords.newPass || !passwords.confirm) {
+      setPassMsg('❌ সব ঘর পূরণ করুন'); return;
+    }
+    if (passwords.current !== user.password) {
+      setPassMsg('❌ বর্তমান পাসওয়ার্ড ভুল'); return;
+    }
+    if (passwords.newPass !== passwords.confirm) {
+      setPassMsg('❌ নতুন পাসওয়ার্ড মিলছে না'); return;
+    }
+    if (passwords.newPass.length < 6) {
+      setPassMsg('❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে'); return;
+    }
+    setPassLoading(true);
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: { ...headers, Prefer: 'return=representation' },
+      body: JSON.stringify({ password: passwords.newPass }),
+    });
+    if (res.ok) {
+      const updated = { ...user, password: passwords.newPass };
+      localStorage.setItem('user', JSON.stringify(updated));
+      setUser(updated);
+      setPasswords({ current: '', newPass: '', confirm: '' });
+      setPassMsg('✅ পাসওয়ার্ড পরিবর্তন হয়েছে');
+    } else {
+      setPassMsg('❌ সমস্যা হয়েছে');
+    }
+    setPassLoading(false);
+    setTimeout(() => setPassMsg(''), 3000);
   };
-
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 2500);
-  };
-
-  const cartTotal = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
-  const cartCount = cart.reduce((sum, c) => sum + c.qty, 0);
-
-  const filtered = category === 'সব' ? products : products.filter(p => p.category === category);
 
   const logout = () => {
     localStorage.removeItem('user');
@@ -84,209 +123,194 @@ export default function Dashboard() {
     router.push('/login');
   };
 
+  const s = {
+    inp: {
+      width: '100%', padding: '10px 12px', border: '1.5px solid #e5e7eb',
+      borderRadius: '8px', fontSize: '14px', color: '#111827',
+      fontFamily: 'Hind Siliguri, sans-serif', boxSizing: 'border-box', outline: 'none',
+    },
+    btn: {
+      background: '#0f2442', color: '#fff', border: 'none',
+      padding: '11px 24px', borderRadius: '9px', fontSize: '14px',
+      fontWeight: '700', cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif',
+    },
+    label: { fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '5px' },
+    card: { background: '#fff', borderRadius: '14px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: '16px' },
+  };
+
   return (
-    <div style={{ minHeight: '100vh', background: '#faf8f5', fontFamily: 'Hind Siliguri, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#f3f4f6', fontFamily: 'Hind Siliguri, sans-serif' }}>
 
       {/* Navbar */}
-      <nav style={{
-        background: '#0f2442', padding: '0 20px',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        height: '60px', position: 'sticky', top: 0, zIndex: 100,
-        boxShadow: '0 2px 12px rgba(0,0,0,0.15)'
-      }}>
-        <div style={{ fontSize: '20px', fontWeight: '800', color: '#fff' }}>
+      <nav style={{ background: '#0f2442', height: '60px', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }}>
+        <div style={{ fontSize: '20px', fontWeight: '800', color: '#fff', cursor: 'pointer' }} onClick={() => router.push('/products')}>
           পাইকারি<span style={{ color: '#e8a020' }}>বজার</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {user && (
-            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px' }}>
-              👋 {user.name || user.phone}
-            </span>
-          )}
-          {/* Cart Button */}
-          <button onClick={() => setCartOpen(true)} style={{
-            position: 'relative', background: '#e8a020', border: 'none',
-            color: '#fff', padding: '8px 16px', borderRadius: '8px',
-            fontSize: '14px', fontWeight: '700', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: '6px'
-          }}>
-            🛒 কার্ট
-            {cartCount > 0 && (
-              <span style={{
-                background: '#ef4444', color: '#fff', borderRadius: '50%',
-                width: '20px', height: '20px', fontSize: '11px', fontWeight: '800',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>{cartCount}</span>
-            )}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button onClick={() => router.push('/products')} style={{ background: '#e8a020', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
+            🛒 পণ্য দেখুন
           </button>
-          <button onClick={logout} style={{
-            background: 'rgba(255,255,255,0.1)', border: 'none', color: 'rgba(255,255,255,0.8)',
-            padding: '8px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer'
-          }}>লগআউট</button>
+          <button onClick={logout} style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+            লগআউট
+          </button>
         </div>
       </nav>
 
-      {/* Toast */}
-      {toast && (
-        <div style={{
-          position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
-          background: '#0f2442', color: '#fff', padding: '12px 24px', borderRadius: '10px',
-          fontSize: '14px', fontWeight: '600', zIndex: 999,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
-        }}>{toast}</div>
-      )}
+      <div style={{ maxWidth: '700px', margin: '0 auto', padding: '24px 16px' }}>
 
-      {/* Cart Drawer */}
-      {cartOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
-          {/* Backdrop */}
-          <div onClick={() => setCartOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} />
-          {/* Drawer */}
-          <div style={{
-            position: 'absolute', right: 0, top: 0, bottom: 0, width: '360px', maxWidth: '100vw',
-            background: '#0f2442', boxShadow: '-4px 0 24px rgba(0,0,0,0.3)',
-            display: 'flex', flexDirection: 'column'
-          }}>
-            <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#fff' }}>🛒 কার্ট ({cartCount})</h2>
-              <button onClick={() => setCartOpen(false)} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: 'rgba(255,255,255,0.7)' }}>✕</button>
-            </div>
-
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-              {cart.length === 0 ? (
-                <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', paddingTop: '60px' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '12px' }}>🛒</div>
-                  <p>কার্ট খালি</p>
-                </div>
-              ) : (
-                cart.map(item => (
-                  <div key={item.id} style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', gap: '12px'
-                  }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '700', fontSize: '15px', color: '#fff' }}>{item.emoji} {item.name}</div>
-                      <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>৳{item.price} × {item.qty}</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button onClick={() => updateQty(item.id, -1)} style={{
-                        width: '28px', height: '28px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)',
-                        background: 'rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: '16px', fontWeight: '700', color: '#fff'
-                      }}>−</button>
-                      <span style={{ fontWeight: '700', minWidth: '20px', textAlign: 'center', color: '#fff' }}>{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, 1)} style={{
-                        width: '28px', height: '28px', borderRadius: '6px', border: 'none',
-                        background: '#e8a020', cursor: 'pointer', fontSize: '16px', fontWeight: '700', color: '#fff'
-                      }}>+</button>
-                    </div>
-                    <div style={{ fontWeight: '700', color: '#e8a020', minWidth: '70px', textAlign: 'right' }}>
-                      ৳{(item.price * item.qty).toLocaleString()}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {cart.length > 0 && (
-              <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <span style={{ fontWeight: '600', fontSize: '16px', color: '#fff' }}>মোট</span>
-                  <span style={{ fontWeight: '800', fontSize: '18px', color: '#e8a020' }}>৳{cartTotal.toLocaleString()}</span>
-                </div>
-                <button onClick={() => { setCartOpen(false); router.push('/checkout'); }} style={{
-                  width: '100%', background: '#e8a020', color: '#fff', border: 'none',
-                  padding: '14px', borderRadius: '10px', fontSize: '15px',
-                  fontWeight: '700', cursor: 'pointer'
-                }}>অর্ডার করুন →</button>
-              </div>
-            )}
+        {/* User Info */}
+        <div style={{ ...s.card, display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#0f2442', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff', fontWeight: '800', flexShrink: 0 }}>
+            {user?.name?.[0] || user?.phone?.[0] || '?'}
+          </div>
+          <div>
+            <div style={{ fontWeight: '700', fontSize: '17px', color: '#111827' }}>{user?.name || 'ব্যবহারকারী'}</div>
+            <div style={{ fontSize: '13px', color: '#6b7280' }}>{user?.phone} · {user?.shop_name}</div>
           </div>
         </div>
-      )}
 
-      {/* Category Filter */}
-      <div style={{ padding: '16px 20px', background: '#fff', borderBottom: '1px solid #f3f4f6', overflowX: 'auto' }}>
-        <div style={{ display: 'flex', gap: '8px', minWidth: 'max-content' }}>
-          {categories.map(cat => (
-            <button key={cat} onClick={() => setCategory(cat)} style={{
-              padding: '7px 16px', borderRadius: '20px', border: 'none',
-              background: category === cat ? '#0f2442' : '#f3f4f6',
-              color: category === cat ? '#fff' : '#374151',
-              fontSize: '13px', fontWeight: '600', cursor: 'pointer',
-              fontFamily: 'Hind Siliguri, sans-serif'
-            }}>{cat}</button>
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', background: '#fff', padding: '6px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          {[['orders', '📦 আমার অর্ডার'], ['address', '📍 ঠিকানা'], ['password', '🔒 পাসওয়ার্ড']].map(([t, l]) => (
+            <button key={t} onClick={() => setTab(t)} style={{
+              flex: 1, padding: '9px', border: 'none', borderRadius: '9px', fontSize: '13px',
+              fontWeight: '700', cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif',
+              background: tab === t ? '#0f2442' : 'transparent',
+              color: tab === t ? '#fff' : '#6b7280',
+            }}>{l}</button>
           ))}
         </div>
-      </div>
 
-      {/* Products Grid */}
-      <div style={{ padding: '20px' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#9ca3af' }}>
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>⏳</div>
-            <p>লোড হচ্ছে...</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#9ca3af' }}>কোনো পণ্য নেই</div>
-        ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-            gap: '14px'
-          }}>
-            {filtered.map(p => {
-              const inCart = cart.find(c => c.id === p.id);
+        {/* Orders Tab */}
+        {tab === 'orders' && (
+          <div>
+            {ordersLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#9ca3af' }}>⏳ লোড হচ্ছে...</div>
+            ) : orders.length === 0 ? (
+              <div style={{ ...s.card, textAlign: 'center', padding: '40px', color: '#9ca3af' }}>
+                <div style={{ fontSize: '40px', marginBottom: '10px' }}>📦</div>
+                <p>কোনো অর্ডার নেই</p>
+                <button onClick={() => router.push('/products')} style={{ ...s.btn, marginTop: '12px' }}>পণ্য দেখুন</button>
+              </div>
+            ) : orders.map(order => {
+              const items = Array.isArray(order.items) ? order.items : [];
+              const st = STATUS[order.status] || STATUS.pending;
+              const date = new Date(order.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
+              const isExpanded = expandedOrder === order.id;
               return (
-                <div key={p.id} style={{
-                  background: '#fff', borderRadius: '14px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                  overflow: 'hidden', display: 'flex', flexDirection: 'column'
-                }}>
-                  {/* Product Image / Emoji */}
-                  <div style={{
-                    height: '120px', background: '#f9fafb',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    {p.image_url
-                      ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <span style={{ fontSize: '48px' }}>{p.emoji || '📦'}</span>
-                    }
-                  </div>
-
-                  <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div style={{ fontWeight: '700', fontSize: '14px', color: '#111827', lineHeight: 1.3 }}>{p.name}</div>
-                    <div style={{ fontSize: '11px', color: '#9ca3af' }}>{p.unit}</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: 'auto' }}>
-                      <span style={{ fontWeight: '800', fontSize: '16px', color: '#0f2442' }}>৳{p.price}</span>
-                      {p.mrp && p.mrp > p.price && (
-                        <span style={{ fontSize: '11px', color: '#9ca3af', textDecoration: 'line-through' }}>৳{p.mrp}</span>
-                      )}
-                    </div>
-
-                    {inCart ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
-                        <button onClick={() => updateQty(p.id, -1)} style={{
-                          flex: 1, padding: '7px', borderRadius: '7px', border: '1.5px solid #e5e7eb',
-                          background: '#e5e7eb', cursor: 'pointer', fontSize: '16px', fontWeight: '700', color: '#111827'
-                        }}>−</button>
-                        <span style={{ fontWeight: '700', minWidth: '24px', textAlign: 'center', color: '#111827' }}>{inCart.qty}</span>
-                        <button onClick={() => updateQty(p.id, 1)} style={{
-                          flex: 1, padding: '7px', borderRadius: '7px', border: 'none',
-                          background: '#0f2442', color: '#fff', cursor: 'pointer', fontSize: '16px', fontWeight: '700'
-                        }}>+</button>
+                <div key={order.id} style={s.card}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#9ca3af' }}>#{order.id?.slice(0, 8)?.toUpperCase()}</span>
+                        <span style={{ fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '20px', background: st.bg, color: st.color }}>{st.label}</span>
                       </div>
-                    ) : (
-                      <button onClick={() => addToCart(p)} style={{
-                        marginTop: '6px', width: '100%', background: '#0f2442', color: '#fff',
-                        border: 'none', padding: '9px', borderRadius: '8px',
-                        fontSize: '13px', fontWeight: '700', cursor: 'pointer',
-                        fontFamily: 'Hind Siliguri, sans-serif'
-                      }}>+ কার্টে যোগ</button>
-                    )}
+                      <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{date}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                        {items.slice(0, 3).map((item, i) => (
+                          <span key={i} style={{ fontSize: '12px', background: '#f3f4f6', padding: '3px 10px', borderRadius: '20px', color: '#374151' }}>
+                            {item.emoji || ''} {item.name} × {item.qty || item.quantity || 1}
+                          </span>
+                        ))}
+                        {items.length > 3 && (
+                          <span style={{ fontSize: '12px', color: '#6b7280' }}>+{items.length - 3} আরও</span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontWeight: '800', fontSize: '18px', color: '#0f2442' }}>৳{Number(order.total || 0).toLocaleString()}</div>
+                      <div style={{ fontSize: '12px', color: '#9ca3af' }}>{items.length} টি পণ্য</div>
+                    </div>
                   </div>
+
+                  <button onClick={() => setExpandedOrder(isExpanded ? null : order.id)} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '13px', cursor: 'pointer', padding: '8px 0 0', fontFamily: 'Hind Siliguri, sans-serif' }}>
+                    {isExpanded ? '▲ কম দেখুন' : '▼ বিস্তারিত দেখুন'}
+                  </button>
+
+                  {isExpanded && (
+                    <div style={{ marginTop: '12px', background: '#f9fafb', borderRadius: '10px', padding: '12px' }}>
+                      {items.map((item, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '5px 0', borderBottom: i < items.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                          <span>{item.emoji || ''} {item.name} × {item.qty || item.quantity || 1}</span>
+                          <span style={{ fontWeight: '600' }}>৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', fontSize: '14px', paddingTop: '10px', marginTop: '4px', borderTop: '1px solid #e5e7eb' }}>
+                        <span>মোট</span>
+                        <span>৳{Number(order.total || 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Address Tab */}
+        {tab === 'address' && (
+          <div style={s.card}>
+            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', color: '#0f2442' }}>📍 ডেলিভারি ঠিকানা</h3>
+            {addressMsg && (
+              <div style={{ padding: '10px', borderRadius: '8px', marginBottom: '14px', fontSize: '13px', background: addressMsg.includes('✅') ? '#f0fdf4' : '#fef2f2', color: addressMsg.includes('✅') ? '#16a34a' : '#dc2626' }}>{addressMsg}</div>
+            )}
+            <div style={{ display: 'grid', gap: '12px' }}>
+              <div>
+                <label style={s.label}>দোকানের নাম</label>
+                <input style={s.inp} value={address.shop_name || ''} onChange={e => setAddress({ ...address, shop_name: e.target.value })} placeholder="দোকানের নাম" />
+              </div>
+              <div>
+                <label style={s.label}>ফোন নম্বর</label>
+                <input style={s.inp} value={address.phone || ''} onChange={e => setAddress({ ...address, phone: e.target.value })} placeholder="01XXXXXXXXX" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={s.label}>জেলা</label>
+                  <select style={s.inp} value={address.district || ''} onChange={e => setAddress({ ...address, district: e.target.value })}>
+                    <option value="">জেলা বাছুন</option>
+                    {['ঢাকা', 'চট্টগ্রাম', 'রাজশাহী', 'সিলেট', 'খুলনা', 'বরিশাল', 'ময়মনসিংহ', 'রংপুর'].map(d => <option key={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={s.label}>থানা</label>
+                  <input style={s.inp} value={address.thana || ''} onChange={e => setAddress({ ...address, thana: e.target.value })} placeholder="থানা" />
+                </div>
+              </div>
+              <div>
+                <label style={s.label}>পূর্ণ ঠিকানা</label>
+                <textarea style={{ ...s.inp, height: '80px', resize: 'none' }} value={address.address || ''} onChange={e => setAddress({ ...address, address: e.target.value })} placeholder="বাড়ি/রাস্তা/এলাকা" />
+              </div>
+              <button onClick={saveAddress} disabled={addressLoading} style={{ ...s.btn, opacity: addressLoading ? 0.7 : 1 }}>
+                {addressLoading ? 'সেভ হচ্ছে...' : 'ঠিকানা সেভ করুন'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Password Tab */}
+        {tab === 'password' && (
+          <div style={s.card}>
+            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', color: '#0f2442' }}>🔒 পাসওয়ার্ড পরিবর্তন</h3>
+            {passMsg && (
+              <div style={{ padding: '10px', borderRadius: '8px', marginBottom: '14px', fontSize: '13px', background: passMsg.includes('✅') ? '#f0fdf4' : '#fef2f2', color: passMsg.includes('✅') ? '#16a34a' : '#dc2626' }}>{passMsg}</div>
+            )}
+            <div style={{ display: 'grid', gap: '12px' }}>
+              <div>
+                <label style={s.label}>বর্তমান পাসওয়ার্ড</label>
+                <input type="password" style={s.inp} value={passwords.current} onChange={e => setPasswords({ ...passwords, current: e.target.value })} placeholder="বর্তমান পাসওয়ার্ড" />
+              </div>
+              <div>
+                <label style={s.label}>নতুন পাসওয়ার্ড</label>
+                <input type="password" style={s.inp} value={passwords.newPass} onChange={e => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" />
+              </div>
+              <div>
+                <label style={s.label}>পাসওয়ার্ড নিশ্চিত করুন</label>
+                <input type="password" style={s.inp} value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="আবার পাসওয়ার্ড দিন" />
+              </div>
+              <button onClick={changePassword} disabled={passLoading} style={{ ...s.btn, opacity: passLoading ? 0.7 : 1 }}>
+                {passLoading ? 'পরিবর্তন হচ্ছে...' : 'পাসওয়ার্ড পরিবর্তন করুন'}
+              </button>
+            </div>
           </div>
         )}
       </div>
