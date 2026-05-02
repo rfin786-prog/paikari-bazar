@@ -267,7 +267,7 @@ export default function Dashboard() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
                         <button onClick={() => updateQty(p.id, -1)} style={{
                           flex: 1, padding: '7px', borderRadius: '7px', border: '1.5px solid #e5e7eb',
-                          background: '#f9fafb', cursor: 'pointer', fontSize: '16px', fontWeight: '700'
+                          background: '#e5e7eb', cursor: 'pointer', fontSize: '16px', fontWeight: '700', color: '#111827'
                         }}>−</button>
                         <span style={{ fontWeight: '700', minWidth: '24px', textAlign: 'center', color: '#111827' }}>{inCart.qty}</span>
                         <button onClick={() => updateQty(p.id, 1)} style={{
