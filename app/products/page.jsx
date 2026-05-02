@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 // ── Toast System ──────────────────────────────────────────
 function ToastContainer({ toasts }) {
@@ -234,11 +228,24 @@ export default function ProductsPage() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-      if (!error && data) {
-        setProducts(data);
-        const cats = ['সব', ...new Set(data.map((p) => p.category).filter(Boolean))];
-        setCategories(cats);
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`,
+          {
+            headers: {
+              apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            },
+          }
+        );
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setProducts(data);
+          const cats = ['সব', ...new Set(data.map((p) => p.category).filter(Boolean))];
+          setCategories(cats);
+        }
+      } catch (err) {
+        console.error('Products fetch error:', err);
       }
       setLoading(false);
     }
@@ -362,7 +369,6 @@ export default function ProductsPage() {
 
       {cartOpen && <CartDrawer items={cartItems} onClose={() => setCartOpen(false)} onUpdateQty={updateQty} onRemove={removeItem} />}
 
-      {/* Toast Notifications */}
       <ToastContainer toasts={toasts} />
     </div>
   );
