@@ -6,6 +6,7 @@ export default function Navbar() {
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
   const [user, setUser] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 600);
@@ -23,118 +24,97 @@ export default function Navbar() {
     localStorage.removeItem('user');
     localStorage.removeItem('paikari_cart');
     setUser(null);
+    setMenuOpen(false);
     router.push('/');
   }
 
   return (
     <nav style={{
       background: '#0f2442',
-      padding: isMobile ? '12px 18px' : '16px 44px',
+      padding: '12px 18px',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
       borderBottom: '1px solid rgba(255,255,255,0.08)',
+      position: 'relative',
     }}>
+      {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => router.push('/')}>
         <div style={{
-          width: isMobile ? '36px' : '42px',
-          height: isMobile ? '36px' : '42px',
-          background: '#e8a020',
-          borderRadius: '10px',
+          width: '38px', height: '38px',
+          background: '#e8a020', borderRadius: '10px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: isMobile ? '18px' : '20px',
-          flexShrink: 0,
+          fontSize: '18px', flexShrink: 0,
         }}>🚚</div>
-        <div>
-          <div style={{ fontSize: isMobile ? '17px' : '21px', color: '#fff', fontWeight: '700', whiteSpace: 'nowrap' }}>
-            পাইকারি<span style={{ color: '#e8a020' }}>বাজার</span>
-          </div>
-          {!isMobile && (
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', letterSpacing: '1px' }}>WHOLESALE B2B</div>
-          )}
+        <div style={{ fontSize: '19px', color: '#fff', fontWeight: '700' }}>
+          পাইকারি<span style={{ color: '#e8a020' }}>বাজার</span>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: isMobile ? '6px' : '8px', flexShrink: 0, alignItems: 'center' }}>
-        <button
-          onClick={() => router.push('/checkout')}
-          style={{
-            background: 'rgba(255,255,255,0.1)',
-            color: '#fff',
-            border: '1.5px solid rgba(255,255,255,0.2)',
-            padding: isMobile ? '7px 12px' : '8px 16px',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: isMobile ? '14px' : '16px',
-            fontFamily: 'inherit',
-            position: 'relative',
-          }}
-        >
+      {/* Right side */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Cart */}
+        <button onClick={() => router.push('/checkout')} style={{
+          background: 'rgba(255,255,255,0.1)',
+          color: '#fff', border: '1.5px solid rgba(255,255,255,0.2)',
+          padding: '7px 12px', borderRadius: '8px',
+          cursor: 'pointer', fontSize: '16px',
+          fontFamily: 'inherit', position: 'relative',
+        }}>
           🛒
           <CartCount />
         </button>
 
-        {user ? (
-          <>
-            <span style={{ color: '#fff', fontSize: '13px', fontWeight: '600' }}>
-              👤 {user.shop_name || user.name || 'আপনি'}
-            </span>
-            <button
-              onClick={logout}
-              style={{
-                background: 'transparent',
-                color: '#ff6b6b',
-                border: '1.5px solid #ff6b6b',
-                padding: isMobile ? '7px 14px' : '8px 18px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: isMobile ? '12px' : '13px',
-                fontWeight: '600',
-                fontFamily: 'inherit',
-              }}
-            >
-              লগআউট
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => router.push('/login')}
-              style={{
-                background: 'transparent',
-                color: 'rgba(255,255,255,0.8)',
-                border: '1.5px solid rgba(255,255,255,0.3)',
-                padding: isMobile ? '7px 14px' : '8px 20px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: isMobile ? '12px' : '13px',
-                fontWeight: '600',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              লগইন
-            </button>
-            <button
-              onClick={() => router.push('/register')}
-              style={{
-                background: '#e8a020',
-                color: '#0f2442',
-                border: 'none',
-                padding: isMobile ? '7px 14px' : '9px 22px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: isMobile ? '12px' : '13px',
-                fontWeight: '700',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              নিবন্ধন
-            </button>
-          </>
-        )}
+        {/* Hamburger Menu */}
+        <button onClick={() => setMenuOpen(!menuOpen)} style={{
+          background: 'rgba(255,255,255,0.1)',
+          color: '#fff', border: '1.5px solid rgba(255,255,255,0.2)',
+          padding: '7px 12px', borderRadius: '8px',
+          cursor: 'pointer', fontSize: '16px',
+          fontFamily: 'inherit',
+        }}>
+          {menuOpen ? '✕' : '☰'}
+        </button>
       </div>
+
+      {/* Dropdown Menu */}
+      {menuOpen && (
+        <div style={{
+          position: 'absolute', top: '62px', right: '18px',
+          background: '#1a3a5c', borderRadius: '12px',
+          padding: '12px', zIndex: 999,
+          display: 'flex', flexDirection: 'column', gap: '8px',
+          minWidth: '180px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          border: '1px solid rgba(255,255,255,0.1)',
+        }}>
+          {user ? (
+            <>
+              <div style={{ color: '#fff', fontSize: '14px', fontWeight: '600', padding: '4px 8px' }}>
+                👤 {user.shop_name || user.name || 'আপনি'}
+              </div>
+              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '2px 0' }} />
+              <button onClick={() => { router.push('/orders'); setMenuOpen(false); }} style={menuBtnStyle}>
+                📦 আমার অর্ডার
+              </button>
+              <button onClick={() => { router.push('/dashboard'); setMenuOpen(false); }} style={menuBtnStyle}>
+                📊 ড্যাশবোর্ড
+              </button>
+              <button onClick={logout} style={{ ...menuBtnStyle, color: '#ff6b6b' }}>
+                🚪 লগআউট
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => { router.push('/login'); setMenuOpen(false); }} style={menuBtnStyle}>
+                🔑 লগইন
+              </button>
+              <button onClick={() => { router.push('/register'); setMenuOpen(false); }} style={{ ...menuBtnStyle, background: '#e8a020', color: '#0f2442', fontWeight: '700' }}>
+                ✍️ নিবন্ধন
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
@@ -156,3 +136,11 @@ function CartCount() {
     }}>{count}</span>
   );
 }
+
+const menuBtnStyle = {
+  background: 'none', border: 'none',
+  color: '#fff', fontSize: '14px',
+  fontFamily: 'inherit', cursor: 'pointer',
+  padding: '8px 10px', borderRadius: '8px',
+  textAlign: 'left', width: '100%',
+};
