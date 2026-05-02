@@ -51,8 +51,7 @@ export default function CheckoutPage() {
       thana: u.thana || '',
       address: u.address || '',
     });
-    // ✅ FIXED: 'cart' key (same as dashboard)
-    const cart = localStorage.getItem('cart');
+    const cart = localStorage.getItem('paikari_cart');
     if (cart) setCartItems(JSON.parse(cart));
     setLoading(false);
   }, []);
@@ -113,8 +112,8 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error');
 
-      localStorage.removeItem('cart');
-      router.push('/orders');
+      localStorage.removeItem('paikari_cart');
+      router.push('/dashboard');
     } catch (err) {
       console.error(err);
       alert('Order failed. Please try again.');
@@ -139,6 +138,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
+      {/* Delivery Address */}
       <div style={cardStyle}>
         <SectionTitle>Delivery Address</SectionTitle>
         {!editMode ? (
@@ -173,6 +173,7 @@ export default function CheckoutPage() {
         )}
       </div>
 
+      {/* Delivery Method */}
       <div style={cardStyle}>
         <SectionTitle>Delivery Method</SectionTitle>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -194,6 +195,7 @@ export default function CheckoutPage() {
         )}
       </div>
 
+      {/* Order Summary */}
       <div style={cardStyle}>
         <SectionTitle>Order Summary</SectionTitle>
         <div style={{ borderBottom: '1px solid #F3F4F6', marginBottom: '12px', paddingBottom: '12px' }}>
@@ -203,7 +205,7 @@ export default function CheckoutPage() {
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
               <div>
                 <p style={{ fontSize: '13px', color: '#111827', margin: '0 0 1px' }}>{item.emoji} {item.name}</p>
-                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.qty || item.quantity} × {item.price.toLocaleString()} ৳</p>
+                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.qty || item.quantity} &times; {item.price.toLocaleString()} ৳</p>
               </div>
               <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{(item.price * (item.qty || item.quantity || 1)).toLocaleString()} ৳</p>
             </div>
@@ -225,6 +227,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
+      {/* Payment */}
       <div style={cardStyle}>
         <SectionTitle>Payment</SectionTitle>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
@@ -251,6 +254,7 @@ export default function CheckoutPage() {
 function SectionTitle({ children }) {
   return <p style={{ fontSize: '12px', fontWeight: '500', color: '#6B7280', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{children}</p>;
 }
+
 function Field({ label, children }) {
   return (
     <div style={{ marginBottom: '8px' }}>
@@ -259,6 +263,7 @@ function Field({ label, children }) {
     </div>
   );
 }
+
 function SummaryRow({ label, value, green }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '4px 0', color: green ? '#1D9E75' : '#6B7280' }}>
