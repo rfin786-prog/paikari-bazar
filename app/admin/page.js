@@ -21,6 +21,9 @@ export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [form, setForm] = useState({ name:'', emoji:'📦', category:'', price:'', mrp:'', unit:'কেজি', stock:'', moq:'1' });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
@@ -46,15 +49,54 @@ export default function AdminPage() {
     setUsers(await res.json());
   };
 
+  function handleImageSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  async function uploadImage() {
+    if (!imageFile) return null;
+    const ext = imageFile.name.split('.').pop();
+    const fileName = `${Date.now()}.${ext}`;
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/products/${fileName}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': imageFile.type,
+      },
+      body: imageFile,
+    });
+    if (!res.ok) return null;
+    return `${SUPABASE_URL}/storage/v1/object/public/products/${fileName}`;
+  }
+
   const addProduct = async () => {
     if (!form.name || !form.price) { setMsg('নাম ও মূল্য দিন'); return; }
+    setUploading(true);
+    const image_url = await uploadImage();
     const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
       method: 'POST',
       headers: { ...headers, 'Prefer': 'return=representation' },
-      body: JSON.stringify({ name: form.name, emoji: form.emoji, category: form.category, price: Number(form.price), mrp: Number(form.mrp), unit: form.unit, stock: Number(form.stock), moq: Number(form.moq), active: true })
+      body: JSON.stringify({
+        name: form.name, emoji: form.emoji, category: form.category,
+        price: Number(form.price), mrp: Number(form.mrp),
+        unit: form.unit, stock: Number(form.stock), moq: Number(form.moq),
+        active: true, image_url,
+      })
     });
-    if (res.status === 201) { setMsg('✅ পণ্য যোগ হয়েছে'); setForm({ name:'', emoji:'📦', category:'', price:'', mrp:'', unit:'কেজি', stock:'', moq:'1' }); loadProducts(); }
-    else { setMsg('❌ সমস্যা হয়েছে'); }
+    setUploading(false);
+    if (res.status === 201) {
+      setMsg('✅ পণ্য যোগ হয়েছে');
+      setForm({ name:'', emoji:'📦', category:'', price:'', mrp:'', unit:'কেজ', stock:'', moq:'1' });
+      setImageFile(null);
+      setImagePreview(null);
+      loadProducts();
+    } else {
+      setMsg('❌ সমস্যা হয়েছে');
+    }
   };
 
   const toggleProduct = async (id, active) => {
@@ -70,7 +112,7 @@ export default function AdminPage() {
   const logout = () => { localStorage.removeItem('user'); router.push('/login'); };
 
   const s = {
-    nav: { background:'#1e1b4b', padding:'0 36px', display:'flex', justifyContent:'space-between', alignItems:'center', height:'60px' },
+    nav: { background:'#1e1b4b', padding:'0 24px', display:'flex', justifyContent:'space-between', alignItems:'center', height:'60px' },
     tab: (t) => ({ padding:'7px 16px', borderRadius:'7px', fontSize:'13px', fontWeight:'600', cursor:'pointer', border:'none', fontFamily:'Hind Siliguri, sans-serif', background: tab===t ? 'rgba(255,255,255,.15)' : 'transparent', color: tab===t ? '#818cf8' : 'rgba(255,255,255,.6)' }),
     inp: { width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:'8px', fontFamily:'Hind Siliguri, sans-serif', fontSize:'13px', outline:'none', boxSizing:'border-box' },
     btn: { background:'#1e1b4b', color:'#fff', border:'none', padding:'10px 20px', borderRadius:'8px', fontFamily:'Hind Siliguri, sans-serif', fontSize:'13px', fontWeight:'700', cursor:'pointer' },
@@ -85,38 +127,64 @@ export default function AdminPage() {
           ))}
         </div>
         <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-          <span style={{color:'rgba(255,255,255,.7)', fontSize:'13px'}}>Admin Panel</span>
+          <span style={{color:'rgba(255,255,255,.7)', fontSize:'13px'}}>Admin</span>
           <button onClick={logout} style={{...s.btn, background:'rgba(255,255,255,.1)', fontSize:'12px', padding:'7px 14px'}}>লগআউট</button>
         </div>
       </nav>
 
-      <div style={{padding:'32px 44px'}}>
+      <div style={{padding:'24px'}}>
 
-        {/* PRODUCTS */}
         {tab === 'products' && (
           <div>
-            <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>পণ্য ব্যবস্থাপনা</h2>
+            <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>পণ্য ব্যবস্থপনা</h2>
             {msg && <div style={{background:'#f0fdf4', border:'1px solid #bbf7d0', color:'#16a34a', padding:'10px', borderRadius:'8px', marginBottom:'16px', fontSize:'13px'}}>{msg}</div>}
-            <div style={{background:'#fff', borderRadius:'14px', padding:'24px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
+
+            <div style={{background:'#fff', borderRadius:'14px', padding:'20px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
               <h3 style={{fontSize:'15px', fontWeight:'700', marginBottom:'16px', color:'#1e1b4b'}}>নতুন পণ্য যোগ করুন</h3>
-              <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'12px', marginBottom:'12px'}}>
-                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>পণ্যের নাম *</label><input style={s.inp} placeholder="চাল (মিনিকেট)" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} /></div>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'12px'}}>
+                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>পণ্যের নাম *</label><input style={s.inp} placeholder="চল (মিনিকেট)" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} /></div>
                 <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ইমোজি</label><input style={s.inp} placeholder="🌾" value={form.emoji} onChange={e=>setForm({...form,emoji:e.target.value})} /></div>
-                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ক্যাটাগরি</label><input style={s.inp} placeholder="শস্য" value={form.category} onChange={e=>setForm({...form,category:e.target.value})} /></div>
-                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ইউনিট</label><input style={s.inp} placeholder="কেজি" value={form.unit} onChange={e=>setForm({...form,unit:e.target.value})} /></div>
-                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>পাইকারি মূল্য *</label><input style={s.inp} type="number" placeholder="65" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} /></div>
-                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>MRP</label><input style={s.inp} type="number" placeholder="75" value={form.mrp} onChange={e=>setForm({...form,mrp:e.target.value})} /></div>
+                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ক্যাটাগরি</label><input style={s.inp} placeholder="খাদ্যশস্য" value={form.category} onChange={e=>setForm({...form,category:e.target.value})} /></div>
+                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ইউনিট</label><input style={s.inp} placeholder="৫০ কেজি বস" value={form.unit} onChange={e=>setForm({...form,unit:e.target.value})} /></div>
+                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>পাইকারি মূল্য *</label><input style={s.inp} type="number" placeholder="1200" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} /></div>
+                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>MRP</label><input style={s.inp} type="number" placeholder="1500" value={form.mrp} onChange={e=>setForm({...form,mrp:e.target.value})} /></div>
                 <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>স্টক</label><input style={s.inp} type="number" placeholder="500" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})} /></div>
                 <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>MOQ</label><input style={s.inp} type="number" placeholder="1" value={form.moq} onChange={e=>setForm({...form,moq:e.target.value})} /></div>
               </div>
-              <button style={s.btn} onClick={addProduct}>+ পণ্য যোগ করুন</button>
+
+              {/* Image Upload */}
+              <div style={{marginBottom:'16px'}}>
+                <label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'8px'}}>পণ্যের ছবি</label>
+                <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                  {imagePreview && (
+                    <img src={imagePreview} alt="preview" style={{width:'70px', height:'70px', objectFit:'cover', borderRadius:'10px', border:'1.5px solid #e5e7eb'}} />
+                  )}
+                  <label style={{
+                    display:'inline-block', padding:'10px 16px',
+                    background:'#f3f4f6', border:'2px dashed #d1d5db',
+                    borderRadius:'10px', cursor:'pointer', fontSize:'13px', color:'#6b7280'
+                  }}>
+                    📷 ছবি বেছে নিন
+                    <input type="file" accept="image/*" onChange={handleImageSelect} style={{display:'none'}} />
+                  </label>
+                  {imageFile && <span style={{fontSize:'12px', color:'#10b981'}}>✅ {imageFile.name}</span>}
+                </div>
+              </div>
+
+              <button style={{...s.btn, opacity: uploading ? 0.7 : 1}} onClick={addProduct} disabled={uploading}>
+                {uploading ? 'আপলড হচ্ছে...' : '+ পণ্য যোগ করুন'}
+              </button>
             </div>
-            <div style={{background:'#fff', borderRadius:'14px', padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
+
+            <div style={{background:'#fff', borderRadius:'14px', padding:'20px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
               <h3 style={{fontSize:'15px', fontWeight:'700', marginBottom:'16px', color:'#1e1b4b'}}>পণ্য তালিকা ({products.length})</h3>
               {products.map(p=>(
                 <div key={p.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 0', borderBottom:'1px solid #f3f4f6'}}>
                   <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                    <span style={{fontSize:'24px'}}>{p.emoji}</span>
+                    {p.image_url
+                      ? <img src={p.image_url} alt={p.name} style={{width:'48px', height:'48px', objectFit:'cover', borderRadius:'8px'}} />
+                      : <span style={{fontSize:'28px'}}>{p.emoji}</span>
+                    }
                     <div>
                       <div style={{fontWeight:'600', fontSize:'14px'}}>{p.name}</div>
                       <div style={{fontSize:'12px', color:'#6b7280'}}>{p.category} | {p.unit} | স্টক: {p.stock}</div>
@@ -133,21 +201,18 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ORDERS */}
         {tab === 'orders' && (
           <div>
-            <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>অর্ডার ব্যবস্থাপনা ({orders.length})</h2>
-            <div style={{background:'#fff', borderRadius:'14px', padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
+            <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>অর্র ব্যবস্থাপনা ({orders.length})</h2>
+            <div style={{background:'#fff', borderRadius:'14px', padding:'20px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
               {orders.length === 0 && <p style={{color:'#6b7280', fontSize:'13px'}}>কোনো অর্ডার নেই</p>}
               {orders.map(o => {
                 const items = Array.isArray(o.items) ? o.items : [];
                 const date = new Date(o.created_at).toLocaleDateString('bn-BD', { day:'numeric', month:'long', year:'numeric' });
                 const statusCfg = STATUS_OPTIONS.find(s => s.value === o.status) || STATUS_OPTIONS[0];
                 const isExpanded = expandedOrder === o.id;
-
                 return (
                   <div key={o.id} style={{borderBottom:'1px solid #f3f4f6', paddingBottom:'12px', marginBottom:'12px'}}>
-                    {/* Order header */}
                     <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'12px'}}>
                       <div style={{flex:1}}>
                         <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'4px', flexWrap:'wrap'}}>
@@ -157,47 +222,27 @@ export default function AdminPage() {
                         <div style={{fontWeight:'700', fontSize:'14px', color:'#111827'}}>{o.shop_name || 'অজানা'}</div>
                         <div style={{fontSize:'12px', color:'#6b7280'}}>{date} · {items.length} টি পণ্য · ৳{Number(o.total||0).toLocaleString()}</div>
                       </div>
-
-                      {/* Status dropdown */}
                       <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'8px'}}>
-                        <select
-                          value={o.status || 'pending'}
-                          onChange={e => updateOrderStatus(o.id, e.target.value)}
-                          style={{padding:'6px 10px', borderRadius:'8px', border:'1.5px solid #e5e7eb', fontFamily:'Hind Siliguri, sans-serif', fontSize:'13px', cursor:'pointer', outline:'none'}}
-                        >
-                          {STATUS_OPTIONS.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
+                        <select value={o.status || 'pending'} onChange={e => updateOrderStatus(o.id, e.target.value)}
+                          style={{padding:'6px 10px', borderRadius:'8px', border:'1.5px solid #e5e7eb', fontFamily:'Hind Siliguri, sans-serif', fontSize:'13px', cursor:'pointer', outline:'none'}}>
+                          {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                         </select>
-                        <button
-                          onClick={() => setExpandedOrder(isExpanded ? null : o.id)}
-                          style={{fontSize:'12px', color:'#6366f1', background:'none', border:'none', cursor:'pointer', padding:0}}
-                        >
+                        <button onClick={() => setExpandedOrder(isExpanded ? null : o.id)}
+                          style={{fontSize:'12px', color:'#6366f1', background:'none', border:'none', cursor:'pointer', padding:0}}>
                           {isExpanded ? '▲ কম দেখুন' : '▼ বিস্তারিত'}
                         </button>
                       </div>
                     </div>
-
-                    {/* Expanded items */}
                     {isExpanded && (
                       <div style={{marginTop:'12px', background:'#f9fafb', borderRadius:'10px', padding:'12px'}}>
                         {items.map((item, idx) => (
                           <div key={idx} style={{display:'flex', justifyContent:'space-between', fontSize:'13px', padding:'4px 0', borderBottom: idx < items.length-1 ? '1px solid #f3f4f6' : 'none'}}>
-                            <span style={{color:'#374151'}}>{item.name} × {item.qty || item.quantity || 1}</span>
-                            <span style={{fontWeight:'600', color:'#111827'}}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
+                            <span>{item.name} × {item.qty || item.quantity || 1}</span>
+                            <span style={{fontWeight:'600'}}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
                           </div>
                         ))}
-                        <div style={{display:'flex', justifyContent:'space-between', fontSize:'13px', paddingTop:'8px', marginTop:'4px', borderTop:'1px solid #e5e7eb'}}>
-                          <span style={{color:'#6b7280'}}>পণ্যমূল্য</span>
-                          <span>৳{Number(o.subtotal||0).toLocaleString()}</span>
-                        </div>
-                        <div style={{display:'flex', justifyContent:'space-between', fontSize:'13px', padding:'2px 0'}}>
-                          <span style={{color:'#6b7280'}}>ডেলিভারি</span>
-                          <span>৳{Number(o.delivery||0).toLocaleString()}</span>
-                        </div>
-                        <div style={{display:'flex', justifyContent:'space-between', fontSize:'14px', fontWeight:'700', paddingTop:'6px', marginTop:'2px', borderTop:'1px solid #e5e7eb', color:'#111827'}}>
-                          <span>মোট</span>
-                          <span>৳{Number(o.total||0).toLocaleString()}</span>
+                        <div style={{display:'flex', justifyContent:'space-between', fontSize:'14px', fontWeight:'700', paddingTop:'8px', marginTop:'4px', borderTop:'1px solid #e5e7eb'}}>
+                          <span>মোট</span><span>৳{Number(o.total||0).toLocaleString()}</span>
                         </div>
                       </div>
                     )}
@@ -208,16 +253,15 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* USERS */}
         {tab === 'users' && (
           <div>
             <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>গ্রাহক তালিকা ({users.length})</h2>
-            <div style={{background:'#fff', borderRadius:'14px', padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
+            <div style={{background:'#fff', borderRadius:'14px', padding:'20px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
               {users.map(u=>(
                 <div key={u.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 0', borderBottom:'1px solid #f3f4f6'}}>
                   <div>
                     <div style={{fontWeight:'600', fontSize:'14px'}}>{u.name}</div>
-                    <div style={{fontSize:'12px', color:'#6b7280'}}>{u.phone} | {u.shop_name} | {u.area}</div>
+                    <div style={{fontSize:'12px', color:'#6b7280'}}>{u.phone} | {u.shop_name}</div>
                   </div>
                   <div style={{fontSize:'13px', color:'#6b7280'}}>ওয়ালেট: ৳{u.wallet||0}</div>
                 </div>
