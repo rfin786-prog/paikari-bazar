@@ -46,7 +46,7 @@ function ToastContainer({ toasts }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '13px', flexShrink: 0, color: '#0f2442', fontWeight: '800',
           }}>✓</span>
-          {message}
+          {t.message}
         </div>
       ))}
       <style>{`
@@ -102,7 +102,6 @@ function ProductCard({ product, onAddToCart, cartItems }) {
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'; }}
       onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
     >
-      {/* Cart badge */}
       {inCart && (
         <div style={{
           position: 'absolute', top: '10px', left: '10px',
@@ -113,7 +112,6 @@ function ProductCard({ product, onAddToCart, cartItems }) {
         }}>🛒 {inCart.qty}</div>
       )}
 
-      {/* Stock badge */}
       {product.stock === 0 && (
         <div style={{
           position: 'absolute', inset: 0, borderRadius: '16px',
@@ -132,7 +130,6 @@ function ProductCard({ product, onAddToCart, cartItems }) {
         }}>কম স্টক</div>
       )}
 
-      {/* Image */}
       <div style={{
         width: '100%', height: '110px', borderRadius: '10px',
         overflow: 'hidden', background: 'rgba(255,255,255,0.06)',
@@ -246,7 +243,6 @@ export default function ProductsSection() {
     <div style={{ background: '#0a1628', padding: '48px 16px 60px', fontFamily: 'Hind Siliguri, sans-serif' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
-        {/* Section Header */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <h2 style={{
             color: '#fff', fontSize: '28px', fontWeight: '800',
@@ -259,15 +255,12 @@ export default function ProductsSection() {
           </p>
         </div>
 
-        {/* Category Cards */}
         {!loading && categories.length > 0 && (
           <div style={{ marginBottom: '36px' }}>
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', fontWeight: '700', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '14px' }}>
               ক্যাটাগরি বেছে নিন
             </p>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-
-              {/* সব */}
               <button
                 onClick={() => setSelectedCategory(null)}
                 style={{
@@ -283,13 +276,8 @@ export default function ProductsSection() {
                   background: !selectedCategory ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px',
                 }}>🏪</div>
-                <span style={{
-                  color: !selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.7)',
-                  fontSize: '12px', fontWeight: '700',
-                }}>সব</span>
-                <span style={{
-                  color: 'rgba(255,255,255,0.35)', fontSize: '10px',
-                }}>{products.length} টি</span>
+                <span style={{ color: !selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: '12px', fontWeight: '700' }}>সব</span>
+                <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{products.length} টি</span>
               </button>
 
               {categories.map((cat, idx) => {
@@ -318,10 +306,7 @@ export default function ProductsSection() {
                         : <span style={{ fontSize: '24px' }}>{CATEGORY_EMOJIS[idx % CATEGORY_EMOJIS.length]}</span>
                       }
                     </div>
-                    <span style={{
-                      color: isActive ? '#e8a020' : 'rgba(255,255,255,0.7)',
-                      fontSize: '12px', fontWeight: '700', whiteSpace: 'nowrap',
-                    }}>{cat.name}</span>
+                    <span style={{ color: isActive ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: '12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{cat.name}</span>
                     <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{count} টি</span>
                   </button>
                 );
@@ -330,7 +315,6 @@ export default function ProductsSection() {
           </div>
         )}
 
-        {/* Search + Count */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
             <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px' }}>🔍</span>
@@ -358,7 +342,6 @@ export default function ProductsSection() {
           )}
         </div>
 
-        {/* Products Grid */}
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '14px' }}>
             {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
