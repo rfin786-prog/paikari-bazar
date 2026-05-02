@@ -26,16 +26,16 @@ const [couponApplied, setCouponApplied] = useState(false);
 const [note, setNote] = useState(’’);
 
 const deliveryOptions = [
-{ id: ‘standard’, name: ‘স্ট্যান্ডার্ড’, info: ‘৩–৫ কার্যদিবস’, price: 60 },
-{ id: ‘express’, name: ‘এক্সপ্রেস’, info: ‘১–২ কার্যদিবস’, price: 120 },
-{ id: ‘scheduled’, name: ‘নির্ধারিত তারিখ’, info: ‘তারিখ বেছে নিন’, price: 80 },
-{ id: ‘pickup’, name: ‘সেলফ পিকআপ’, info: ‘গুদাম থেকে নিন’, price: 0 },
+{ id: ‘standard’, name: ‘standard’, info: ‘3-5 days’, price: 60 },
+{ id: ‘express’, name: ‘express’, info: ‘1-2 days’, price: 120 },
+{ id: ‘scheduled’, name: ‘scheduled’, info: ‘pick date’, price: 80 },
+{ id: ‘pickup’, name: ‘pickup’, info: ‘from warehouse’, price: 0 },
 ];
 
 const paymentOptions = [
-{ id: ‘cod’, icon: ‘💵’, name: ‘ক্যাশ অন ডেলিভারি’ },
-{ id: ‘mobile’, icon: ‘📱’, name: ‘বিকাশ / নগদ’ },
-{ id: ‘bank’, icon: ‘🏦’, name: ‘ব্যাংক ট্রান্সফার’ },
+{ id: ‘cod’, icon: ‘💵’, name: ‘Cash on Delivery’ },
+{ id: ‘mobile’, icon: ‘📱’, name: ‘Bkash / Nagad’ },
+{ id: ‘bank’, icon: ‘🏦’, name: ‘Bank Transfer’ },
 ];
 
 useEffect(() => {
@@ -66,7 +66,7 @@ if (code === ‘PAIKA10’) {
 setCouponDiscount(Math.round(subtotal * 0.1));
 setCouponApplied(true);
 } else {
-alert(‘কুপন কোডটি সঠিক নয়।’);
+alert(‘Invalid coupon code.’);
 setCouponDiscount(0);
 setCouponApplied(false);
 }
@@ -78,9 +78,9 @@ setEditMode(false);
 }
 
 async function placeOrder() {
-if (cartItems.length === 0) { alert(‘কার্টে কোনো পণ্য নেই।’); return; }
+if (cartItems.length === 0) { alert(‘Cart is empty.’); return; }
 if (deliveryMethod === ‘scheduled’ && !deliveryDate) {
-alert(‘অনুগ্রহ করে ডেলিভারি তারিখ বেছে নিন।’); return;
+alert(‘Please select a delivery date.’); return;
 }
 setPlacing(true);
 try {
@@ -117,7 +117,7 @@ quantity: item.qty || item.quantity || 1,
   router.push('/orders');
 } catch (err) {
   console.error(err);
-  alert('অর্ডার দেওয়া যায়নি। আবার চেষ্টা করুন।');
+  alert('Order failed. Please try again.');
 } finally {
   setPlacing(false);
 }
@@ -127,114 +127,109 @@ quantity: item.qty || item.quantity || 1,
 
 if (loading) return (
 <div style={{ display: ‘flex’, justifyContent: ‘center’, alignItems: ‘center’, minHeight: ‘60vh’ }}>
-<p style={{ color: ‘#6B7280’, fontSize: ‘14px’ }}>লোড হচ্ছে…</p>
+<p style={{ color: ‘#6B7280’, fontSize: ‘14px’ }}>Loading…</p>
 </div>
 );
 
 return (
 <div style={{ maxWidth: ‘560px’, margin: ‘0 auto’, padding: ‘1rem 1rem 3rem’, fontFamily: ‘sans-serif’ }}>
 <div style={{ display: ‘flex’, alignItems: ‘center’, gap: ‘10px’, marginBottom: ‘1.25rem’, paddingBottom: ‘1rem’, borderBottom: ‘1px solid #E5E7EB’ }}>
-<div style={{ width: ‘36px’, height: ‘36px’, borderRadius: ‘8px’, background: ‘#1D9E75’, display: ‘flex’, alignItems: ‘center’, justifyContent: ‘center’, color: ‘#fff’, fontSize: ‘15px’, fontWeight: ‘600’ }}>প</div>
+<div style={{ width: ‘36px’, height: ‘36px’, borderRadius: ‘8px’, background: ‘#1D9E75’, display: ‘flex’, alignItems: ‘center’, justifyContent: ‘center’, color: ‘#fff’, fontSize: ‘15px’, fontWeight: ‘600’ }}>P</div>
 <div>
-<h1 style={{ fontSize: ‘17px’, fontWeight: ‘600’, color: ‘#111827’, margin: 0 }}>পাইকারি বাজার</h1>
-<p style={{ fontSize: ‘13px’, color: ‘#6B7280’, margin: 0 }}>অর্ডার চেকআউট</p>
+<h1 style={{ fontSize: ‘17px’, fontWeight: ‘600’, color: ‘#111827’, margin: 0 }}>Paikari Bazar</h1>
+<p style={{ fontSize: ‘13px’, color: ‘#6B7280’, margin: 0 }}>Order Checkout</p>
 </div>
 </div>
 
 ```
-  {/* ডেলিভারি ঠিকানা */}
   <div style={cardStyle}>
-    <SectionTitle>ডেলিভারি ঠিকানা</SectionTitle>
+    <SectionTitle>Delivery Address</SectionTitle>
     {!editMode ? (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <p style={{ fontSize: '15px', fontWeight: '600', color: '#111827', margin: '0 0 2px' }}>{profile?.shop_name || 'দোকানের নাম নেই'}</p>
+          <p style={{ fontSize: '15px', fontWeight: '600', color: '#111827', margin: '0 0 2px' }}>{profile?.shop_name || 'No shop name'}</p>
           <p style={{ fontSize: '13px', color: '#6B7280', margin: '0 0 2px' }}>{profile?.phone}</p>
           <p style={{ fontSize: '13px', color: '#6B7280', margin: 0, lineHeight: '1.5' }}>
             {profile?.address}<br />{profile?.thana && `${profile.thana}, `}{profile?.district}
           </p>
         </div>
-        <button onClick={() => setEditMode(true)} style={editBtnStyle}>সম্পাদনা</button>
+        <button onClick={() => setEditMode(true)} style={editBtnStyle}>Edit</button>
       </div>
     ) : (
       <div style={{ marginTop: '4px' }}>
-        <Field label="দোকানের নাম"><input style={inputStyle} value={editedAddress.shop_name} onChange={e => setEditedAddress(p => ({ ...p, shop_name: e.target.value }))} /></Field>
-        <Field label="মোবাইল নম্বর"><input style={inputStyle} value={editedAddress.phone} onChange={e => setEditedAddress(p => ({ ...p, phone: e.target.value }))} /></Field>
+        <Field label="Shop Name"><input style={inputStyle} value={editedAddress.shop_name} onChange={e => setEditedAddress(p => ({ ...p, shop_name: e.target.value }))} /></Field>
+        <Field label="Phone"><input style={inputStyle} value={editedAddress.phone} onChange={e => setEditedAddress(p => ({ ...p, phone: e.target.value }))} /></Field>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          <Field label="জেলা">
+          <Field label="District">
             <select style={inputStyle} value={editedAddress.district} onChange={e => setEditedAddress(p => ({ ...p, district: e.target.value }))}>
-              {['ঢাকা','চট্টগ্রাম','রাজশাহী','সিলেট','খুলনা','বরিশাল','ময়মনসিংহ','রংপুর'].map(d => <option key={d}>{d}</option>)}
+              {['Dhaka','Chittagong','Rajshahi','Sylhet','Khulna','Barisal','Mymensingh','Rangpur'].map(d => <option key={d}>{d}</option>)}
             </select>
           </Field>
-          <Field label="উপজেলা / থানা"><input style={inputStyle} value={editedAddress.thana} onChange={e => setEditedAddress(p => ({ ...p, thana: e.target.value }))} /></Field>
+          <Field label="Thana"><input style={inputStyle} value={editedAddress.thana} onChange={e => setEditedAddress(p => ({ ...p, thana: e.target.value }))} /></Field>
         </div>
-        <Field label="সম্পূর্ণ ঠিকানা"><textarea style={{ ...inputStyle, height: '64px', resize: 'none' }} value={editedAddress.address} onChange={e => setEditedAddress(p => ({ ...p, address: e.target.value }))} /></Field>
+        <Field label="Full Address"><textarea style={{ ...inputStyle, height: '64px', resize: 'none' }} value={editedAddress.address} onChange={e => setEditedAddress(p => ({ ...p, address: e.target.value }))} /></Field>
         <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-          <button onClick={saveAddress} style={{ ...greenBtnStyle, padding: '7px 16px', fontSize: '13px' }}>সংরক্ষণ করুন</button>
-          <button onClick={() => setEditMode(false)} style={{ padding: '7px 16px', fontSize: '13px', background: 'none', border: '1px solid #D1D5DB', borderRadius: '8px', cursor: 'pointer', color: '#6B7280' }}>বাতিল</button>
+          <button onClick={saveAddress} style={{ ...greenBtnStyle, padding: '7px 16px', fontSize: '13px' }}>Save</button>
+          <button onClick={() => setEditMode(false)} style={{ padding: '7px 16px', fontSize: '13px', background: 'none', border: '1px solid #D1D5DB', borderRadius: '8px', cursor: 'pointer', color: '#6B7280' }}>Cancel</button>
         </div>
       </div>
     )}
   </div>
 
-  {/* ডেলিভারি পদ্ধতি */}
   <div style={cardStyle}>
-    <SectionTitle>ডেলিভারি পদ্ধতি</SectionTitle>
+    <SectionTitle>Delivery Method</SectionTitle>
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
       {deliveryOptions.map(opt => (
         <div key={opt.id} onClick={() => setDeliveryMethod(opt.id)}
           style={{ border: deliveryMethod === opt.id ? '2px solid #1D9E75' : '1px solid #E5E7EB', borderRadius: '10px', padding: '10px 12px', cursor: 'pointer', background: deliveryMethod === opt.id ? '#F0FBF7' : 'transparent' }}>
           <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: '0 0 2px' }}>{opt.name}</p>
           <p style={{ fontSize: '11px', color: '#6B7280', margin: '0 0 4px' }}>{opt.info}</p>
-          <p style={{ fontSize: '12px', color: '#1D9E75', fontWeight: '600', margin: 0 }}>{opt.price === 0 ? 'বিনামূল্যে' : `৳ ${opt.price}`}</p>
+          <p style={{ fontSize: '12px', color: '#1D9E75', fontWeight: '600', margin: 0 }}>{opt.price === 0 ? 'Free' : `${opt.price} BDT`}</p>
         </div>
       ))}
     </div>
     {deliveryMethod === 'scheduled' && (
       <div style={{ marginTop: '10px' }}>
-        <Field label="ডেলিভারি তারিখ">
+        <Field label="Delivery Date">
           <input type="date" style={inputStyle} value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} min={new Date().toISOString().split('T')[0]} />
         </Field>
       </div>
     )}
   </div>
 
-  {/* অর্ডার সারসংক্ষেপ */}
   <div style={cardStyle}>
-    <SectionTitle>অর্ডার সারসংক্ষেপ</SectionTitle>
+    <SectionTitle>Order Summary</SectionTitle>
     <div style={{ borderBottom: '1px solid #F3F4F6', marginBottom: '12px', paddingBottom: '12px' }}>
       {cartItems.length === 0 ? (
-        <p style={{ fontSize: '13px', color: '#6B7280', textAlign: 'center', padding: '1rem 0' }}>কার্টে কোনো পণ্য নেই</p>
+        <p style={{ fontSize: '13px', color: '#6B7280', textAlign: 'center', padding: '1rem 0' }}>Cart is empty</p>
       ) : cartItems.map((item, i) => (
         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
           <div>
             <p style={{ fontSize: '13px', color: '#111827', margin: '0 0 1px' }}>{item.name}</p>
-            <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.qty || item.quantity} x ৳ {item.price.toLocaleString()}</p>
+            <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.qty || item.quantity} x {item.price.toLocaleString()} BDT</p>
           </div>
-          <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>৳ {(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</p>
+          <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{(item.price * (item.qty || item.quantity || 1)).toLocaleString()} BDT</p>
         </div>
       ))}
     </div>
     <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-      <input style={{ ...inputStyle, flex: 1 }} placeholder="কুপন কোড লিখুন..." value={couponCode}
+      <input style={{ ...inputStyle, flex: 1 }} placeholder="Enter coupon code..." value={couponCode}
         onChange={e => { setCouponCode(e.target.value); setCouponApplied(false); setCouponDiscount(0); }} disabled={couponApplied} />
       <button onClick={applyCoupon} disabled={couponApplied}
         style={{ padding: '8px 14px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap', color: couponApplied ? '#1D9E75' : '#374151' }}>
-        {couponApplied ? 'প্রয়োগ হয়েছে' : 'প্রয়োগ করুন'}
+        {couponApplied ? 'Applied' : 'Apply'}
       </button>
     </div>
-    <SummaryRow label="পণ্যের মোট" value={`৳ ${subtotal.toLocaleString()}`} />
-    <SummaryRow label="ডেলিভারি চার্জ" value={deliveryCost === 0 ? 'বিনামূল্যে' : `৳ ${deliveryCost}`} />
-    {couponDiscount > 0 && <SummaryRow label="কুপন ছাড়" value={`- ৳ ${couponDiscount.toLocaleString()}`} green />}
+    <SummaryRow label="Subtotal" value={`${subtotal.toLocaleString()} BDT`} />
+    <SummaryRow label="Delivery" value={deliveryCost === 0 ? 'Free' : `${deliveryCost} BDT`} />
+    {couponDiscount > 0 && <SummaryRow label="Coupon Discount" value={`- ${couponDiscount.toLocaleString()} BDT`} green />}
     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: '600', color: '#111827', paddingTop: '10px', borderTop: '1px solid #F3F4F6', marginTop: '6px' }}>
-      <span>সর্বমোট</span><span>৳ {grandTotal.toLocaleString()}</span>
+      <span>Total</span><span>{grandTotal.toLocaleString()} BDT</span>
     </div>
   </div>
 
-  {/* পেমেন্ট */}
   <div style={cardStyle}>
-    <SectionTitle>পেমেন্ট</SectionTitle>
-    <p style={{ fontSize: '12px', fontWeight: '500', color: '#6B7280', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>পেমেন্ট পদ্ধতি</p>
+    <SectionTitle>Payment</SectionTitle>
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
       {paymentOptions.map(opt => (
         <div key={opt.id} onClick={() => setPaymentMethod(opt.id)}
@@ -244,12 +239,12 @@ return (
         </div>
       ))}
     </div>
-    <Field label="বিশেষ নোট (ঐচ্ছিক)">
-      <textarea style={{ ...inputStyle, height: '60px', resize: 'none' }} placeholder="ডেলিভারি বা অর্ডার সম্পর্কে কিছু জানাতে চাইলে লিখুন..." value={note} onChange={e => setNote(e.target.value)} />
+    <Field label="Special Note (optional)">
+      <textarea style={{ ...inputStyle, height: '60px', resize: 'none' }} placeholder="Any note about delivery or order..." value={note} onChange={e => setNote(e.target.value)} />
     </Field>
     <button onClick={placeOrder} disabled={placing}
       style={{ ...greenBtnStyle, width: '100%', padding: '13px', fontSize: '15px', marginTop: '8px', opacity: placing ? 0.7 : 1 }}>
-      {placing ? 'অর্ডার দেওয়া হচ্ছে...' : 'অর্ডার নিশ্চিত করুন →'}
+      {placing ? 'Placing order...' : 'Confirm Order'}
     </button>
   </div>
 </div>
