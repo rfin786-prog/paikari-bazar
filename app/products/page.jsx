@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 
@@ -9,6 +9,72 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+// ── Toast System ──────────────────────────────────────────
+function ToastContainer({ toasts }) {
+  return (
+    <div style={{
+      position: 'fixed', bottom: '24px', left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 9999,
+      display: 'flex', flexDirection: 'column', gap: '10px',
+      alignItems: 'center', pointerEvents: 'none',
+    }}>
+      {toasts.map(t => (
+        <div key={t.id} style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          background: 'linear-gradient(135deg, #0f2442, #1a3a6b)',
+          color: '#fff',
+          padding: '12px 20px',
+          borderRadius: '50px',
+          fontSize: '14px',
+          fontFamily: "'Hind Siliguri', sans-serif",
+          fontWeight: '600',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+          border: '1px solid rgba(232,160,32,0.3)',
+          animation: t.leaving ? 'toastOut 0.3s ease forwards' : 'toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards',
+          whiteSpace: 'nowrap',
+        }}>
+          <span style={{
+            width: '28px', height: '28px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #e8a020, #f5c842)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '14px', flexShrink: 0,
+          }}>✓</span>
+          <span>{t.message}</span>
+        </div>
+      ))}
+      <style>{`
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateY(16px) scale(0.92); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toastOut {
+          from { opacity: 1; transform: translateY(0) scale(1); }
+          to   { opacity: 0; transform: translateY(8px) scale(0.95); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function useToast() {
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, leaving: false }]);
+    setTimeout(() => {
+      setToasts(prev => prev.map(t => t.id === id ? { ...t, leaving: true } : t));
+      setTimeout(() => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+      }, 300);
+    }, 2000);
+  }, []);
+
+  return { toasts, showToast };
+}
+
+// ── Skeleton ──────────────────────────────────────────────
 function SkeletonCard() {
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 animate-pulse">
@@ -23,6 +89,7 @@ function SkeletonCard() {
   );
 }
 
+// ── Product Card ──────────────────────────────────────────
 function ProductCard({ product, onAddToCart, cartItems }) {
   const inCart = cartItems.find((i) => i.id === product.id);
   const [added, setAdded] = useState(false);
@@ -42,14 +109,17 @@ function ProductCard({ product, onAddToCart, cartItems }) {
           <div className="text-5xl opacity-30">📦</div>
         )}
         {product.stock <= 10 && product.stock > 0 && (
-          <span className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-            কম স্টক
-          </span>
+          <span className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">কম স্টক</span>
         )}
         {product.stock === 0 && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <span className="text-white font-semibold text-sm bg-red-500 px-3 py-1 rounded-full">স্টক শেষ</span>
           </div>
+        )}
+        {inCart && (
+          <span className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+            🛒 {inCart.qty}
+          </span>
         )}
       </div>
       <div className="p-4 flex flex-col flex-1">
@@ -63,9 +133,23 @@ function ProductCard({ product, onAddToCart, cartItems }) {
           <button
             onClick={handleAdd}
             disabled={product.stock === 0}
-            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${product.stock === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : added || inCart ? 'bg-green-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95'}`}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+              product.stock === 0
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : added
+                ? 'bg-green-500 text-white scale-95'
+                : inCart
+                ? 'bg-green-50 text-green-700 border-2 border-green-400 hover:bg-green-100'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95'
+            }`}
           >
-            {product.stock === 0 ? 'স্টক নেই' : added ? '✓ যোগ হয়েছে' : inCart ? `✓ কার্টে আছে (${inCart.qty})` : '🛒 কার্টে যোগ করুন'}
+            {product.stock === 0
+              ? 'স্টক নেই'
+              : added
+              ? '✓ যোগ হয়েছে!'
+              : inCart
+              ? `🛒 কার্টে আছে (${inCart.qty})`
+              : '🛒 কার্টে যোগ করুন'}
           </button>
         </div>
       </div>
@@ -73,6 +157,7 @@ function ProductCard({ product, onAddToCart, cartItems }) {
   );
 }
 
+// ── Cart Drawer ───────────────────────────────────────────
 function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   return (
@@ -81,7 +166,7 @@ function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
       <div className="relative bg-white w-full max-w-sm h-full flex flex-col shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="font-bold text-lg text-gray-800">🛒 আপনার কার্ট ({items.length})</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {items.length === 0 ? (
@@ -133,6 +218,7 @@ function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
   );
 }
 
+// ── Main Page ─────────────────────────────────────────────
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -142,6 +228,8 @@ export default function ProductsPage() {
   const [cartItems, setCartItems] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [sortBy, setSortBy] = useState('default');
+
+  const { toasts, showToast } = useToast();
 
   useEffect(() => {
     async function fetchData() {
@@ -182,7 +270,11 @@ export default function ProductsPage() {
   const addToCart = (product) => {
     setCartItems((prev) => {
       const exists = prev.find((i) => i.id === product.id);
-      if (exists) return prev.map((i) => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+      if (exists) {
+        showToast(`${product.name} — আরও ১টি যোগ হয়েছে`);
+        return prev.map((i) => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+      }
+      showToast(`${product.name} কার্টে যোগ হয়েছে`);
       return [...prev, { ...product, qty: 1 }];
     });
   };
@@ -197,6 +289,9 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap'); body { font-family: 'Hind Siliguri', sans-serif; }`}</style>
+
+      {/* Navbar */}
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
@@ -214,7 +309,7 @@ export default function ProductsPage() {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Link href="/orders" className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-xl hover:bg-indigo-50 transition-colors">
+            <Link href="/dashboard" className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-xl hover:bg-indigo-50 transition-colors">
               📦 <span className="hidden sm:inline">আমার অর্ডার</span>
             </Link>
             <button onClick={() => setCartOpen(true)} className="relative flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
@@ -266,6 +361,9 @@ export default function ProductsPage() {
       </div>
 
       {cartOpen && <CartDrawer items={cartItems} onClose={() => setCartOpen(false)} onUpdateQty={updateQty} onRemove={removeItem} />}
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} />
     </div>
   );
 }
