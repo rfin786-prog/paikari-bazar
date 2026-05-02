@@ -23,20 +23,30 @@ function StatusBadge({ status }) {
   );
 }
 
-function OrderCard({ order, onExpand, expanded }) {
+function OrderCard({ order, onExpand, expanded, isNew }) {
   const items = Array.isArray(order.items) ? order.items : [];
   const date = new Date(order.created_at);
   const dateStr = date.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' });
   const timeStr = date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+    <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 ${
+      isNew ? 'border-green-300 ring-2 ring-green-200' : 'border-gray-100'
+    }`}>
+      {/* নতুন badge */}
+      {isNew && (
+        <div className="bg-green-500 text-white text-xs font-bold text-center py-1.5 tracking-wide">
+          ✓ অর্ডার সফলভাবে দেওয়া হয়েছে
+        </div>
+      )}
+
       {/* Header */}
       <div className="p-4 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="text-xs font-mono text-gray-400">#{order.id?.slice(0, 8)?.toUpperCase()}</span>
             <StatusBadge status={order.status || 'pending'} />
+            {isNew && <span className="text-xs bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">নতুন</span>}
           </div>
           <p className="font-semibold text-gray-800 text-sm truncate">{order.shop_name || 'অজানা দোকান'}</p>
           <p className="text-xs text-gray-400 mt-0.5">{dateStr} · {timeStr}</p>
@@ -76,7 +86,6 @@ function OrderCard({ order, onExpand, expanded }) {
       {/* Expanded details */}
       {expanded && (
         <div className="border-t border-gray-100 bg-gray-50 p-4 space-y-3">
-          {/* Items list */}
           <div className="space-y-2">
             {items.map((item, idx) => (
               <div key={idx} className="flex justify-between items-center text-sm">
@@ -90,7 +99,6 @@ function OrderCard({ order, onExpand, expanded }) {
             ))}
           </div>
 
-          {/* Price breakdown */}
           <div className="border-t border-gray-200 pt-3 space-y-1.5">
             <div className="flex justify-between text-sm text-gray-500">
               <span>পণ্যের মূল্য</span>
@@ -140,6 +148,7 @@ export default function OrdersPage() {
   const [expandedId, setExpandedId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('সব');
   const [user, setUser] = useState(null);
+  const [newOrderId, setNewOrderId] = useState(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('user');
@@ -149,6 +158,14 @@ export default function OrdersPage() {
       fetchOrders(u.id);
     } else {
       setLoading(false);
+    }
+
+    // নতুন order ID check করো
+    const nid = localStorage.getItem('new_order_id');
+    if (nid) {
+      setNewOrderId(nid);
+      setExpandedId(nid); // auto expand করো
+      localStorage.removeItem('new_order_id');
     }
   }, []);
 
@@ -182,7 +199,6 @@ export default function OrdersPage() {
 
   const statusFilters = ['সব', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
-  // Not logged in
   if (!loading && !user) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -210,7 +226,6 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
@@ -227,13 +242,11 @@ export default function OrdersPage() {
       </nav>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Page header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">আমার অর্ডার</h1>
           {user && <p className="text-sm text-gray-500 mt-0.5">{user.shop_name || user.phone}</p>}
         </div>
 
-        {/* Status filter tabs */}
         <div className="flex gap-2 flex-wrap mb-5">
           {statusFilters.map((s) => {
             const cfg = STATUS_CONFIG[s];
@@ -259,7 +272,6 @@ export default function OrdersPage() {
           })}
         </div>
 
-        {/* Content */}
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
@@ -290,6 +302,7 @@ export default function OrdersPage() {
                 order={order}
                 onExpand={toggleExpand}
                 expanded={expandedId === order.id}
+                isNew={order.id === newOrderId}
               />
             ))}
           </div>
