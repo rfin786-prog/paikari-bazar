@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -13,6 +14,7 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(null); // order data after success
 
   const [editMode, setEditMode] = useState(false);
   const [editedAddress, setEditedAddress] = useState({});
@@ -113,13 +115,99 @@ export default function CheckoutPage() {
       if (!res.ok) throw new Error(data.message || 'Error');
 
       localStorage.removeItem('paikari_cart');
-      router.push('/dashboard');
+      // নতুন order ID localStorage এ save করো যাতে orders page হাইলাইট করতে পারে
+      if (Array.isArray(data) && data[0]) {
+        localStorage.setItem('new_order_id', data[0].id);
+        setOrderSuccess(data[0]);
+      } else {
+        setOrderSuccess({ total: grandTotal, items: normalizedItems });
+      }
     } catch (err) {
       console.error(err);
       alert('Order failed. Please try again.');
     } finally {
       setPlacing(false);
     }
+  }
+
+  // ── Success Screen ─────────────────────────────────────
+  if (orderSuccess) {
+    return (
+      <div style={{
+        minHeight: '100vh', background: '#f9fafb',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '1rem', fontFamily: 'Hind Siliguri, sans-serif',
+      }}>
+        <div style={{
+          background: '#fff', borderRadius: '20px', padding: '2.5rem 2rem',
+          maxWidth: '420px', width: '100%', textAlign: 'center',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.08)',
+          border: '1px solid #E5E7EB',
+        }}>
+          {/* Animated checkmark */}
+          <div style={{
+            width: '80px', height: '80px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #1D9E75, #22c55e)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 1.5rem',
+            boxShadow: '0 8px 24px rgba(29,158,117,0.3)',
+            fontSize: '36px',
+          }}>✓</div>
+
+          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#111827', margin: '0 0 8px' }}>
+            অর্ডার সফল হয়েছে!
+          </h2>
+          <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 1.5rem', lineHeight: '1.6' }}>
+            আপনার অর্ডার গ্রহণ করা হয়েছে। শীঘ্রই আমরা আপনার সাথে যোগাযোগ করব।
+          </p>
+
+          {/* Order details */}
+          <div style={{
+            background: '#F9FAFB', borderRadius: '12px', padding: '1rem',
+            marginBottom: '1.5rem', textAlign: 'left',
+          }}>
+            {orderSuccess.id && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', color: '#6B7280' }}>অর্ডার ID</span>
+                <span style={{ fontSize: '13px', fontWeight: '700', color: '#111827', fontFamily: 'monospace' }}>
+                  #{orderSuccess.id.slice(0, 8).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '13px', color: '#6B7280' }}>মোট পরিমাণ</span>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: '#1D9E75' }}>
+                ৳{Number(orderSuccess.total || grandTotal).toLocaleString()}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '13px', color: '#6B7280' }}>স্ট্যাটাস</span>
+              <span style={{
+                fontSize: '12px', fontWeight: '600', color: '#92400e',
+                background: '#FEF3C7', padding: '2px 10px', borderRadius: '20px',
+              }}>অপেক্ষমান</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <Link href="/orders" style={{
+              display: 'block', background: '#1D9E75', color: '#fff',
+              padding: '13px', borderRadius: '12px', fontWeight: '700',
+              fontSize: '15px', textDecoration: 'none',
+            }}>
+              📦 আমার অর্ডার দেখুন
+            </Link>
+            <Link href="/products" style={{
+              display: 'block', background: '#F3F4F6', color: '#374151',
+              padding: '13px', borderRadius: '12px', fontWeight: '600',
+              fontSize: '14px', textDecoration: 'none',
+            }}>
+              🛒 আরও কেনাকাটা করুন
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (loading) return (
