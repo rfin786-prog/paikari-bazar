@@ -19,17 +19,27 @@ export default function AdminPage() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [expandedOrder, setExpandedOrder] = useState(null);
-  const [form, setForm] = useState({ name:'', emoji:'📦', category:'', price:'', mrp:'', unit:'কেজি', stock:'', moq:'1' });
+
+  // Product form
+  const [form, setForm] = useState({ name:'', emoji:'📦', category_id:'', price:'', mrp:'', unit:'কেজি', stock:'', moq:'1' });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState('');
 
+  // Category form
+  const [catForm, setCatForm] = useState({ name: '' });
+  const [catImageFile, setCatImageFile] = useState(null);
+  const [catImagePreview, setCatImagePreview] = useState(null);
+  const [catUploading, setCatUploading] = useState(false);
+  const [catMsg, setCatMsg] = useState('');
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (!user || user.role !== 'admin') { router.push('/login'); return; }
-    loadProducts(); loadOrders(); loadUsers();
+    loadProducts(); loadOrders(); loadUsers(); loadCategories();
   }, []);
 
   const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
@@ -49,6 +59,13 @@ export default function AdminPage() {
     setUsers(await res.json());
   };
 
+  const loadCategories = async () => {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/categories?order=created_at.asc`, { headers });
+    const data = await res.json();
+    setCategories(Array.isArray(data) ? data : []);
+  };
+
+  // Product image upload
   function handleImageSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -56,47 +73,91 @@ export default function AdminPage() {
     setImagePreview(URL.createObjectURL(file));
   }
 
-  async function uploadImage() {
+  async function uploadProductImage() {
     if (!imageFile) return null;
     const ext = imageFile.name.split('.').pop();
     const fileName = `${Date.now()}.${ext}`;
     const res = await fetch(`${SUPABASE_URL}/storage/v1/object/products/${fileName}`, {
       method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': imageFile.type,
-      },
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': imageFile.type },
       body: imageFile,
     });
     if (!res.ok) return null;
     return `${SUPABASE_URL}/storage/v1/object/public/products/${fileName}`;
   }
 
+  // Category image upload
+  function handleCatImageSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setCatImageFile(file);
+    setCatImagePreview(URL.createObjectURL(file));
+  }
+
+  async function uploadCatImage() {
+    if (!catImageFile) return null;
+    const ext = catImageFile.name.split('.').pop();
+    const fileName = `cat_${Date.now()}.${ext}`;
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/category-images/${fileName}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': catImageFile.type },
+      body: catImageFile,
+    });
+    if (!res.ok) return null;
+    return `${SUPABASE_URL}/storage/v1/object/public/category-images/${fileName}`;
+  }
+
   const addProduct = async () => {
     if (!form.name || !form.price) { setMsg('নাম ও মূল্য দিন'); return; }
     setUploading(true);
-    const image_url = await uploadImage();
+    const image_url = await uploadProductImage();
+    const body = {
+      name: form.name, emoji: form.emoji,
+      price: Number(form.price), mrp: Number(form.mrp),
+      unit: form.unit, stock: Number(form.stock), moq: Number(form.moq),
+      active: true, image_url,
+    };
+    if (form.category_id) body.category_id = form.category_id;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
       method: 'POST',
       headers: { ...headers, 'Prefer': 'return=representation' },
-      body: JSON.stringify({
-        name: form.name, emoji: form.emoji, category: form.category,
-        price: Number(form.price), mrp: Number(form.mrp),
-        unit: form.unit, stock: Number(form.stock), moq: Number(form.moq),
-        active: true, image_url,
-      })
+      body: JSON.stringify(body),
     });
     setUploading(false);
     if (res.status === 201) {
       setMsg('✅ পণ্য যোগ হয়েছে');
-      setForm({ name:'', emoji:'📦', category:'', price:'', mrp:'', unit:'কেজ', stock:'', moq:'1' });
-      setImageFile(null);
-      setImagePreview(null);
+      setForm({ name:'', emoji:'📦', category_id:'', price:'', mrp:'', unit:'কেজি', stock:'', moq:'1' });
+      setImageFile(null); setImagePreview(null);
       loadProducts();
     } else {
       setMsg('❌ সমস্যা হয়েছে');
     }
+  };
+
+  const addCategory = async () => {
+    if (!catForm.name) { setCatMsg('ক্যাটাগরির নাম দিন'); return; }
+    setCatUploading(true);
+    const image_url = await uploadCatImage();
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/categories`, {
+      method: 'POST',
+      headers: { ...headers, 'Prefer': 'return=representation' },
+      body: JSON.stringify({ name: catForm.name, image_url }),
+    });
+    setCatUploading(false);
+    if (res.status === 201) {
+      setCatMsg('✅ ক্যাটাগরি যোগ হয়েছে');
+      setCatForm({ name: '' });
+      setCatImageFile(null); setCatImagePreview(null);
+      loadCategories();
+    } else {
+      setCatMsg('❌ সমস্যা হয়েছে');
+    }
+  };
+
+  const deleteCategory = async (id) => {
+    if (!confirm('এই ক্যাটাগরি মুছে ফেলবেন?')) return;
+    await fetch(`${SUPABASE_URL}/rest/v1/categories?id=eq.${id}`, { method: 'DELETE', headers });
+    loadCategories();
   };
 
   const toggleProduct = async (id, active) => {
@@ -122,7 +183,7 @@ export default function AdminPage() {
     <div style={{minHeight:'100vh', background:'#f3f4f6', fontFamily:'Hind Siliguri, sans-serif'}}>
       <nav style={s.nav}>
         <div style={{display:'flex', gap:'4px'}}>
-          {[['products','পণ্য'],['orders','অর্ডার'],['users','গ্রাহক']].map(([t,l])=>(
+          {[['products','পণ্য'],['categories','ক্যাটাগরি'],['orders','অর্ডার'],['users','গ্রাহক']].map(([t,l])=>(
             <button key={t} style={s.tab(t)} onClick={()=>setTab(t)}>{l}</button>
           ))}
         </div>
@@ -134,36 +195,38 @@ export default function AdminPage() {
 
       <div style={{padding:'24px'}}>
 
+        {/* ===== PRODUCTS TAB ===== */}
         {tab === 'products' && (
           <div>
-            <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>পণ্য ব্যবস্থপনা</h2>
+            <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>পণ্য ব্যবস্থাপনা</h2>
             {msg && <div style={{background:'#f0fdf4', border:'1px solid #bbf7d0', color:'#16a34a', padding:'10px', borderRadius:'8px', marginBottom:'16px', fontSize:'13px'}}>{msg}</div>}
 
             <div style={{background:'#fff', borderRadius:'14px', padding:'20px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
               <h3 style={{fontSize:'15px', fontWeight:'700', marginBottom:'16px', color:'#1e1b4b'}}>নতুন পণ্য যোগ করুন</h3>
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'12px'}}>
-                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>পণ্যের নাম *</label><input style={s.inp} placeholder="চল (মিনিকেট)" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} /></div>
+                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>পণ্যের নাম *</label><input style={s.inp} placeholder="চাল (মিনিকেট)" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} /></div>
                 <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ইমোজি</label><input style={s.inp} placeholder="🌾" value={form.emoji} onChange={e=>setForm({...form,emoji:e.target.value})} /></div>
-                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ক্যাটাগরি</label><input style={s.inp} placeholder="খাদ্যশস্য" value={form.category} onChange={e=>setForm({...form,category:e.target.value})} /></div>
-                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ইউনিট</label><input style={s.inp} placeholder="৫০ কেজি বস" value={form.unit} onChange={e=>setForm({...form,unit:e.target.value})} /></div>
+
+                {/* Category dropdown */}
+                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ক্যাটাগরি</label>
+                  <select style={s.inp} value={form.category_id} onChange={e=>setForm({...form,category_id:e.target.value})}>
+                    <option value="">-- ক্যাটাগরি বেছে নিন --</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+
+                <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ইউনিট</label><input style={s.inp} placeholder="৫০ কেজি বস্তা" value={form.unit} onChange={e=>setForm({...form,unit:e.target.value})} /></div>
                 <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>পাইকারি মূল্য *</label><input style={s.inp} type="number" placeholder="1200" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} /></div>
                 <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>MRP</label><input style={s.inp} type="number" placeholder="1500" value={form.mrp} onChange={e=>setForm({...form,mrp:e.target.value})} /></div>
                 <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>স্টক</label><input style={s.inp} type="number" placeholder="500" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})} /></div>
                 <div><label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>MOQ</label><input style={s.inp} type="number" placeholder="1" value={form.moq} onChange={e=>setForm({...form,moq:e.target.value})} /></div>
               </div>
 
-              {/* Image Upload */}
               <div style={{marginBottom:'16px'}}>
                 <label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'8px'}}>পণ্যের ছবি</label>
                 <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                  {imagePreview && (
-                    <img src={imagePreview} alt="preview" style={{width:'70px', height:'70px', objectFit:'cover', borderRadius:'10px', border:'1.5px solid #e5e7eb'}} />
-                  )}
-                  <label style={{
-                    display:'inline-block', padding:'10px 16px',
-                    background:'#f3f4f6', border:'2px dashed #d1d5db',
-                    borderRadius:'10px', cursor:'pointer', fontSize:'13px', color:'#6b7280'
-                  }}>
+                  {imagePreview && <img src={imagePreview} alt="preview" style={{width:'70px', height:'70px', objectFit:'cover', borderRadius:'10px', border:'1.5px solid #e5e7eb'}} />}
+                  <label style={{display:'inline-block', padding:'10px 16px', background:'#f3f4f6', border:'2px dashed #d1d5db', borderRadius:'10px', cursor:'pointer', fontSize:'13px', color:'#6b7280'}}>
                     📷 ছবি বেছে নিন
                     <input type="file" accept="image/*" onChange={handleImageSelect} style={{display:'none'}} />
                   </label>
@@ -172,38 +235,100 @@ export default function AdminPage() {
               </div>
 
               <button style={{...s.btn, opacity: uploading ? 0.7 : 1}} onClick={addProduct} disabled={uploading}>
-                {uploading ? 'আপলড হচ্ছে...' : '+ পণ্য যোগ করুন'}
+                {uploading ? 'আপলোড হচ্ছে...' : '+ পণ্য যোগ করুন'}
               </button>
             </div>
 
             <div style={{background:'#fff', borderRadius:'14px', padding:'20px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
               <h3 style={{fontSize:'15px', fontWeight:'700', marginBottom:'16px', color:'#1e1b4b'}}>পণ্য তালিকা ({products.length})</h3>
-              {products.map(p=>(
-                <div key={p.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 0', borderBottom:'1px solid #f3f4f6'}}>
-                  <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                    {p.image_url
-                      ? <img src={p.image_url} alt={p.name} style={{width:'48px', height:'48px', objectFit:'cover', borderRadius:'8px'}} />
-                      : <span style={{fontSize:'28px'}}>{p.emoji}</span>
-                    }
-                    <div>
-                      <div style={{fontWeight:'600', fontSize:'14px'}}>{p.name}</div>
-                      <div style={{fontSize:'12px', color:'#6b7280'}}>{p.category} | {p.unit} | স্টক: {p.stock}</div>
+              {products.map(p => {
+                const cat = categories.find(c => c.id === p.category_id);
+                return (
+                  <div key={p.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 0', borderBottom:'1px solid #f3f4f6'}}>
+                    <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                      {p.image_url
+                        ? <img src={p.image_url} alt={p.name} style={{width:'48px', height:'48px', objectFit:'cover', borderRadius:'8px'}} />
+                        : <span style={{fontSize:'28px'}}>{p.emoji}</span>
+                      }
+                      <div>
+                        <div style={{fontWeight:'600', fontSize:'14px'}}>{p.name}</div>
+                        <div style={{fontSize:'12px', color:'#6b7280'}}>{cat ? cat.name : 'ক্যাটাগরি নেই'} | {p.unit} | স্টক: {p.stock}</div>
+                      </div>
+                    </div>
+                    <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                      <span style={{fontWeight:'700', color:'#1e1b4b'}}>৳{p.price}</span>
+                      <button onClick={()=>toggleProduct(p.id, p.active)} style={{...s.btn, background: p.active ? '#dcfce7' : '#fee2e2', color: p.active ? '#16a34a' : '#dc2626', padding:'6px 12px', fontSize:'12px'}}>{p.active ? '🟢 সক্রিয়' : '🔴 নিষ্ক্রিয়'}</button>
                     </div>
                   </div>
-                  <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                    <span style={{fontWeight:'700', color:'#1e1b4b'}}>৳{p.price}</span>
-                    <button onClick={()=>toggleProduct(p.id, p.active)} style={{...s.btn, background: p.active ? '#dcfce7' : '#fee2e2', color: p.active ? '#16a34a' : '#dc2626', padding:'6px 12px', fontSize:'12px'}}>{p.active ? '🟢 সক্রিয়' : '🔴 নিষ্ক্রিয়'}</button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {products.length === 0 && <p style={{color:'#6b7280', fontSize:'13px'}}>কোনো পণ্য নেই</p>}
             </div>
           </div>
         )}
 
+        {/* ===== CATEGORIES TAB ===== */}
+        {tab === 'categories' && (
+          <div>
+            <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>ক্যাটাগরি ব্যবস্থাপনা</h2>
+            {catMsg && <div style={{background:'#f0fdf4', border:'1px solid #bbf7d0', color:'#16a34a', padding:'10px', borderRadius:'8px', marginBottom:'16px', fontSize:'13px'}}>{catMsg}</div>}
+
+            {/* Add Category Form */}
+            <div style={{background:'#fff', borderRadius:'14px', padding:'20px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
+              <h3 style={{fontSize:'15px', fontWeight:'700', marginBottom:'16px', color:'#1e1b4b'}}>নতুন ক্যাটাগরি যোগ করুন</h3>
+
+              <div style={{marginBottom:'12px'}}>
+                <label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'4px'}}>ক্যাটাগরির নাম *</label>
+                <input style={s.inp} placeholder="যেমন: খাদ্যশস্য, তেল, মশলা..." value={catForm.name} onChange={e=>setCatForm({...catForm,name:e.target.value})} />
+              </div>
+
+              <div style={{marginBottom:'16px'}}>
+                <label style={{fontSize:'12px', fontWeight:'600', display:'block', marginBottom:'8px'}}>ক্যাটাগরির ছবি</label>
+                <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                  {catImagePreview && (
+                    <img src={catImagePreview} alt="preview" style={{width:'70px', height:'70px', objectFit:'cover', borderRadius:'10px', border:'1.5px solid #e5e7eb'}} />
+                  )}
+                  <label style={{display:'inline-block', padding:'10px 16px', background:'#f3f4f6', border:'2px dashed #d1d5db', borderRadius:'10px', cursor:'pointer', fontSize:'13px', color:'#6b7280'}}>
+                    📷 ছবি বেছে নিন
+                    <input type="file" accept="image/*" onChange={handleCatImageSelect} style={{display:'none'}} />
+                  </label>
+                  {catImageFile && <span style={{fontSize:'12px', color:'#10b981'}}>✅ {catImageFile.name}</span>}
+                </div>
+              </div>
+
+              <button style={{...s.btn, background:'#059669', opacity: catUploading ? 0.7 : 1}} onClick={addCategory} disabled={catUploading}>
+                {catUploading ? 'আপলোড হচ্ছে...' : '+ ক্যাটাগরি যোগ করুন'}
+              </button>
+            </div>
+
+            {/* Categories List */}
+            <div style={{background:'#fff', borderRadius:'14px', padding:'20px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
+              <h3 style={{fontSize:'15px', fontWeight:'700', marginBottom:'16px', color:'#1e1b4b'}}>ক্যাটাগরি তালিকা ({categories.length})</h3>
+              {categories.length === 0 && <p style={{color:'#6b7280', fontSize:'13px'}}>কোনো ক্যাটাগরি নেই</p>}
+              <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:'12px'}}>
+                {categories.map(cat => (
+                  <div key={cat.id} style={{border:'1.5px solid #f3f4f6', borderRadius:'12px', padding:'14px', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', position:'relative'}}>
+                    <div style={{width:'60px', height:'60px', borderRadius:'12px', overflow:'hidden', background:'#f3f4f6', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                      {cat.image_url
+                        ? <img src={cat.image_url} alt={cat.name} style={{width:'100%', height:'100%', objectFit:'cover'}} />
+                        : <span style={{fontSize:'28px'}}>📦</span>
+                      }
+                    </div>
+                    <span style={{fontWeight:'600', fontSize:'14px', textAlign:'center'}}>{cat.name}</span>
+                    <button onClick={() => deleteCategory(cat.id)} style={{...s.btn, background:'#fee2e2', color:'#dc2626', padding:'5px 12px', fontSize:'12px'}}>
+                      🗑 মুছুন
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== ORDERS TAB ===== */}
         {tab === 'orders' && (
           <div>
-            <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>অর্র ব্যবস্থাপনা ({orders.length})</h2>
+            <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>অর্ডার ব্যবস্থাপনা ({orders.length})</h2>
             <div style={{background:'#fff', borderRadius:'14px', padding:'20px', boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
               {orders.length === 0 && <p style={{color:'#6b7280', fontSize:'13px'}}>কোনো অর্ডার নেই</p>}
               {orders.map(o => {
@@ -253,6 +378,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ===== USERS TAB ===== */}
         {tab === 'users' && (
           <div>
             <h2 style={{fontSize:'20px', fontWeight:'700', marginBottom:'20px', color:'#1e1b4b'}}>গ্রাহক তালিকা ({users.length})</h2>
@@ -270,6 +396,7 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
