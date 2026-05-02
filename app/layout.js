@@ -28,7 +28,12 @@ export default function RootLayout({ children }) {
       lang="bn"
       className={`${geistSans.variable} ${geistMono.variable} ${hindSiliguri.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body
+        className="min-h-full flex flex-col"
+        style={{ fontFamily: 'var(--font-hind-siliguri), sans-serif' }}
+      >
+        {children}
+      </body>
     </html>
   );
 }
