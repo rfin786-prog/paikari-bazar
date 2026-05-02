@@ -51,7 +51,8 @@ export default function CheckoutPage() {
       thana: u.thana || '',
       address: u.address || '',
     });
-    const cart = localStorage.getItem('paikari_cart');
+    // ✅ FIXED: 'cart' key (same as dashboard)
+    const cart = localStorage.getItem('cart');
     if (cart) setCartItems(JSON.parse(cart));
     setLoading(false);
   }, []);
@@ -72,7 +73,6 @@ export default function CheckoutPage() {
     }
   }
 
-  // ✅ FIX: '…' (ellipsis char) → '...' (correct JS spread)
   function saveAddress() {
     setProfile(prev => ({ ...prev, ...editedAddress }));
     setEditMode(false);
@@ -85,7 +85,6 @@ export default function CheckoutPage() {
     }
     setPlacing(true);
     try {
-      // ✅ FIX: '…' → '...' spread operator
       const normalizedItems = cartItems.map(item => ({
         ...item,
         qty: item.qty || item.quantity || 1,
@@ -114,7 +113,7 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error');
 
-      localStorage.removeItem('paikari_cart');
+      localStorage.removeItem('cart');
       router.push('/orders');
     } catch (err) {
       console.error(err);
@@ -203,26 +202,26 @@ export default function CheckoutPage() {
           ) : cartItems.map((item, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
               <div>
-                <p style={{ fontSize: '13px', color: '#111827', margin: '0 0 1px' }}>{item.name}</p>
-                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.qty || item.quantity} x {item.price.toLocaleString()} BDT</p>
+                <p style={{ fontSize: '13px', color: '#111827', margin: '0 0 1px' }}>{item.emoji} {item.name}</p>
+                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.qty || item.quantity} × {item.price.toLocaleString()} ৳</p>
               </div>
-              <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{(item.price * (item.qty || item.quantity || 1)).toLocaleString()} BDT</p>
+              <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{(item.price * (item.qty || item.quantity || 1)).toLocaleString()} ৳</p>
             </div>
           ))}
         </div>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-          <input style={{ ...inputStyle, flex: 1 }} placeholder="Enter coupon code..." value={couponCode}
+          <input style={{ ...inputStyle, flex: 1 }} placeholder="কুপন কোড..." value={couponCode}
             onChange={e => { setCouponCode(e.target.value); setCouponApplied(false); setCouponDiscount(0); }} disabled={couponApplied} />
           <button onClick={applyCoupon} disabled={couponApplied}
             style={{ padding: '8px 14px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap', color: couponApplied ? '#1D9E75' : '#374151' }}>
             {couponApplied ? 'Applied ✓' : 'Apply'}
           </button>
         </div>
-        <SummaryRow label="Subtotal" value={`${subtotal.toLocaleString()} BDT`} />
-        <SummaryRow label="Delivery" value={deliveryCost === 0 ? 'Free' : `${deliveryCost} BDT`} />
-        {couponDiscount > 0 && <SummaryRow label="Coupon Discount" value={`- ${couponDiscount.toLocaleString()} BDT`} green />}
+        <SummaryRow label="সাবটোটাল" value={`৳${subtotal.toLocaleString()}`} />
+        <SummaryRow label="ডেলিভারি" value={deliveryCost === 0 ? 'ফ্রি' : `৳${deliveryCost}`} />
+        {couponDiscount > 0 && <SummaryRow label="ছাড়" value={`- ৳${couponDiscount.toLocaleString()}`} green />}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: '600', color: '#111827', paddingTop: '10px', borderTop: '1px solid #F3F4F6', marginTop: '6px' }}>
-          <span>Total</span><span>{grandTotal.toLocaleString()} BDT</span>
+          <span>মোট</span><span>৳{grandTotal.toLocaleString()}</span>
         </div>
       </div>
 
@@ -237,12 +236,12 @@ export default function CheckoutPage() {
             </div>
           ))}
         </div>
-        <Field label="Special Note (optional)">
-          <textarea style={{ ...inputStyle, height: '60px', resize: 'none' }} placeholder="Any note about delivery or order..." value={note} onChange={e => setNote(e.target.value)} />
+        <Field label="বিশেষ নোট (ঐচ্ছিক)">
+          <textarea style={{ ...inputStyle, height: '60px', resize: 'none' }} placeholder="ডেলিভারি বা অর্ডার সম্পর্কে কিছু জানাতে চাইলে লিখুন..." value={note} onChange={e => setNote(e.target.value)} />
         </Field>
         <button onClick={placeOrder} disabled={placing}
           style={{ ...greenBtnStyle, width: '100%', padding: '13px', fontSize: '15px', marginTop: '8px', opacity: placing ? 0.7 : 1 }}>
-          {placing ? 'Placing order...' : 'Confirm Order'}
+          {placing ? 'অর্ডার হচ্ছে...' : 'অর্ডার নিশ্চিত করুন'}
         </button>
       </div>
     </div>
