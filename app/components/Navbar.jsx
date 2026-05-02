@@ -22,7 +22,6 @@ export default function Navbar() {
       alignItems: 'center',
       borderBottom: '1px solid rgba(255,255,255,0.08)',
     }}>
-      {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => router.push('/')}>
         <div style={{
           width: isMobile ? '36px' : '42px',
@@ -43,8 +42,25 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Buttons */}
-      <div style={{ display: 'flex', gap: isMobile ? '6px' : '8px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: isMobile ? '6px' : '8px', flexShrink: 0, alignItems: 'center' }}>
+        <button
+          onClick={() => router.push('/checkout')}
+          style={{
+            background: 'rgba(255,255,255,0.1)',
+            color: '#fff',
+            border: '1.5px solid rgba(255,255,255,0.2)',
+            padding: isMobile ? '7px 12px' : '8px 16px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: isMobile ? '14px' : '16px',
+            fontWeight: '700',
+            fontFamily: 'inherit',
+            position: 'relative',
+          }}
+        >
+          🛒
+          <CartCount />
+        </button>
         <button
           onClick={() => router.push('/login')}
           style={{
@@ -81,5 +97,23 @@ export default function Navbar() {
         </button>
       </div>
     </nav>
+  );
+}
+
+function CartCount() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const cart = JSON.parse(localStorage.getItem('paikari_cart') || '[]');
+    setCount(cart.length);
+  }, []);
+  if (count === 0) return null;
+  return (
+    <span style={{
+      position: 'absolute', top: '-6px', right: '-6px',
+      background: '#e8a020', color: '#0f2442',
+      borderRadius: '50%', width: '18px', height: '18px',
+      fontSize: '11px', fontWeight: '700',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>{count}</span>
   );
 }
