@@ -231,11 +231,11 @@ export default function Dashboard() {
                     <div style={{ marginTop: '12px', background: '#f9fafb', borderRadius: '10px', padding: '12px' }}>
                       {items.map((item, i) => (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '5px 0', borderBottom: i < items.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
-                          <span>{item.emoji || ''} {item.name} × {item.qty || item.quantity || 1}</span>
-                          <span style={{ fontWeight: '600' }}>৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
+                          <span style={{ color: '#111827', fontWeight: '500' }}>{item.emoji || ''} {item.name} × {item.qty || item.quantity || 1}</span>
+                          <span style={{ fontWeight: '700', color: '#0f2442' }}>৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
                         </div>
                       ))}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', fontSize: '14px', paddingTop: '10px', marginTop: '4px', borderTop: '1px solid #e5e7eb' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', fontSize: '14px', paddingTop: '10px', marginTop: '4px', borderTop: '1px solid #e5e7eb', color: '#111827' }}>
                         <span>মোট</span>
                         <span>৳{Number(order.total || 0).toLocaleString()}</span>
                       </div>
