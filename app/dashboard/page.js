@@ -1,319 +1,659 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+‘use client’;
+import { useState, useEffect } from ‘react’;
+import { useRouter } from ‘next/navigation’;
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const STATUS = {
-  pending:    { label: 'অপেক্ষমান',      color: '#d97706', bg: '#fef3c7' },
-  processing: { label: 'প্রক্রিয়াধীন',   color: '#2563eb', bg: '#dbeafe' },
-  shipped:    { label: 'পাঠানো হয়েছে',   color: '#7c3aed', bg: '#ede9fe' },
-  delivered:  { label: 'ডেলিভারি হয়েছে', color: '#059669', bg: '#d1fae5' },
-  cancelled:  { label: 'বাতিল',           color: '#dc2626', bg: '#fee2e2' },
+pending:    { label: ‘অপেক্ষমান’,      color: ‘#92400e’, bg: ‘#fef3c7’, dot: ‘#f59e0b’ },
+processing: { label: ‘প্রক্রিয়াধীন’,   color: ‘#1e40af’, bg: ‘#dbeafe’, dot: ‘#3b82f6’ },
+shipped:    { label: ‘পাঠানো হয়েছে’,   color: ‘#5b21b6’, bg: ‘#ede9fe’, dot: ‘#8b5cf6’ },
+delivered:  { label: ‘ডেলিভারি হয়েছে’, color: ‘#065f46’, bg: ‘#d1fae5’, dot: ‘#10b981’ },
+cancelled:  { label: ‘বাতিল’,           color: ‘#991b1b’, bg: ‘#fee2e2’, dot: ‘#ef4444’ },
 };
 
 const headers = {
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
-  'Content-Type': 'application/json',
+apikey: SUPABASE_KEY,
+Authorization: `Bearer ${SUPABASE_KEY}`,
+‘Content-Type’: ‘application/json’,
 };
 
 export default function Dashboard() {
-  const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [tab, setTab] = useState('orders');
-  const [orders, setOrders] = useState([]);
-  const [expandedOrder, setExpandedOrder] = useState(null);
-  const [ordersLoading, setOrdersLoading] = useState(true);
+const router = useRouter();
+const [user, setUser] = useState(null);
+const [tab, setTab] = useState(‘orders’);
+const [orders, setOrders] = useState([]);
+const [expandedOrder, setExpandedOrder] = useState(null);
+const [ordersLoading, setOrdersLoading] = useState(true);
+const [mounted, setMounted] = useState(false);
 
-  // Address form
-  const [address, setAddress] = useState({});
-  const [addressMsg, setAddressMsg] = useState('');
-  const [addressLoading, setAddressLoading] = useState(false);
+const [address, setAddress] = useState({});
+const [addressMsg, setAddressMsg] = useState(’’);
+const [addressLoading, setAddressLoading] = useState(false);
 
-  // Password form
-  const [passwords, setPasswords] = useState({ current: '', newPass: '', confirm: '' });
-  const [passMsg, setPassMsg] = useState('');
-  const [passLoading, setPassLoading] = useState(false);
+const [passwords, setPasswords] = useState({ current: ‘’, newPass: ‘’, confirm: ‘’ });
+const [passMsg, setPassMsg] = useState(’’);
+const [passLoading, setPassLoading] = useState(false);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('user');
-    if (!stored) { router.push('/login'); return; }
-    const u = JSON.parse(stored);
-    if (u.role === 'admin') { router.push('/admin'); return; }
-    setUser(u);
-    setAddress({
-      shop_name: u.shop_name || '',
-      phone: u.phone || '',
-      district: u.district || '',
-      thana: u.thana || '',
-      address: u.address || '',
-    });
-    loadOrders(u.id);
-  }, []);
+useEffect(() => {
+setMounted(true);
+const stored = localStorage.getItem(‘user’);
+if (!stored) { router.push(’/login’); return; }
+const u = JSON.parse(stored);
+if (u.role === ‘admin’) { router.push(’/admin’); return; }
+setUser(u);
+setAddress({
+shop_name: u.shop_name || ‘’,
+phone: u.phone || ‘’,
+district: u.district || ‘’,
+thana: u.thana || ‘’,
+address: u.address || ‘’,
+});
+loadOrders(u.id);
+}, []);
 
-  const loadOrders = async (userId) => {
-    setOrdersLoading(true);
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/orders?user_id=eq.${userId}&order=created_at.desc`,
-      { headers }
-    );
-    const data = await res.json();
-    setOrders(Array.isArray(data) ? data : []);
-    setOrdersLoading(false);
-  };
+const loadOrders = async (userId) => {
+setOrdersLoading(true);
+const res = await fetch(
+`${SUPABASE_URL}/rest/v1/orders?user_id=eq.${userId}&order=created_at.desc`,
+{ headers }
+);
+const data = await res.json();
+setOrders(Array.isArray(data) ? data : []);
+setOrdersLoading(false);
+};
 
-  const saveAddress = async () => {
-    setAddressLoading(true);
-    setAddressMsg('');
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
-      method: 'PATCH',
-      headers: { ...headers, Prefer: 'return=representation' },
-      body: JSON.stringify(address),
-    });
-    if (res.ok) {
-      const updated = { ...user, ...address };
-      localStorage.setItem('user', JSON.stringify(updated));
-      setUser(updated);
-      setAddressMsg('✅ ঠিকানা সেভ হয়েছে');
-    } else {
-      setAddressMsg('❌ সমস্যা হয়েছে');
+const saveAddress = async () => {
+setAddressLoading(true);
+setAddressMsg(’’);
+const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
+method: ‘PATCH’,
+headers: { …headers, Prefer: ‘return=representation’ },
+body: JSON.stringify(address),
+});
+if (res.ok) {
+const updated = { …user, …address };
+localStorage.setItem(‘user’, JSON.stringify(updated));
+setUser(updated);
+setAddressMsg(‘success’);
+} else {
+setAddressMsg(‘error’);
+}
+setAddressLoading(false);
+setTimeout(() => setAddressMsg(’’), 3000);
+};
+
+const changePassword = async () => {
+setPassMsg(’’);
+if (!passwords.current || !passwords.newPass || !passwords.confirm) {
+setPassMsg(‘empty’); return;
+}
+if (passwords.current !== user.password) {
+setPassMsg(‘wrong’); return;
+}
+if (passwords.newPass !== passwords.confirm) {
+setPassMsg(‘mismatch’); return;
+}
+if (passwords.newPass.length < 6) {
+setPassMsg(‘short’); return;
+}
+setPassLoading(true);
+const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
+method: ‘PATCH’,
+headers: { …headers, Prefer: ‘return=representation’ },
+body: JSON.stringify({ password: passwords.newPass }),
+});
+if (res.ok) {
+const updated = { …user, password: passwords.newPass };
+localStorage.setItem(‘user’, JSON.stringify(updated));
+setUser(updated);
+setPasswords({ current: ‘’, newPass: ‘’, confirm: ‘’ });
+setPassMsg(‘success’);
+} else {
+setPassMsg(‘error’);
+}
+setPassLoading(false);
+setTimeout(() => setPassMsg(’’), 3000);
+};
+
+const logout = () => {
+localStorage.removeItem(‘user’);
+localStorage.removeItem(‘cart’);
+router.push(’/login’);
+};
+
+const passMessages = {
+empty: ‘❌ সব ঘর পূরণ করুন’,
+wrong: ‘❌ বর্তমান পাসওয়ার্ড ভুল’,
+mismatch: ‘❌ নতুন পাসওয়ার্ড মিলছে না’,
+short: ‘❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে’,
+success: ‘✅ পাসওয়ার্ড পরিবর্তন হয়েছে’,
+error: ‘❌ সমস্যা হয়েছে’,
+};
+
+const avatarLetter = user?.name?.[0] || user?.phone?.[0] || ‘?’;
+
+return (
+<>
+<style>{`
+@import url(‘https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Tiro+Bangla&display=swap’);
+
+```
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hind Siliguri', sans-serif;
+      background: #f0f2f5;
     }
-    setAddressLoading(false);
-    setTimeout(() => setAddressMsg(''), 3000);
-  };
 
-  const changePassword = async () => {
-    setPassMsg('');
-    if (!passwords.current || !passwords.newPass || !passwords.confirm) {
-      setPassMsg('❌ সব ঘর পূরণ করুন'); return;
+    .dash-wrap {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #0a1628 0%, #0f2442 40%, #1a3a6b 100%);
+      position: relative;
     }
-    if (passwords.current !== user.password) {
-      setPassMsg('❌ বর্তমান পাসওয়ার্ড ভুল'); return;
+
+    .dash-wrap::before {
+      content: '';
+      position: fixed;
+      top: -200px; right: -200px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(232,160,32,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
     }
-    if (passwords.newPass !== passwords.confirm) {
-      setPassMsg('❌ নতুন পাসওয়ার্ড মিলছে না'); return;
+
+    /* NAVBAR */
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      height: 64px;
+      background: rgba(10, 22, 40, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(232,160,32,0.15);
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
     }
-    if (passwords.newPass.length < 6) {
-      setPassMsg('❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে'); return;
+
+    .nav-logo {
+      font-size: 22px; font-weight: 800;
+      color: #fff; cursor: pointer;
+      letter-spacing: -0.5px;
+      font-family: 'Tiro Bangla', serif;
     }
-    setPassLoading(true);
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
-      method: 'PATCH',
-      headers: { ...headers, Prefer: 'return=representation' },
-      body: JSON.stringify({ password: passwords.newPass }),
-    });
-    if (res.ok) {
-      const updated = { ...user, password: passwords.newPass };
-      localStorage.setItem('user', JSON.stringify(updated));
-      setUser(updated);
-      setPasswords({ current: '', newPass: '', confirm: '' });
-      setPassMsg('✅ পাসওয়ার্ড পরিবর্তন হয়েছে');
-    } else {
-      setPassMsg('❌ সমস্যা হয়েছে');
+
+    .nav-logo span { color: #e8a020; }
+
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #e8a020, #f5c842);
+      color: #0f2442; border: none;
+      padding: 9px 18px; border-radius: 10px;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      font-family: 'Hind Siliguri', sans-serif;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 12px rgba(232,160,32,0.3);
     }
-    setPassLoading(false);
-    setTimeout(() => setPassMsg(''), 3000);
-  };
+    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(232,160,32,0.4); }
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('cart');
-    router.push('/login');
-  };
+    .btn-ghost {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.75);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 9px 16px; border-radius: 10px;
+      font-size: 13px; cursor: pointer;
+      font-family: 'Hind Siliguri', sans-serif;
+      transition: background 0.15s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.14); }
 
-  const s = {
-    inp: {
-      width: '100%', padding: '10px 12px', border: '1.5px solid #e5e7eb',
-      borderRadius: '8px', fontSize: '14px', color: '#111827',
-      fontFamily: 'Hind Siliguri, sans-serif', boxSizing: 'border-box', outline: 'none',
-    },
-    btn: {
-      background: '#0f2442', color: '#fff', border: 'none',
-      padding: '11px 24px', borderRadius: '9px', fontSize: '14px',
-      fontWeight: '700', cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif',
-    },
-    label: { fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '5px' },
-    card: { background: '#fff', borderRadius: '14px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: '16px' },
-  };
+    /* CONTENT */
+    .content {
+      position: relative; z-index: 1;
+      max-width: 720px; margin: 0 auto;
+      padding: 28px 16px 48px;
+    }
 
-  return (
-    <div style={{ minHeight: '100vh', background: '#f3f4f6', fontFamily: 'Hind Siliguri, sans-serif' }}>
+    /* USER HERO */
+    .user-hero {
+      background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex; align-items: center; gap: 18px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+    }
 
-      {/* Navbar */}
-      <nav style={{ background: '#0f2442', height: '60px', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }}>
-        <div style={{ fontSize: '20px', fontWeight: '800', color: '#fff', cursor: 'pointer' }} onClick={() => router.push('/products')}>
-          পাইকারি<span style={{ color: '#e8a020' }}>বজার</span>
-        </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button onClick={() => router.push('/products')} style={{ background: '#e8a020', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
-            🛒 পণ্য দেখুন
-          </button>
-          <button onClick={logout} style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
-            লগআউট
-          </button>
-        </div>
-      </nav>
+    .avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, #e8a020, #f5c842);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; font-weight: 800; color: #0f2442;
+      flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(232,160,32,0.4);
+      font-family: 'Tiro Bangla', serif;
+    }
 
-      <div style={{ maxWidth: '700px', margin: '0 auto', padding: '24px 16px' }}>
+    .user-info-name {
+      font-size: 19px; font-weight: 700; color: #fff;
+      margin-bottom: 4px;
+      font-family: 'Tiro Bangla', serif;
+    }
 
-        {/* User Info */}
-        <div style={{ ...s.card, display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#0f2442', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff', fontWeight: '800', flexShrink: 0 }}>
-            {user?.name?.[0] || user?.phone?.[0] || '?'}
-          </div>
+    .user-info-sub {
+      font-size: 13px; color: rgba(255,255,255,0.5);
+    }
+
+    .user-info-sub span {
+      display: inline-block;
+      background: rgba(232,160,32,0.15);
+      color: #e8a020;
+      padding: 2px 10px; border-radius: 20px;
+      font-size: 12px; margin-left: 6px;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex; gap: 6px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 6px; border-radius: 14px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .tab-btn {
+      flex: 1; padding: 10px 8px;
+      border: none; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      font-family: 'Hind Siliguri', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #e8a020, #f5c842);
+      color: #0f2442;
+      box-shadow: 0 4px 12px rgba(232,160,32,0.35);
+    }
+
+    .tab-btn.inactive {
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .tab-btn.inactive:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.06); }
+
+    /* CARD */
+    .card {
+      background: rgba(255,255,255,0.97);
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      transition: transform 0.15s;
+    }
+
+    .card:hover { transform: translateY(-1px); }
+
+    /* ORDER CARD */
+    .order-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+
+    .order-id {
+      font-size: 11px; font-family: monospace;
+      color: #9ca3af; background: #f3f4f6;
+      padding: 3px 8px; border-radius: 6px;
+      display: inline-block; margin-bottom: 8px;
+    }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px;
+      margin-left: 6px;
+    }
+
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+
+    .order-date { font-size: 12px; color: #9ca3af; margin-bottom: 10px; }
+
+    .item-tag {
+      font-size: 12px;
+      background: #f3f4f6; color: #374151;
+      padding: 4px 11px; border-radius: 20px;
+      display: inline-block; margin: 3px 3px 0 0;
+    }
+
+    .order-amount {
+      font-size: 22px; font-weight: 800; color: #0f2442;
+      line-height: 1;
+    }
+
+    .order-count { font-size: 12px; color: #9ca3af; text-align: right; margin-top: 4px; }
+
+    .expand-btn {
+      background: none; border: none;
+      color: #6366f1; font-size: 13px;
+      cursor: pointer; padding: 10px 0 0;
+      font-family: 'Hind Siliguri', sans-serif;
+      font-weight: 600;
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    .order-detail {
+      margin-top: 14px;
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 14px;
+      border: 1px solid #f0f0f0;
+    }
+
+    .detail-row {
+      display: flex; justify-content: space-between;
+      font-size: 13px; padding: 6px 0;
+      border-bottom: 1px dashed #f0f0f0;
+      color: #374151;
+    }
+
+    .detail-row:last-child { border-bottom: none; }
+
+    .detail-total {
+      display: flex; justify-content: space-between;
+      font-weight: 800; font-size: 15px;
+      padding-top: 12px; margin-top: 4px;
+      border-top: 2px solid #e5e7eb;
+      color: #0f2442;
+    }
+
+    /* FORM */
+    .form-card {
+      background: rgba(255,255,255,0.97);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    }
+
+    .form-title {
+      font-size: 17px; font-weight: 700;
+      color: #0f2442; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid #f3f4f6;
+      font-family: 'Tiro Bangla', serif;
+    }
+
+    .label {
+      display: block; font-size: 12px;
+      font-weight: 600; color: #6b7280;
+      margin-bottom: 6px; letter-spacing: 0.3px;
+    }
+
+    .inp {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px; font-size: 14px;
+      color: #111827;
+      font-family: 'Hind Siliguri', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fafafa;
+    }
+
+    .inp:focus {
+      border-color: #0f2442;
+      box-shadow: 0 0 0 3px rgba(15,36,66,0.08);
+      background: #fff;
+    }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0f2442, #1a3a6b);
+      color: #fff; border: none;
+      padding: 13px 28px; border-radius: 12px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      font-family: 'Hind Siliguri', sans-serif;
+      width: 100%; margin-top: 6px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(15,36,66,0.25);
+    }
+
+    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(15,36,66,0.35); }
+    .btn-primary:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .alert {
+      padding: 12px 16px; border-radius: 10px;
+      margin-bottom: 16px; font-size: 13px;
+      font-weight: 600;
+    }
+
+    .alert.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .alert.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+    .empty-state {
+      text-align: center; padding: 48px 20px;
+      color: #9ca3af;
+    }
+
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-text { font-size: 15px; margin-bottom: 16px; }
+
+    .loading-state {
+      text-align: center; padding: 48px;
+      color: rgba(255,255,255,0.5);
+      font-size: 15px;
+    }
+
+    @media (max-width: 480px) {
+      .grid2 { grid-template-columns: 1fr; }
+      .order-amount { font-size: 18px; }
+      .navbar { padding: 0 14px; }
+    }
+  `}</style>
+
+  <div className="dash-wrap">
+
+    {/* Navbar */}
+    <nav className="navbar">
+      <div className="nav-logo" onClick={() => router.push('/products')}>
+        পাইকারি<span>বাজার</span>
+      </div>
+      <div className="nav-actions">
+        <button className="btn-ghost" onClick={logout}>লগআউট</button>
+      </div>
+    </nav>
+
+    <div className="content">
+
+      {/* User Hero */}
+      {user && (
+        <div className="user-hero">
+          <div className="avatar">{avatarLetter}</div>
           <div>
-            <div style={{ fontWeight: '700', fontSize: '17px', color: '#111827' }}>{user?.name || 'ব্যবহারকারী'}</div>
-            <div style={{ fontSize: '13px', color: '#6b7280' }}>{user?.phone} · {user?.shop_name}</div>
+            <div className="user-info-name">{user.name || 'ব্যবহারকারী'}</div>
+            <div className="user-info-sub">
+              {user.phone}
+              {user.shop_name && <span>{user.shop_name}</span>}
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', background: '#fff', padding: '6px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          {[['orders', '📦 আমার অর্ডার'], ['address', '📍 ঠিকানা'], ['password', '🔒 পাসওয়ার্ড']].map(([t, l]) => (
-            <button key={t} onClick={() => setTab(t)} style={{
-              flex: 1, padding: '9px', border: 'none', borderRadius: '9px', fontSize: '13px',
-              fontWeight: '700', cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif',
-              background: tab === t ? '#0f2442' : 'transparent',
-              color: tab === t ? '#fff' : '#6b7280',
-            }}>{l}</button>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div className="tabs">
+        {[['orders', '📦 আমার অর্ডার'], ['address', '📍 ঠিকানা'], ['password', '🔒 পাসওয়ার্ড']].map(([t, l]) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`tab-btn ${tab === t ? 'active' : 'inactive'}`}
+          >{l}</button>
+        ))}
+      </div>
 
-        {/* Orders Tab */}
-        {tab === 'orders' && (
-          <div>
-            {ordersLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#9ca3af' }}>⏳ লোড হচ্ছে...</div>
-            ) : orders.length === 0 ? (
-              <div style={{ ...s.card, textAlign: 'center', padding: '40px', color: '#9ca3af' }}>
-                <div style={{ fontSize: '40px', marginBottom: '10px' }}>📦</div>
-                <p>কোনো অর্ডার নেই</p>
-                <button onClick={() => router.push('/products')} style={{ ...s.btn, marginTop: '12px' }}>পণ্য দেখুন</button>
+      {/* ── Orders Tab ── */}
+      {tab === 'orders' && (
+        <div>
+          {ordersLoading ? (
+            <div className="loading-state">⏳ লোড হচ্ছে...</div>
+          ) : orders.length === 0 ? (
+            <div className="card">
+              <div className="empty-state">
+                <div className="empty-icon">📦</div>
+                <p className="empty-text">এখনো কোনো অর্ডার নেই</p>
+                <button className="btn-primary" style={{ width: 'auto', padding: '11px 28px', marginTop: 0 }} onClick={() => router.push('/products')}>
+                  পণ্য দেখুন
+                </button>
               </div>
-            ) : orders.map(order => {
-              const items = Array.isArray(order.items) ? order.items : [];
-              const st = STATUS[order.status] || STATUS.pending;
-              const date = new Date(order.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
-              const isExpanded = expandedOrder === order.id;
-              return (
-                <div key={order.id} style={s.card}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#9ca3af' }}>#{order.id?.slice(0, 8)?.toUpperCase()}</span>
-                        <span style={{ fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '20px', background: st.bg, color: st.color }}>{st.label}</span>
-                      </div>
-                      <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{date}</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-                        {items.slice(0, 3).map((item, i) => (
-                          <span key={i} style={{ fontSize: '12px', background: '#f3f4f6', padding: '3px 10px', borderRadius: '20px', color: '#374151' }}>
-                            {item.emoji || ''} {item.name} × {item.qty || item.quantity || 1}
-                          </span>
-                        ))}
-                        {items.length > 3 && (
-                          <span style={{ fontSize: '12px', color: '#6b7280' }}>+{items.length - 3} আরও</span>
-                        )}
-                      </div>
+            </div>
+          ) : orders.map(order => {
+            const items = Array.isArray(order.items) ? order.items : [];
+            const st = STATUS[order.status] || STATUS.pending;
+            const date = new Date(order.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
+            const isExpanded = expandedOrder === order.id;
+
+            return (
+              <div key={order.id} className="card">
+                <div className="order-top">
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
+                      <span className="order-id">#{order.id?.slice(0, 8)?.toUpperCase()}</span>
+                      <span
+                        className="status-badge"
+                        style={{ background: st.bg, color: st.color }}
+                      >
+                        <span className="status-dot" style={{ background: st.dot }}></span>
+                        {st.label}
+                      </span>
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontWeight: '800', fontSize: '18px', color: '#0f2442' }}>৳{Number(order.total || 0).toLocaleString()}</div>
-                      <div style={{ fontSize: '12px', color: '#9ca3af' }}>{items.length} টি পণ্য</div>
+                    <div className="order-date">{date}</div>
+                    <div>
+                      {items.slice(0, 3).map((item, i) => (
+                        <span key={i} className="item-tag">
+                          {item.emoji || ''} {item.name} × {item.qty || item.quantity || 1}
+                        </span>
+                      ))}
+                      {items.length > 3 && (
+                        <span className="item-tag" style={{ color: '#6b7280' }}>+{items.length - 3} আরও</span>
+                      )}
                     </div>
                   </div>
+                  <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                    <div className="order-amount">৳{Number(order.total || 0).toLocaleString()}</div>
+                    <div className="order-count">{items.length} টি পণ্য</div>
+                  </div>
+                </div>
 
-                  <button onClick={() => setExpandedOrder(isExpanded ? null : order.id)} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '13px', cursor: 'pointer', padding: '8px 0 0', fontFamily: 'Hind Siliguri, sans-serif' }}>
-                    {isExpanded ? '▲ কম দেখুন' : '▼ বিস্তারিত দেখুন'}
-                  </button>
+                <button className="expand-btn" onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
+                  {isExpanded ? '▲ কম দেখুন' : '▼ বিস্তারিত দেখুন'}
+                </button>
 
-                  {isExpanded && (
-                    <div style={{ marginTop: '12px', background: '#f9fafb', borderRadius: '10px', padding: '12px' }}>
-                      {items.map((item, i) => (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '5px 0', borderBottom: i < items.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
-                          <span style={{ color: '#111827', fontWeight: '500' }}>{item.emoji || ''} {item.name} × {item.qty || item.quantity || 1}</span>
-                          <span style={{ fontWeight: '700', color: '#0f2442' }}>৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
-                        </div>
-                      ))}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', fontSize: '14px', paddingTop: '10px', marginTop: '4px', borderTop: '1px solid #e5e7eb', color: '#111827' }}>
-                        <span>মোট</span>
-                        <span>৳{Number(order.total || 0).toLocaleString()}</span>
+                {isExpanded && (
+                  <div className="order-detail">
+                    {items.map((item, i) => (
+                      <div key={i} className="detail-row">
+                        <span>{item.emoji || ''} {item.name} × {item.qty || item.quantity || 1}</span>
+                        <span style={{ fontWeight: '700', color: '#0f2442' }}>
+                          ৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}
+                        </span>
                       </div>
+                    ))}
+                    <div className="detail-total">
+                      <span>মোট</span>
+                      <span>৳{Number(order.total || 0).toLocaleString()}</span>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-        {/* Address Tab */}
-        {tab === 'address' && (
-          <div style={s.card}>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', color: '#0f2442' }}>📍 ডেলিভারি ঠিকানা</h3>
-            {addressMsg && (
-              <div style={{ padding: '10px', borderRadius: '8px', marginBottom: '14px', fontSize: '13px', background: addressMsg.includes('✅') ? '#f0fdf4' : '#fef2f2', color: addressMsg.includes('✅') ? '#16a34a' : '#dc2626' }}>{addressMsg}</div>
-            )}
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <div>
-                <label style={s.label}>দোকানের নাম</label>
-                <input style={s.inp} value={address.shop_name || ''} onChange={e => setAddress({ ...address, shop_name: e.target.value })} placeholder="দোকানের নাম" />
-              </div>
-              <div>
-                <label style={s.label}>ফোন নম্বর</label>
-                <input style={s.inp} value={address.phone || ''} onChange={e => setAddress({ ...address, phone: e.target.value })} placeholder="01XXXXXXXXX" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={s.label}>জেলা</label>
-                  <select style={s.inp} value={address.district || ''} onChange={e => setAddress({ ...address, district: e.target.value })}>
-                    <option value="">জেলা বাছুন</option>
-                    {['ঢাকা', 'চট্টগ্রাম', 'রাজশাহী', 'সিলেট', 'খুলনা', 'বরিশাল', 'ময়মনসিংহ', 'রংপুর'].map(d => <option key={d}>{d}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={s.label}>থানা</label>
-                  <input style={s.inp} value={address.thana || ''} onChange={e => setAddress({ ...address, thana: e.target.value })} placeholder="থানা" />
-                </div>
-              </div>
-              <div>
-                <label style={s.label}>পূর্ণ ঠিকানা</label>
-                <textarea style={{ ...s.inp, height: '80px', resize: 'none' }} value={address.address || ''} onChange={e => setAddress({ ...address, address: e.target.value })} placeholder="বাড়ি/রাস্তা/এলাকা" />
-              </div>
-              <button onClick={saveAddress} disabled={addressLoading} style={{ ...s.btn, opacity: addressLoading ? 0.7 : 1 }}>
-                {addressLoading ? 'সেভ হচ্ছে...' : 'ঠিকানা সেভ করুন'}
-              </button>
-            </div>
-          </div>
-        )}
+      {/* ── Address Tab ── */}
+      {tab === 'address' && (
+        <div className="form-card">
+          <div className="form-title">📍 ডেলিভারি ঠিকানা</div>
 
-        {/* Password Tab */}
-        {tab === 'password' && (
-          <div style={s.card}>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', color: '#0f2442' }}>🔒 পাসওয়ার্ড পরিবর্তন</h3>
-            {passMsg && (
-              <div style={{ padding: '10px', borderRadius: '8px', marginBottom: '14px', fontSize: '13px', background: passMsg.includes('✅') ? '#f0fdf4' : '#fef2f2', color: passMsg.includes('✅') ? '#16a34a' : '#dc2626' }}>{passMsg}</div>
-            )}
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <div>
-                <label style={s.label}>বর্তমান পাসওয়ার্ড</label>
-                <input type="password" style={s.inp} value={passwords.current} onChange={e => setPasswords({ ...passwords, current: e.target.value })} placeholder="বর্তমান পাসওয়ার্ড" />
-              </div>
-              <div>
-                <label style={s.label}>নতুন পাসওয়ার্ড</label>
-                <input type="password" style={s.inp} value={passwords.newPass} onChange={e => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" />
-              </div>
-              <div>
-                <label style={s.label}>পাসওয়ার্ড নিশ্চিত করুন</label>
-                <input type="password" style={s.inp} value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="আবার পাসওয়ার্ড দিন" />
-              </div>
-              <button onClick={changePassword} disabled={passLoading} style={{ ...s.btn, opacity: passLoading ? 0.7 : 1 }}>
-                {passLoading ? 'পরিবর্তন হচ্ছে...' : 'পাসওয়ার্ড পরিবর্তন করুন'}
-              </button>
+          {addressMsg && (
+            <div className={`alert ${addressMsg === 'success' ? 'success' : 'error'}`}>
+              {addressMsg === 'success' ? '✅ ঠিকানা সেভ হয়েছে' : '❌ সমস্যা হয়েছে, আবার চেষ্টা করুন'}
             </div>
+          )}
+
+          <div style={{ display: 'grid', gap: '14px' }}>
+            <div>
+              <label className="label">দোকানের নাম</label>
+              <input className="inp" value={address.shop_name || ''} onChange={e => setAddress({ ...address, shop_name: e.target.value })} placeholder="দোকানের নাম লিখুন" />
+            </div>
+            <div>
+              <label className="label">ফোন নম্বর</label>
+              <input className="inp" value={address.phone || ''} onChange={e => setAddress({ ...address, phone: e.target.value })} placeholder="01XXXXXXXXX" />
+            </div>
+            <div className="grid2">
+              <div>
+                <label className="label">জেলা</label>
+                <select className="inp" value={address.district || ''} onChange={e => setAddress({ ...address, district: e.target.value })}>
+                  <option value="">জেলা বাছুন</option>
+                  {['ঢাকা','চট্টগ্রাম','রাজশাহী','সিলেট','খুলনা','বরিশাল','ময়মনসিংহ','রংপুর'].map(d => <option key={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label">থানা</label>
+                <input className="inp" value={address.thana || ''} onChange={e => setAddress({ ...address, thana: e.target.value })} placeholder="থানার নাম" />
+              </div>
+            </div>
+            <div>
+              <label className="label">পূর্ণ ঠিকানা</label>
+              <textarea className="inp" style={{ height: '88px', resize: 'none' }} value={address.address || ''} onChange={e => setAddress({ ...address, address: e.target.value })} placeholder="বাড়ি নম্বর / রাস্তা / এলাকা" />
+            </div>
+            <button className="btn-primary" onClick={saveAddress} disabled={addressLoading}>
+              {addressLoading ? '⏳ সেভ হচ্ছে...' : '✅ ঠিকানা সেভ করুন'}
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* ── Password Tab ── */}
+      {tab === 'password' && (
+        <div className="form-card">
+          <div className="form-title">🔒 পাসওয়ার্ড পরিবর্তন</div>
+
+          {passMsg && (
+            <div className={`alert ${passMsg === 'success' ? 'success' : 'error'}`}>
+              {passMessages[passMsg]}
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gap: '14px' }}>
+            <div>
+              <label className="label">বর্তমান পাসওয়ার্ড</label>
+              <input type="password" className="inp" value={passwords.current} onChange={e => setPasswords({ ...passwords, current: e.target.value })} placeholder="বর্তমান পাসওয়ার্ড দিন" />
+            </div>
+            <div>
+              <label className="label">নতুন পাসওয়ার্ড</label>
+              <input type="password" className="inp" value={passwords.newPass} onChange={e => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="কমপক্ষে ৬ অক্ষর" />
+            </div>
+            <div>
+              <label className="label">পাসওয়ার্ড নিশ্চিত করুন</label>
+              <input type="password" className="inp" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="আবার পাসওয়ার্ড দিন" />
+            </div>
+            <button className="btn-primary" onClick={changePassword} disabled={passLoading}>
+              {passLoading ? '⏳ পরিবর্তন হচ্ছে...' : '🔒 পাসওয়ার্ড পরিবর্তন করুন'}
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
-  );
+  </div>
+</>
+```
+
+);
 }
