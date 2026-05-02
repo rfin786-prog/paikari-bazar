@@ -144,17 +144,17 @@ export default function Dashboard() {
           {/* Drawer */}
           <div style={{
             position: 'absolute', right: 0, top: 0, bottom: 0, width: '360px', maxWidth: '100vw',
-            background: '#fff', boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
+            background: '#0f2442', boxShadow: '-4px 0 24px rgba(0,0,0,0.3)',
             display: 'flex', flexDirection: 'column'
           }}>
-            <div style={{ padding: '20px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#0f2442' }}>🛒 কার্ট ({cartCount})</h2>
-              <button onClick={() => setCartOpen(false)} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#6b7280' }}>✕</button>
+            <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#fff' }}>🛒 কার্ট ({cartCount})</h2>
+              <button onClick={() => setCartOpen(false)} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: 'rgba(255,255,255,0.7)' }}>✕</button>
             </div>
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
               {cart.length === 0 ? (
-                <div style={{ textAlign: 'center', color: '#9ca3af', paddingTop: '60px' }}>
+                <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', paddingTop: '60px' }}>
                   <div style={{ fontSize: '48px', marginBottom: '12px' }}>🛒</div>
                   <p>কার্ট খালি</p>
                 </div>
@@ -162,24 +162,24 @@ export default function Dashboard() {
                 cart.map(item => (
                   <div key={item.id} style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '12px 0', borderBottom: '1px solid #f3f4f6', gap: '12px'
+                    padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', gap: '12px'
                   }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '600', fontSize: '14px' }}>{item.emoji} {item.name}</div>
-                      <div style={{ fontSize: '12px', color: '#6b7280' }}>৳{item.price} × {item.qty}</div>
+                      <div style={{ fontWeight: '700', fontSize: '15px', color: '#fff' }}>{item.emoji} {item.name}</div>
+                      <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>৳{item.price} × {item.qty}</div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <button onClick={() => updateQty(item.id, -1)} style={{
-                        width: '28px', height: '28px', borderRadius: '6px', border: '1.5px solid #e5e7eb',
-                        background: '#f9fafb', cursor: 'pointer', fontSize: '16px', fontWeight: '700'
+                        width: '28px', height: '28px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)',
+                        background: 'rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: '16px', fontWeight: '700', color: '#fff'
                       }}>−</button>
-                      <span style={{ fontWeight: '700', minWidth: '20px', textAlign: 'center' }}>{item.qty}</span>
+                      <span style={{ fontWeight: '700', minWidth: '20px', textAlign: 'center', color: '#fff' }}>{item.qty}</span>
                       <button onClick={() => updateQty(item.id, 1)} style={{
-                        width: '28px', height: '28px', borderRadius: '6px', border: '1.5px solid #e5e7eb',
-                        background: '#f9fafb', cursor: 'pointer', fontSize: '16px', fontWeight: '700'
+                        width: '28px', height: '28px', borderRadius: '6px', border: 'none',
+                        background: '#e8a020', cursor: 'pointer', fontSize: '16px', fontWeight: '700', color: '#fff'
                       }}>+</button>
                     </div>
-                    <div style={{ fontWeight: '700', color: '#0f2442', minWidth: '60px', textAlign: 'right' }}>
+                    <div style={{ fontWeight: '700', color: '#e8a020', minWidth: '70px', textAlign: 'right' }}>
                       ৳{(item.price * item.qty).toLocaleString()}
                     </div>
                   </div>
@@ -188,13 +188,13 @@ export default function Dashboard() {
             </div>
 
             {cart.length > 0 && (
-              <div style={{ padding: '16px', borderTop: '1px solid #f3f4f6' }}>
+              <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <span style={{ fontWeight: '600', fontSize: '16px' }}>মোট</span>
-                  <span style={{ fontWeight: '800', fontSize: '18px', color: '#0f2442' }}>৳{cartTotal.toLocaleString()}</span>
+                  <span style={{ fontWeight: '600', fontSize: '16px', color: '#fff' }}>মোট</span>
+                  <span style={{ fontWeight: '800', fontSize: '18px', color: '#e8a020' }}>৳{cartTotal.toLocaleString()}</span>
                 </div>
                 <button onClick={() => { setCartOpen(false); router.push('/checkout'); }} style={{
-                  width: '100%', background: '#0f2442', color: '#fff', border: 'none',
+                  width: '100%', background: '#e8a020', color: '#fff', border: 'none',
                   padding: '14px', borderRadius: '10px', fontSize: '15px',
                   fontWeight: '700', cursor: 'pointer'
                 }}>অর্ডার করুন →</button>
