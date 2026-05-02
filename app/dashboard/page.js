@@ -269,7 +269,7 @@ export default function Dashboard() {
                           flex: 1, padding: '7px', borderRadius: '7px', border: '1.5px solid #e5e7eb',
                           background: '#f9fafb', cursor: 'pointer', fontSize: '16px', fontWeight: '700'
                         }}>−</button>
-                        <span style={{ fontWeight: '700', minWidth: '24px', textAlign: 'center' }}>{inCart.qty}</span>
+                        <span style={{ fontWeight: '700', minWidth: '24px', textAlign: 'center', color: '#111827' }}>{inCart.qty}</span>
                         <button onClick={() => updateQty(p.id, 1)} style={{
                           flex: 1, padding: '7px', borderRadius: '7px', border: 'none',
                           background: '#0f2442', color: '#fff', cursor: 'pointer', fontSize: '16px', fontWeight: '700'
