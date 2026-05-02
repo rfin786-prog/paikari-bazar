@@ -8,7 +8,6 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export default function LoginPage() {
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
-
   const [form, setForm] = useState({ phone: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,159 +25,211 @@ export default function LoginPage() {
       setError('সব তথ্য পূরণ করুন');
       return;
     }
-
     setLoading(true);
-
     try {
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/users?phone=eq.${form.phone}&password=eq.${form.password}&status=eq.active`,
-        {
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`
-          }
-        }
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
       );
-
       const data = await res.json();
-
       if (data.length === 0) {
-        setError('ফন নম্বর বা পাসওয়ার্ড ভুল');
+        setError('ফোন নম্বর বা পাসওয়ার্ড ভুল');
         setLoading(false);
         return;
       }
-
       const user = data[0];
-
-      // Admin কে user login থেকে ঢুকতে দেওয়া হবে না
-      if (user.role === 'admin') {
-        setError('Admin লগইনের জন্য Admin Panel ব্যবহার করুন');
-        localStorage.removeItem('user');
-        setLoading(false);
-        return;
-      }
-
       localStorage.setItem('user', JSON.stringify(user));
-      router.push('/dashboard');
-
+      if (user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
     } catch {
       setError('সমস্যা হয়েছে, আবার চেষ্টা করুন');
       setLoading(false);
     }
   };
 
-  const s = {
-    page: {
+  return (
+    <div style={{
       minHeight: '100vh',
       display: 'flex',
       flexDirection: isMobile ? 'column' : 'row',
-      fontFamily: 'Hind Siliguri, sans-serif'
-    },
+      fontFamily: "'Hind Siliguri', sans-serif",
+    }}>
 
-    left: {
-      display: isMobile ? 'none' : 'flex',
-      flex: '0 0 360px',
-      background: '#0f2442',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      padding: '44px',
-      color: '#fff'
-    },
-
-    right: {
-      flex: 1,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: isMobile ? '20px 14px' : '44px',
-      background: '#faf7f2'
-    },
-
-    box: {
-      width: '100%',
-      maxWidth: '420px',
-      background: '#fff',
-      borderRadius: '16px',
-      padding: isMobile ? '22px' : '36px',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.08)'
-    },
-
-    inp: {
-      width: '100%',
-      padding: '12px',
-      border: '1.5px solid #e5e7eb',
-      borderRadius: '8px',
-      marginBottom: '14px'
-    },
-
-    btn: {
-      width: '100%',
-      background: '#0f2442',
-      color: '#fff',
-      border: 'none',
-      padding: '13px',
-      borderRadius: '9px',
-      fontWeight: '700',
-      cursor: loading ? 'not-allowed' : 'pointer',
-      opacity: loading ? 0.7 : 1
-    },
-
-    err: {
-      background: '#fef2f2',
-      border: '1px solid #fecaca',
-      color: '#dc2626',
-      padding: '10px',
-      borderRadius: '8px',
-      marginBottom: '12px'
-    }
-  };
-
-  return (
-    <div style={s.page}>
-
-      {/* LEFT (desktop only) */}
-      <div style={s.left}>
-        <div style={{ fontSize: '24px', fontWeight: '700' }}>
-          পাইকারি<span style={{ color: '#e8a020' }}>বজার</span>
+      {/* LEFT PANEL */}
+      {!isMobile && (
+        <div style={{
+          flex: '0 0 380px',
+          background: 'linear-gradient(160deg, #071828 0%, #0f2442 60%, #1a3a5c 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          padding: '48px',
+          color: '#fff',
+        }}>
+          <div style={{ fontSize: '28px', fontWeight: '800', marginBottom: '16px' }}>
+            পাইকারি<span style={{ color: '#e8a020' }}>বজার</span>
+          </div>
+          <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.7' }}>
+            সরাসরি সাপ্লায়ার থেকে<br />আপনার দোকানে পৌঁছে দিই।
+          </p>
         </div>
-      </div>
+      )}
 
-      {/* RIGHT */}
-      <div style={s.right}>
-        <div style={s.box}>
+      {/* RIGHT PANEL */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f5f5f0',
+        padding: isMobile ? '24px 16px' : '48px',
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '420px',
+          background: '#ffffff',
+          borderRadius: '20px',
+          padding: isMobile ? '28px 20px' : '40px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.10)',
+        }}>
 
-          <h2 style={{ marginBottom: '10px' }}>লগইন করুন</h2>
+          {/* Mobile logo */}
+          {isMobile && (
+            <div style={{ fontSize: '22px', fontWeight: '800', marginBottom: '20px', color: '#0f2442' }}>
+              পাইকারি<span style={{ color: '#e8a020' }}>বজার</span>
+            </div>
+          )}
 
-          {error && <div style={s.err}>{error}</div>}
+          <h2 style={{
+            fontSize: '22px',
+            fontWeight: '700',
+            color: '#111827',
+            marginBottom: '6px',
+          }}>
+            লগইন করুন
+          </h2>
+          <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>
+            আপনার অ্যাকাউন্টে প্রবেশ করুন
+          </p>
 
-          <input
-            style={s.inp}
-            placeholder="ফোন নমর"
-            value={form.phone}
-            onChange={e => setForm({ ...form, phone: e.target.value })}
-          />
+          {error && (
+            <div style={{
+              background: '#fef2f2',
+              border: '1.5px solid #fecaca',
+              color: '#dc2626',
+              padding: '12px 14px',
+              borderRadius: '10px',
+              marginBottom: '16px',
+              fontSize: '14px',
+              fontWeight: '500',
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
 
-          <input
-            style={s.inp}
-            type="password"
-            placeholder="পাসওয়ার্ড"
-            value={form.password}
-            onChange={e => setForm({ ...form, password: e.target.value })}
-          />
+          {/* Phone input */}
+          <div style={{ marginBottom: '14px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '6px',
+            }}>
+              ফোন নম্বর
+            </label>
+            <input
+              type="tel"
+              placeholder="01700000000"
+              value={form.phone}
+              onChange={e => setForm({ ...form, phone: e.target.value })}
+              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '1.5px solid #d1d5db',
+                borderRadius: '10px',
+                fontSize: '15px',
+                color: '#111827',
+                fontFamily: "'Hind Siliguri', sans-serif",
+                outline: 'none',
+                boxSizing: 'border-box',
+                background: '#fafafa',
+              }}
+            />
+          </div>
 
-          <button style={s.btn} onClick={handleSubmit} disabled={loading}>
+          {/* Password input */}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '6px',
+            }}>
+              পাসওয়ার্ড
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
+              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '1.5px solid #d1d5db',
+                borderRadius: '10px',
+                fontSize: '15px',
+                color: '#111827',
+                fontFamily: "'Hind Siliguri', sans-serif",
+                outline: 'none',
+                boxSizing: 'border-box',
+                background: '#fafafa',
+              }}
+            />
+          </div>
+
+          {/* Submit button */}
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            style={{
+              width: '100%',
+              background: loading ? '#6b7280' : '#0f2442',
+              color: '#ffffff',
+              border: 'none',
+              padding: '14px',
+              borderRadius: '10px',
+              fontSize: '16px',
+              fontWeight: '700',
+              fontFamily: "'Hind Siliguri', sans-serif",
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'background 0.2s',
+            }}
+          >
             {loading ? 'অপেক্ষা করুন...' : 'লগইন করুন'}
           </button>
 
-          <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px' }}>
+          {/* Register link */}
+          <p style={{
+            textAlign: 'center',
+            marginTop: '20px',
+            fontSize: '14px',
+            color: '#6b7280',
+          }}>
             অ্যাকাউন্ট নেই?{' '}
             <span
-              style={{ color: '#e8a020', fontWeight: '700', cursor: 'pointer' }}
               onClick={() => router.push('/register')}
+              style={{ color: '#e8a020', fontWeight: '700', cursor: 'pointer' }}
             >
               নিবন্ধন করুন
             </span>
-          </div>
+          </p>
 
         </div>
       </div>
