@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 export default function Navbar() {
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 600);
@@ -12,6 +13,18 @@ export default function Navbar() {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('user');
+    if (saved) setUser(JSON.parse(saved));
+  }, []);
+
+  function logout() {
+    localStorage.removeItem('user');
+    localStorage.removeItem('paikari_cart');
+    setUser(null);
+    router.push('/');
+  }
 
   return (
     <nav style={{
@@ -53,7 +66,6 @@ export default function Navbar() {
             borderRadius: '8px',
             cursor: 'pointer',
             fontSize: isMobile ? '14px' : '16px',
-            fontWeight: '700',
             fontFamily: 'inherit',
             position: 'relative',
           }}
@@ -61,40 +73,67 @@ export default function Navbar() {
           🛒
           <CartCount />
         </button>
-        <button
-          onClick={() => router.push('/login')}
-          style={{
-            background: 'transparent',
-            color: 'rgba(255,255,255,0.8)',
-            border: '1.5px solid rgba(255,255,255,0.3)',
-            padding: isMobile ? '7px 14px' : '8px 20px',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: isMobile ? '12px' : '13px',
-            fontWeight: '600',
-            fontFamily: 'inherit',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          লগইন
-        </button>
-        <button
-          onClick={() => router.push('/register')}
-          style={{
-            background: '#e8a020',
-            color: '#0f2442',
-            border: 'none',
-            padding: isMobile ? '7px 14px' : '9px 22px',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: isMobile ? '12px' : '13px',
-            fontWeight: '700',
-            fontFamily: 'inherit',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          নিবন্ধন
-        </button>
+
+        {user ? (
+          <>
+            <span style={{ color: '#fff', fontSize: '13px', fontWeight: '600' }}>
+              👤 {user.shop_name || user.name || 'আপনি'}
+            </span>
+            <button
+              onClick={logout}
+              style={{
+                background: 'transparent',
+                color: '#ff6b6b',
+                border: '1.5px solid #ff6b6b',
+                padding: isMobile ? '7px 14px' : '8px 18px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: isMobile ? '12px' : '13px',
+                fontWeight: '600',
+                fontFamily: 'inherit',
+              }}
+            >
+              লগআউট
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => router.push('/login')}
+              style={{
+                background: 'transparent',
+                color: 'rgba(255,255,255,0.8)',
+                border: '1.5px solid rgba(255,255,255,0.3)',
+                padding: isMobile ? '7px 14px' : '8px 20px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: isMobile ? '12px' : '13px',
+                fontWeight: '600',
+                fontFamily: 'inherit',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              লগইন
+            </button>
+            <button
+              onClick={() => router.push('/register')}
+              style={{
+                background: '#e8a020',
+                color: '#0f2442',
+                border: 'none',
+                padding: isMobile ? '7px 14px' : '9px 22px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: isMobile ? '12px' : '13px',
+                fontWeight: '700',
+                fontFamily: 'inherit',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              নিবন্ধন
+            </button>
+          </>
+        )}
       </div>
     </nav>
   );
