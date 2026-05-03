@@ -13,28 +13,30 @@ export default function DashboardTab({ setTab }) {
 
   async function fetchStats() {
     try {
-      const [ordersRes, productsRes, usersRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/orders?select=id,total_price,status,created_at&order=created_at.desc&limit=5`, { headers }),
+      const [recentRes, allOrdersRes, productsRes, usersRes] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/orders?select=id,total,status,created_at,shop_name&order=created_at.desc&limit=5`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/orders?select=id,total`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/users?select=id`, { headers }),
       ]);
 
-      const orders = await ordersRes.json();
+      const recent = await recentRes.json();
+      const allOrders = await allOrdersRes.json();
       const products = await productsRes.json();
       const users = await usersRes.json();
 
-      const revenue = Array.isArray(orders)
-        ? orders.reduce((sum, o) => sum + (parseFloat(o.total_price) || 0), 0)
+      const revenue = Array.isArray(allOrders)
+        ? allOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0)
         : 0;
 
       setStats({
-        orders: Array.isArray(orders) ? orders.length : 0,
+        orders: Array.isArray(allOrders) ? allOrders.length : 0,
         products: Array.isArray(products) ? products.length : 0,
         users: Array.isArray(users) ? users.length : 0,
         revenue,
       });
 
-      setRecentOrders(Array.isArray(orders) ? orders : []);
+      setRecentOrders(Array.isArray(recent) ? recent : []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -117,7 +119,9 @@ export default function DashboardTab({ setTab }) {
                       #{i + 1}
                     </div>
                     <div>
-                      <div style={{ color: '#fff', fontSize: '13px', fontWeight: '600' }}>অর্ডার #{String(order.id).slice(-6)}</div>
+                      <div style={{ color: '#fff', fontSize: '13px', fontWeight: '600' }}>
+                        {order.shop_name || `অর্ডার #${String(order.id).slice(-6)}`}
+                      </div>
                       <div style={{ color: 'rgba(255,255,255,.3)', fontSize: '11px', marginTop: '2px' }}>
                         {new Date(order.created_at).toLocaleDateString('bn-BD')}
                       </div>
@@ -125,7 +129,7 @@ export default function DashboardTab({ setTab }) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{ fontSize: '13px', fontWeight: '700', color: '#34d399' }}>
-                      ৳{parseFloat(order.total_price || 0).toLocaleString('bn-BD')}
+                      ৳{parseFloat(order.total || 0).toLocaleString('bn-BD')}
                     </span>
                     <span style={{ fontSize: '11px', fontWeight: '600', color: st.color, background: st.bg, padding: '3px 10px', borderRadius: '20px' }}>
                       {st.label}
