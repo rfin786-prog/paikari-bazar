@@ -279,7 +279,7 @@ export default function OrdersTab() {
               </div>
 
               {isExpanded && (
-                <div style={{ marginTop: '12px', background: '#f9fafb', borderRadius: '10px', padding: '12px' }}>
+                <div style={{ marginTop: '12px', background: '#eef0f5', borderRadius: '10px', padding: '12px' }}>
                   {/* Buyer info */}
                   <div style={{ marginBottom: '10px', padding: '8px', background: '#fff', borderRadius: '8px', border: '1px solid #f3f4f6' }}>
                     <div style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>ক্রেতার তথ্য</div>
@@ -294,14 +294,14 @@ export default function OrdersTab() {
 
                   {/* Items */}
                   {items.map((item, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '4px 0', borderBottom: idx < items.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
-                      <span>{item.name} × {item.qty || item.quantity || 1}</span>
-                      <span style={{ fontWeight: '600' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '6px 0', borderBottom: idx < items.length - 1 ? '1px solid #e5e7eb' : 'none', color: '#111827' }}>
+                      <span style={{ fontWeight: '500', color: '#111827' }}>{item.name} × {item.qty || item.quantity || 1}</span>
+                      <span style={{ fontWeight: '700', color: '#1e1b4b' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
                     </div>
                   ))}
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '700', paddingTop: '8px', marginTop: '4px', borderTop: '1px solid #e5e7eb' }}>
-                    <span>মোট</span><span>৳{Number(o.total || 0).toLocaleString()}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '700', paddingTop: '10px', marginTop: '4px', borderTop: '2px solid #1e1b4b', color: '#111827' }}>
+                    <span>মোট</span><span style={{ color: '#1e1b4b' }}>৳{Number(o.total || 0).toLocaleString()}</span>
                   </div>
 
                   {o.note && (
