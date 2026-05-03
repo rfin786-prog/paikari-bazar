@@ -127,98 +127,138 @@ export default function UsersTab() {
         </div>
       )}
 
-      {/* Orders Modal */}
-      {selectedUser && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 1000,
-            background: 'rgba(0,0,0,0.5)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', padding: '16px',
-          }}
-          onClick={() => setSelectedUser(null)}
-        >
+      {/* Profile Modal */}
+      {selectedUser && (() => {
+        const u = selectedUser;
+        const stat = userStats[u.id] || { orderCount: 0, totalSpent: 0, lastOrder: null };
+        const orders = [...(userOrders[u.id] || [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const isBlocked = u.is_blocked;
+        const avatarLetter = u.name?.charAt(0)?.toUpperCase() || '?';
+        const joinDate = new Date(u.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
+        const [modalTab, setModalTab] = [selectedUser._tab || 'profile', (tab) => setSelectedUser({ ...u, _tab: tab })];
+
+        return (
           <div
-            style={{
-              background: '#fff', borderRadius: '16px', width: '100%',
-              maxWidth: '520px', maxHeight: '80vh', overflow: 'hidden',
-              display: 'flex', flexDirection: 'column',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-            }}
-            onClick={e => e.stopPropagation()}
+            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+            onClick={() => setSelectedUser(null)}
           >
-            <div style={{
-              padding: '16px 20px', borderBottom: '1px solid #f3f4f6',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
-              <div>
-                <div style={{ fontWeight: '700', fontSize: '16px', color: '#111827' }}>
-                  {selectedUser.shop_name || selectedUser.name} এর অর্ডার
+            <div
+              style={{ background: '#fff', borderRadius: '18px', width: '100%', maxWidth: '480px', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(0,0,0,0.22)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Profile Header */}
+              <div style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #3730a3 100%)', padding: '20px', position: 'relative' }}>
+                <button onClick={() => setSelectedUser(null)} style={{ position: 'absolute', top: '14px', right: '14px', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '8px', width: '30px', height: '30px', fontSize: '16px', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '54px', height: '54px', borderRadius: '50%', background: isBlocked ? '#fee2e2' : 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '22px', color: isBlocked ? '#ef4444' : '#fff', flexShrink: 0, border: '2px solid rgba(255,255,255,0.3)' }}>
+                    {isBlocked ? '🚫' : avatarLetter}
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ fontWeight: '700', fontSize: '17px', color: '#fff' }}>{u.name || 'অজানা'}</div>
+                      {isBlocked && <span style={{ fontSize: '10px', fontWeight: '700', color: '#ef4444', background: '#fee2e2', padding: '2px 7px', borderRadius: '6px' }}>ব্লকড</span>}
+                    </div>
+                    {u.shop_name && <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', marginTop: '2px' }}>🏪 {u.shop_name}</div>}
+                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', marginTop: '2px' }}>যোগ দিয়েছেন {joinDate}</div>
+                  </div>
                 </div>
-                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                  {(userOrders[selectedUser.id] || []).length} টি অর্ডার
+
+                {/* Quick stats */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
+                  {[
+                    { label: 'অর্ডার', value: stat.orderCount },
+                    { label: 'মোট খরচ', value: `৳${stat.totalSpent.toLocaleString()}` },
+                    { label: 'ওয়ালেট', value: `৳${(u.wallet || 0).toLocaleString()}` },
+                  ].map(item => (
+                    <div key={item.label} style={{ flex: 1, background: 'rgba(255,255,255,0.12)', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
+                      <div style={{ fontWeight: '700', fontSize: '15px', color: '#fff' }}>{item.value}</div>
+                      <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>{item.label}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedUser(null)}
-                style={{
-                  background: '#f3f4f6', border: 'none', borderRadius: '8px',
-                  width: '32px', height: '32px', fontSize: '18px', cursor: 'pointer',
-                  color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>×</button>
-            </div>
 
-            <div style={{ overflowY: 'auto', padding: '12px 20px', flex: 1 }}>
-              {(userOrders[selectedUser.id] || []).length === 0 ? (
-                <p style={{ color: '#9ca3af', fontSize: '13px', textAlign: 'center', padding: '32px 0' }}>
-                  কোনো অর্ডার নেই
-                </p>
-              ) : (
-                [...(userOrders[selectedUser.id] || [])]
-                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                  .map(o => {
-                    const st = getStatusCfg(o.status);
-                    const items = Array.isArray(o.items) ? o.items : [];
-                    const date = new Date(o.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' });
-                    return (
-                      <div key={o.id} style={{
-                        border: '1.5px solid #e5e7eb', borderRadius: '10px',
-                        padding: '12px', marginBottom: '10px',
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <div>
-                            <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#6b7280' }}>
-                              #{o.id?.slice(0, 8)?.toUpperCase()}
-                            </span>
-                            <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{date}</div>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{
-                              fontSize: '11px', fontWeight: '600', padding: '2px 8px',
-                              borderRadius: '20px', background: st.bg, color: st.color,
-                            }}>{st.label}</span>
-                            <span style={{ fontWeight: '700', fontSize: '14px', color: '#1e1b4b' }}>
-                              ৳{Number(o.total || 0).toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                        {items.map((item, idx) => (
-                          <div key={idx} style={{
-                            display: 'flex', justifyContent: 'space-between',
-                            fontSize: '12px', color: '#374151',
-                            padding: '3px 0', borderTop: idx === 0 ? '1px solid #f3f4f6' : 'none',
-                          }}>
-                            <span>{item.name} × {item.qty || item.quantity || 1}</span>
-                            <span style={{ fontWeight: '600' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
-                          </div>
-                        ))}
+              {/* Tabs */}
+              <div style={{ display: 'flex', borderBottom: '1px solid #f3f4f6' }}>
+                {['profile', 'orders'].map(tab => (
+                  <button key={tab} onClick={() => setModalTab(tab)} style={{ flex: 1, padding: '12px', fontSize: '13px', fontWeight: '600', fontFamily: 'Hind Siliguri, sans-serif', border: 'none', cursor: 'pointer', background: 'none', color: modalTab === tab ? '#1e1b4b' : '#9ca3af', borderBottom: modalTab === tab ? '2px solid #1e1b4b' : '2px solid transparent' }}>
+                    {tab === 'profile' ? '👤 প্রোফাইল' : `🛒 অর্ডার (${orders.length})`}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab Content */}
+              <div style={{ overflowY: 'auto', flex: 1, padding: '16px 20px' }}>
+
+                {modalTab === 'profile' && (
+                  <div>
+                    {/* Info rows */}
+                    {[
+                      { icon: '📞', label: 'ফোন', value: u.phone },
+                      { icon: '🏪', label: 'দোকান', value: u.shop_name },
+                      { icon: '📍', label: 'ঠিকানা', value: u.address },
+                      { icon: '📅', label: 'যোগ দিয়েছেন', value: joinDate },
+                      { icon: '👛', label: 'ওয়ালেট', value: u.wallet > 0 ? `৳${u.wallet.toLocaleString()}` : null },
+                    ].filter(r => r.value).map(row => (
+                      <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f9fafb' }}>
+                        <span style={{ fontSize: '16px', width: '24px', textAlign: 'center' }}>{row.icon}</span>
+                        <span style={{ fontSize: '12px', color: '#9ca3af', width: '60px', flexShrink: 0 }}>{row.label}</span>
+                        <span style={{ fontSize: '13px', color: '#111827', fontWeight: '600' }}>{row.value}</span>
                       </div>
-                    );
-                  })
-              )}
+                    ))}
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                      <button
+                        onClick={() => { toggleBlock(u); setSelectedUser({ ...u, is_blocked: !isBlocked, _tab: 'profile' }); }}
+                        style={{ flex: 1, padding: '10px', borderRadius: '10px', border: `1.5px solid ${isBlocked ? '#bbf7d0' : '#fde68a'}`, background: isBlocked ? '#f0fdf4' : '#fefce8', color: isBlocked ? '#15803d' : '#92400e', fontSize: '13px', fontWeight: '600', cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif' }}>
+                        {isBlocked ? '✅ আনব্লক করুন' : '🚫 ব্লক করুন'}
+                      </button>
+                      <button
+                        onClick={() => { setSelectedUser(null); deleteUser(u.id, u.name); }}
+                        style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1.5px solid #fecaca', background: '#fef2f2', color: '#ef4444', fontSize: '13px', fontWeight: '600', cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif' }}>
+                        🗑️ মুছুন
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {modalTab === 'orders' && (
+                  <div>
+                    {orders.length === 0 ? (
+                      <p style={{ color: '#9ca3af', fontSize: '13px', textAlign: 'center', padding: '32px 0' }}>কোনো অর্ডার নেই</p>
+                    ) : orders.map(o => {
+                      const st = getStatusCfg(o.status);
+                      const items = Array.isArray(o.items) ? o.items : [];
+                      const date = new Date(o.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' });
+                      return (
+                        <div key={o.id} style={{ border: '1.5px solid #e5e7eb', borderRadius: '10px', padding: '12px', marginBottom: '10px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <div>
+                              <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#6b7280' }}>#{o.id?.slice(0, 8)?.toUpperCase()}</span>
+                              <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{date}</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '20px', background: st.bg, color: st.color }}>{st.label}</span>
+                              <span style={{ fontWeight: '700', fontSize: '14px', color: '#1e1b4b' }}>৳{Number(o.total || 0).toLocaleString()}</span>
+                            </div>
+                          </div>
+                          {items.map((item, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#374151', padding: '3px 0', borderTop: idx === 0 ? '1px solid #f3f4f6' : 'none' }}>
+                              <span>{item.name} × {item.qty || item.quantity || 1}</span>
+                              <span style={{ fontWeight: '600' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '20px', color: '#1e1b4b' }}>
         গ্রাহক তালিকা ({users.length})
