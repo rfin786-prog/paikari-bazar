@@ -1,5 +1,6 @@
 'use client';
 
+
 export default function HeroWholesale() {
   return (
     <section style={{
