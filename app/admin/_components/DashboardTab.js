@@ -1,4 +1,4 @@
-‘use client’;
+'use client';
 import { useState, useEffect } from ‘react’;
 import { SUPABASE_URL, headers, STATUS_OPTIONS } from ‘./constants’;
 
