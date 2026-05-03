@@ -16,10 +16,18 @@ export default function UsersTab() {
   useEffect(() => {
     loadUsers();
     loadOrders();
-    const handleClick = () => setOpenMenu(null);
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
   }, []);
+
+  useEffect(() => {
+    if (openMenu === null) return;
+    const handleClick = () => setOpenMenu(null);
+    // small delay so the button's own click doesn't immediately close it
+    const timer = setTimeout(() => document.addEventListener('click', handleClick), 10);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClick);
+    };
+  }, [openMenu]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -284,7 +292,7 @@ export default function UsersTab() {
                 </div>
 
                 {/* Action menu */}
-                <div style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                <div style={{ position: 'relative', flexShrink: 0 }}>
                   <button
                     onClick={() => setOpenMenu(openMenu === u.id ? null : u.id)}
                     style={{
