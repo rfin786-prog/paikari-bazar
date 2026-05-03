@@ -2,6 +2,19 @@
 import { useState, useEffect } from 'react';
 import { SUPABASE_URL, SUPABASE_KEY, headers, s } from './constants';
 
+const inp = {
+  width: '100%',
+  padding: '10px 12px',
+  borderRadius: '8px',
+  border: '1px solid #d1d5db',
+  fontSize: '14px',
+  fontFamily: 'Hind Siliguri, sans-serif',
+  color: '#111827',
+  background: '#fff',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
 export default function ProductsTab() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -100,45 +113,45 @@ export default function ProductsTab() {
         <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: '#1e1b4b' }}>নতুন পণ্য যোগ করুন</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>পণ্যের নাম *</label>
-            <input style={s.inp} placeholder="চাল (মিনিকেট)" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>পণ্যের নাম *</label>
+            <input style={inp} placeholder="চাল (মিনিকেট)" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
           </div>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>ইমোজি</label>
-            <input style={s.inp} placeholder="🌾" value={form.emoji} onChange={e => setForm({ ...form, emoji: e.target.value })} />
+            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>ইমোজি</label>
+            <input style={inp} placeholder="🌾" value={form.emoji} onChange={e => setForm({ ...form, emoji: e.target.value })} />
           </div>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>ক্যাটাগরি</label>
-            <select style={s.inp} value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })}>
+            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>ক্যাটাগরি</label>
+            <select style={inp} value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })}>
               <option value="">-- ক্যাটাগরি বেছে নিন --</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>ইউনিট</label>
-            <input style={s.inp} placeholder="৫০ কেজি বস্তা" value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} />
+            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>ইউনিট</label>
+            <input style={inp} placeholder="৫০ কেজি বস্তা" value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} />
           </div>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>পাইকারি মূল্য *</label>
-            <input style={s.inp} type="number" placeholder="1200" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>পাইকারি মূল্য *</label>
+            <input style={inp} type="number" placeholder="1200" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
           </div>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>MRP</label>
-            <input style={s.inp} type="number" placeholder="1500" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} />
+            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>MRP</label>
+            <input style={inp} type="number" placeholder="1500" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} />
           </div>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>স্টক</label>
-            <input style={s.inp} type="number" placeholder="500" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} />
+            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>স্টক</label>
+            <input style={inp} type="number" placeholder="500" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} />
           </div>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>MOQ</label>
-            <input style={s.inp} type="number" placeholder="1" value={form.moq} onChange={e => setForm({ ...form, moq: e.target.value })} />
+            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>MOQ</label>
+            <input style={inp} type="number" placeholder="1" value={form.moq} onChange={e => setForm({ ...form, moq: e.target.value })} />
           </div>
         </div>
 
         {/* Image Upload */}
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>পণ্যের ছবি</label>
+          <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '8px', color: '#374151' }}>পণ্যের ছবি</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {imagePreview && <img src={imagePreview} alt="preview" style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '10px', border: '1.5px solid #e5e7eb' }} />}
             <label style={{ display: 'inline-block', padding: '10px 16px', background: '#f3f4f6', border: '2px dashed #d1d5db', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', color: '#6b7280' }}>
@@ -167,7 +180,7 @@ export default function ProductsTab() {
                   ? <img src={p.image_url} alt={p.name} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px' }} />
                   : <span style={{ fontSize: '28px' }}>{p.emoji}</span>}
                 <div>
-                  <div style={{ fontWeight: '600', fontSize: '14px' }}>{p.name}</div>
+                  <div style={{ fontWeight: '600', fontSize: '14px', color: '#111827' }}>{p.name}</div>
                   <div style={{ fontSize: '12px', color: '#6b7280' }}>{cat ? cat.name : 'ক্যাটাগরি নেই'} | {p.unit} | স্টক: {p.stock}</div>
                 </div>
               </div>
