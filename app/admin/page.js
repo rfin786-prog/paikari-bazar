@@ -1,21 +1,24 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import DashboardTab from './_components/DashboardTab';
 import ProductsTab from './_components/ProductsTab';
 import CategoriesTab from './_components/CategoriesTab';
 import OrdersTab from './_components/OrdersTab';
 import UsersTab from './_components/UsersTab';
 
 const TABS = [
-  { key: 'products',   label: 'পণ্য' },
-  { key: 'categories', label: 'ক্যাটাগরি' },
-  { key: 'orders',     label: 'অর্ডার' },
-  { key: 'users',      label: 'গ্রাহক' },
+  { key: 'dashboard',  label: 'ড্যাশবোর্ড', icon: '▪' },
+  { key: 'products',   label: 'পণ্য',        icon: '▪' },
+  { key: 'categories', label: 'ক্যাটাগরি',   icon: '▪' },
+  { key: 'orders',     label: 'অর্ডার',      icon: '▪' },
+  { key: 'users',      label: 'গ্রাহক',      icon: '▪' },
 ];
 
 export default function AdminPage() {
   const router = useRouter();
-  const [tab, setTab] = useState('products');
+  const [tab, setTab] = useState('dashboard');
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -27,42 +30,122 @@ export default function AdminPage() {
     router.push('/login');
   };
 
-  return (
-    <div style={{ minHeight: '100vh', background: '#f3f4f6', fontFamily: 'Hind Siliguri, sans-serif' }}>
+  const TAB_ICONS = {
+    dashboard:  '⬡',
+    products:   '⬡',
+    categories: '⬡',
+    orders:     '⬡',
+    users:      '⬡',
+  };
 
-      {/* Navbar */}
-      <nav style={{ background: '#1e1b4b', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '60px' }}>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {TABS.map(({ key, label }) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: '7px 16px', borderRadius: '7px', fontSize: '13px', fontWeight: '600',
-              cursor: 'pointer', border: 'none', fontFamily: 'Hind Siliguri, sans-serif',
-              background: tab === key ? 'rgba(255,255,255,.15)' : 'transparent',
-              color: tab === key ? '#818cf8' : 'rgba(255,255,255,.6)',
-            }}>
-              {label}
-            </button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ color: 'rgba(255,255,255,.7)', fontSize: '13px' }}>Admin</span>
-          <button onClick={logout} style={{
-            background: 'rgba(255,255,255,.1)', color: '#fff', border: 'none',
-            padding: '7px 14px', borderRadius: '8px', fontFamily: 'Hind Siliguri, sans-serif',
-            fontSize: '12px', fontWeight: '700', cursor: 'pointer',
-          }}>
-            লগআউট
+  const TAB_EMOJIS = {
+    dashboard:  '🏠',
+    products:   '📦',
+    categories: '🏷️',
+    orders:     '🛒',
+    users:      '👥',
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#0f0e17', fontFamily: "'Hind Siliguri', sans-serif", display: 'flex' }}>
+
+      {/* Sidebar */}
+      <aside style={{
+        width: collapsed ? '64px' : '220px',
+        background: '#1a1828',
+        borderRight: '1px solid rgba(255,255,255,.06)',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'width .25s ease',
+        overflow: 'hidden',
+        flexShrink: 0,
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+      }}>
+        {/* Logo */}
+        <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(255,255,255,.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '64px' }}>
+          {!collapsed && (
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff', lineHeight: 1.2 }}>পাইকারি</div>
+              <div style={{ fontSize: '13px', fontWeight: '600', color: '#818cf8' }}>বাজার</div>
+            </div>
+          )}
+          <button onClick={() => setCollapsed(!collapsed)} style={{ background: 'rgba(255,255,255,.07)', border: 'none', color: 'rgba(255,255,255,.5)', width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            {collapsed ? '›' : '‹'}
           </button>
         </div>
-      </nav>
 
-      {/* Tab Content */}
-      <div style={{ padding: '24px' }}>
+        {/* Nav Items */}
+        <nav style={{ flex: 1, padding: '12px 8px' }}>
+          {TABS.map(({ key, label }) => (
+            <button key={key} onClick={() => setTab(key)} style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: collapsed ? '10px 0' : '10px 12px',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              borderRadius: '8px',
+              border: 'none',
+              background: tab === key ? 'rgba(129,140,248,.15)' : 'transparent',
+              borderLeft: tab === key ? '3px solid #818cf8' : '3px solid transparent',
+              color: tab === key ? '#fff' : 'rgba(255,255,255,.45)',
+              fontSize: '13px',
+              fontWeight: tab === key ? '600' : '400',
+              fontFamily: "'Hind Siliguri', sans-serif",
+              cursor: 'pointer',
+              marginBottom: '2px',
+              transition: 'all .15s',
+              whiteSpace: 'nowrap',
+            }}>
+              <span style={{ fontSize: '16px', flexShrink: 0 }}>{TAB_EMOJIS[key]}</span>
+              {!collapsed && label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Bottom: Admin + Logout */}
+        <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,.06)' }}>
+          {!collapsed && (
+            <div style={{ padding: '8px 12px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(129,140,248,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#818cf8', fontWeight: '700' }}>A</div>
+              <div>
+                <div style={{ fontSize: '12px', color: '#fff', fontWeight: '600' }}>Admin</div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,.35)' }}>01700000000</div>
+              </div>
+            </div>
+          )}
+          <button onClick={logout} style={{
+            width: '100%',
+            padding: collapsed ? '10px 0' : '9px 12px',
+            borderRadius: '8px',
+            border: 'none',
+            background: 'rgba(239,68,68,.1)',
+            color: '#f87171',
+            fontSize: '12px',
+            fontWeight: '600',
+            fontFamily: "'Hind Siliguri', sans-serif",
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            gap: '8px',
+          }}>
+            <span>🚪</span>
+            {!collapsed && 'লগআউট'}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main style={{ flex: 1, padding: '28px', overflowY: 'auto', minHeight: '100vh' }}>
+        {tab === 'dashboard'  && <DashboardTab setTab={setTab} />}
         {tab === 'products'   && <ProductsTab />}
         {tab === 'categories' && <CategoriesTab />}
         {tab === 'orders'     && <OrdersTab />}
         {tab === 'users'      && <UsersTab />}
-      </div>
+      </main>
     </div>
   );
 }
