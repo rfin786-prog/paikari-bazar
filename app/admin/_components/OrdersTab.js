@@ -198,7 +198,7 @@ export default function OrdersTab() {
         })}
       </div>
 
-      <div style={s.card}>
+      <div style={{ ...s.card, padding: '8px', background: '#f9fafb' }}>
         {filteredOrders.length === 0 && <p style={{ color: '#6b7280', fontSize: '13px' }}>কোনো অর্ডার নেই</p>}
         {filteredOrders.map(o => {
           const items = Array.isArray(o.items) ? o.items : [];
@@ -211,7 +211,7 @@ export default function OrdersTab() {
           const isUpdating = updatingId === o.id;
 
           return (
-            <div key={o.id} style={{ borderBottom: '1px solid #f3f4f6', paddingBottom: '12px', marginBottom: '12px' }}>
+            <div key={o.id} style={{ border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '14px 16px', marginBottom: '12px', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
