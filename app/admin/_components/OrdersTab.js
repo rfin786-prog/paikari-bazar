@@ -143,7 +143,9 @@ function TrackingModal({ order, onClose, onUpdateStatus, isUpdating }) {
                     </div>
 
                     {isDone && (
-                      <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+                      <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px', fontWeight: isCurrent ? '600' : '400' }}>
+                        {/* বর্তমান ধাপের জন্য updated_at এবং আগের ধাপের জন্য created_at */}
+                        {isCurrent ? 'আপডেট: ' : 'সময়: '} 
                         {formatDateTime(isCurrent ? (order.updated_at || order.created_at) : order.created_at)}
                       </div>
                     )}
@@ -308,19 +310,24 @@ export default function OrdersTab() {
 
   const updateOrderStatus = async (id, status, shopName) => {
     setUpdatingId(id);
+    const now = new Date().toISOString();
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
         method: 'PATCH',
         headers,
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ 
+            status: status,
+            updated_at: now // ডাটাবেজে আপডেট সময় পাঠানো হচ্ছে
+        }),
       });
       if (res.ok || res.status === 204) {
         const statusCfg = STATUS_OPTIONS.find(st => st.value === status);
         showToast(`✅ "${shopName || 'অর্ডার'}" → ${statusCfg?.label || status}`, 'success');
         await loadOrders();
-        // Keep modal in sync
+        
+        // মডাল খোলা থাকলে সেটিকেও আপডেট করুন
         if (trackingOrder?.id === id) {
-          setTrackingOrder(prev => ({ ...prev, status }));
+          setTrackingOrder(prev => ({ ...prev, status, updated_at: now }));
         }
       } else {
         showToast('❌ আপডেট ব্যর্থ হয়েছে, আবার চেষ্টা করুন', 'error');
@@ -539,7 +546,6 @@ export default function OrdersTab() {
                   </select>
 
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    {/* 🆕 Tracking Button */}
                     <button
                       onClick={() => setTrackingOrder(o)}
                       style={{
