@@ -1,8 +1,17 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { SUPABASE_URL, headers } from './constants';
 
-// ─── Timeline Steps Configuration ───────────────────────────────────────────
+// --- কনফিগারেশন (সরাসরি এখানেই দেওয়া হলো যাতে ভুল না হয়) ---
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+const headers = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_ANON_KEY,
+  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+};
+
+// --- টাইমলাইন কনফিগারেশন ---
 const TIMELINE_STEPS = [
   { value: 'pending',   label: 'অর্ডার দেওয়া হয়েছে', sub: 'আপনার অর্ডারটি গ্রহণ করা হয়েছে' },
   { value: 'confirmed', label: 'প্রক্রিয়াধীন',         sub: 'অর্ডারটি যাচাই ও প্যাক করা হচ্ছে' },
@@ -12,7 +21,7 @@ const TIMELINE_STEPS = [
 
 const STEP_ORDER = ['pending', 'confirmed', 'shipped', 'delivered'];
 
-// ─── Timeline Component (এখানেই সময় দেখানোর লজিক যোগ করা হয়েছে) ────────────────
+// --- টাইমলাইন কম্পোনেন্ট ---
 const TrackingTimeline = ({ status, order }) => {
   const currentStepIdx = STEP_ORDER.indexOf(status);
 
@@ -48,7 +57,6 @@ const TrackingTimeline = ({ status, order }) => {
                 {step.label}
               </p>
 
-              {/* সময় দেখানোর নতুন অংশ */}
               {isDone && (
                 <p style={{ fontSize: 10, color: '#059669', margin: '2px 0', fontWeight: 600 }}>
                   📅 {new Date(isCurrent ? (order.updated_at || order.created_at) : order.created_at).toLocaleString('bn-BD', {
@@ -68,7 +76,7 @@ const TrackingTimeline = ({ status, order }) => {
   );
 };
 
-// ─── Order Card Component ───────────────────────────────────────────────────
+// --- অর্ডার কার্ড ---
 const OrderCard = ({ order, isNew }) => {
   const [showDetails, setShowDetails] = useState(false);
   const date = new Date(order.created_at);
@@ -79,19 +87,19 @@ const OrderCard = ({ order, isNew }) => {
     <div style={{
       border: isNew ? '2px solid #10b981' : '1px solid #e5e7eb',
       borderRadius: 16, padding: 16, marginBottom: 16, backgroundColor: '#fff',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+      fontFamily: 'sans-serif'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>অর্ডার আইডি: #{order.id.slice(0, 8).toUpperCase()}</p>
+          <p style={{ fontSize: 11, color: '#6b7280', margin: 0 }}>ID: #{order.id?.slice(0, 8).toUpperCase()}</p>
           <p style={{ fontSize: 14, fontWeight: 700, margin: '4px 0' }}>{dateStr} | {timeStr}</p>
           <p style={{ fontSize: 14, color: '#111827', fontWeight: 600 }}>মোট: ৳{order.total}</p>
         </div>
         <div style={{
-          padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
+          padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
           backgroundColor: order.status === 'delivered' ? '#ecfdf5' : '#fff7ed',
-          color: order.status === 'delivered' ? '#059669' : '#c2410c',
-          border: `1px solid ${order.status === 'delivered' ? '#10b981' : '#fb923c'}`
+          color: order.status === 'delivered' ? '#059669' : '#c2410c'
         }}>
           {order.status === 'pending' ? 'অপেক্ষমান' : 
            order.status === 'confirmed' ? 'প্রক্রিয়াধীন' :
@@ -103,24 +111,15 @@ const OrderCard = ({ order, isNew }) => {
         onClick={() => setShowDetails(!showDetails)}
         style={{
           width: '100%', marginTop: 12, padding: '8px', borderRadius: 8,
-          backgroundColor: '#f3f4f6', border: 'none', fontSize: 13, fontWeight: 600,
-          cursor: 'pointer', color: '#374151'
+          backgroundColor: '#f3f4f6', border: 'none', fontSize: 12, fontWeight: 600,
+          cursor: 'pointer'
         }}
       >
-        {showDetails ? 'বিস্তারিত লুকান' : 'বিস্তারিত ট্র্যাকিং দেখুন'}
+        {showDetails ? 'বন্ধ করুন' : 'বিস্তারিত ট্র্যাকিং'}
       </button>
 
       {showDetails && (
         <div style={{ marginTop: 12, borderTop: '1px solid #f3f4f6', paddingTop: 12 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>পণ্যের তালিকা:</p>
-          {order.items.map((item, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-              <span>{item.name} x {item.qty}</span>
-              <span>৳{item.price * item.qty}</span>
-            </div>
-          ))}
-          
-          {/* ট্র্যাকিং টাইমলাইন */}
           <TrackingTimeline status={order.status} order={order} />
         </div>
       )}
@@ -128,53 +127,37 @@ const OrderCard = ({ order, isNew }) => {
   );
 };
 
-// ─── Main MyOrders Page ─────────────────────────────────────────────────────
-export default function MyOrders({ userId }) {
+// --- মেইন পেজ ---
+export default function MyOrders({ userId = "user_1" }) { // আপনার লজিক অনুযায়ী userId দিন
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newOrderId, setNewOrderId] = useState(null);
 
   useEffect(() => {
-    // চেক করা হচ্ছে কোনো রিসেন্ট অর্ডার আছে কি না
-    const recent = localStorage.getItem('last_order_id');
-    if (recent) setNewOrderId(recent);
-
     const fetchOrders = async () => {
       try {
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/orders?user_id=eq.${userId}&order=created_at.desc`,
+          `${SUPABASE_URL}/rest/v1/orders?select=*&order=created_at.desc`,
           { headers }
         );
         const data = await res.json();
         setOrders(data);
       } catch (err) {
-        console.error("অর্ডার লোড করতে সমস্যা:", err);
+        console.error("Error:", err);
       } finally {
         setLoading(false);
       }
     };
     fetchOrders();
-  }, [userId]);
+  }, []);
 
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}>অর্ডার লোড হচ্ছে...</div>;
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: '16px', fontFamily: 'Arial, sans-serif' }}>
-      <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 20 }}>আমার অর্ডারসমূহ ({orders.length})</h2>
-      
-      {newOrderId && (
-        <div style={{ backgroundColor: '#ecfdf5', padding: 12, borderRadius: 12, marginBottom: 20, border: '1px solid #10b981' }}>
-          <p style={{ color: '#065f46', fontSize: 14, fontWeight: 600, margin: 0 }}>🎉 আপনার অর্ডারটি সফলভাবে সম্পন্ন হয়েছে!</p>
-        </div>
-      )}
-
-      {orders.length === 0 ? (
-        <p style={{ textAlign: 'center', color: '#6b7280' }}>আপনার কোনো অর্ডার পাওয়া যায়নি।</p>
-      ) : (
-        orders.map(order => (
-          <OrderCard key={order.id} order={order} isNew={order.id === newOrderId} />
-        ))
-      )}
+    <div style={{ maxWidth: 600, margin: '0 auto', padding: '16px' }}>
+      <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 15 }}>আমার অর্ডারসমূহ ({orders.length})</h2>
+      {orders.map(order => (
+        <OrderCard key={order.id} order={order} />
+      ))}
     </div>
   );
 }
