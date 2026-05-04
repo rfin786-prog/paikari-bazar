@@ -8,11 +8,11 @@ import OrdersTab from './_components/OrdersTab';
 import UsersTab from './_components/UsersTab';
 
 const TABS = [
-  { key: 'dashboard',  label: 'ড্যাশবোর্ড', icon: '▪' },
-  { key: 'products',   label: 'পণ্য',        icon: '▪' },
-  { key: 'categories', label: 'ক্যাটাগরি',   icon: '▪' },
-  { key: 'orders',     label: 'অর্ডার',      icon: '▪' },
-  { key: 'users',      label: 'গ্রাহক',      icon: '▪' },
+  { key: 'dashboard',  label: 'Dashboard', icon: '▪' },
+  { key: 'products',   label: 'Products',  icon: '▪' },
+  { key: 'categories', label: 'Categories',icon: '▪' },
+  { key: 'orders',     label: 'Orders',    icon: '▪' },
+  { key: 'users',      label: 'Users',     icon: '▪' },
 ];
 
 export default function AdminPage() {
@@ -30,14 +30,6 @@ export default function AdminPage() {
     router.push('/login');
   };
 
-  const TAB_ICONS = {
-    dashboard:  '⬡',
-    products:   '⬡',
-    categories: '⬡',
-    orders:     '⬡',
-    users:      '⬡',
-  };
-
   const TAB_EMOJIS = {
     dashboard:  '🏠',
     products:   '📦',
@@ -46,8 +38,10 @@ export default function AdminPage() {
     users:      '👥',
   };
 
+  const FONT = 'var(--font-hind-siliguri), sans-serif';
+
   return (
-    <div style={{ minHeight: '100vh', background: '#0f0e17', fontFamily: "'Hind Siliguri', sans-serif", display: 'flex' }}>
+    <div style={{ minHeight: '100vh', background: '#0f0e17', fontFamily: FONT, display: 'flex' }}>
 
       {/* Sidebar */}
       <aside style={{
@@ -93,7 +87,7 @@ export default function AdminPage() {
               color: tab === key ? '#fff' : 'rgba(255,255,255,.45)',
               fontSize: '13px',
               fontWeight: tab === key ? '600' : '400',
-              fontFamily: "'Hind Siliguri', sans-serif",
+              fontFamily: FONT,
               cursor: 'pointer',
               marginBottom: '2px',
               transition: 'all .15s',
@@ -125,7 +119,7 @@ export default function AdminPage() {
             color: '#f87171',
             fontSize: '12px',
             fontWeight: '600',
-            fontFamily: "'Hind Siliguri', sans-serif",
+            fontFamily: FONT,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -133,7 +127,7 @@ export default function AdminPage() {
             gap: '8px',
           }}>
             <span>🚪</span>
-            {!collapsed && 'লগআউট'}
+            {!collapsed && 'Logout'}
           </button>
         </div>
       </aside>
