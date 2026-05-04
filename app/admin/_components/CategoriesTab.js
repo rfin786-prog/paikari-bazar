@@ -10,16 +10,13 @@ export default function CategoriesTab() {
   const [catUploading, setCatUploading] = useState(false);
   const [catMsg, setCatMsg] = useState('');
 
-  // Edit state
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ name: '' });
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState(null);
   const [editUploading, setEditUploading] = useState(false);
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
+  useEffect(() => { loadCategories(); }, []);
 
   const loadCategories = async () => {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/categories?order=created_at.asc`, { headers });
@@ -55,7 +52,7 @@ export default function CategoriesTab() {
   }
 
   const addCategory = async () => {
-    if (!catForm.name) { setCatMsg('❌ ক্যাটাগরির নাম দিন'); return; }
+    if (!catForm.name) { setCatMsg('❌ Please enter a category name'); return; }
     setCatUploading(true);
     const image_url = await uploadImage(catImageFile);
     const res = await fetch(`${SUPABASE_URL}/rest/v1/categories`, {
@@ -65,12 +62,12 @@ export default function CategoriesTab() {
     });
     setCatUploading(false);
     if (res.status === 201) {
-      setCatMsg('✅ ক্যাটাগরি যোগ হয়েছে');
+      setCatMsg('✅ Category added successfully');
       setCatForm({ name: '' });
       setCatImageFile(null); setCatImagePreview(null);
       loadCategories();
     } else {
-      setCatMsg('❌ সমস্যা হয়েছে');
+      setCatMsg('❌ Something went wrong');
     }
   };
 
@@ -104,18 +101,18 @@ export default function CategoriesTab() {
     setEditUploading(false);
     cancelEdit();
     loadCategories();
-    setCatMsg('✅ ক্যাটাগরি আপডেট হয়েছে');
+    setCatMsg('✅ Category updated successfully');
   };
 
   const deleteCategory = async (id) => {
-    if (!confirm('এই ক্যাটাগরি মুছে ফেলবেন?')) return;
+    if (!confirm('Delete this category?')) return;
     await fetch(`${SUPABASE_URL}/rest/v1/categories?id=eq.${id}`, { method: 'DELETE', headers });
     loadCategories();
   };
 
   return (
     <div>
-      <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '20px', color: '#1e1b4b' }}>ক্যাটাগরি ব্যবস্থাপনা</h2>
+      <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '20px', color: '#1e1b4b' }}>Category Management</h2>
 
       {catMsg && (
         <div style={{ background: catMsg.includes('✅') ? '#f0fdf4' : '#fef2f2', border: `1px solid ${catMsg.includes('✅') ? '#bbf7d0' : '#fecaca'}`, color: catMsg.includes('✅') ? '#16a34a' : '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px' }}>
@@ -123,45 +120,46 @@ export default function CategoriesTab() {
         </div>
       )}
 
-      {/* Add Category Form */}
+      {/* Add Category */}
       <div style={{ ...s.card, marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: '#1e1b4b' }}>নতুন ক্যাটাগরি যোগ করুন</h3>
+        <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: '#1e1b4b' }}>Add New Category</h3>
+
         <div style={{ marginBottom: '12px' }}>
-          <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>ক্যাটাগরির নাম *</label>
-          <input style={s.inp} placeholder="যেমন: খাদ্যশস্য, তেল, মশলা..." value={catForm.name} onChange={e => setCatForm({ ...catForm, name: e.target.value })} />
+          <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Category Name *</label>
+          <input style={s.inp} placeholder="e.g. Grains, Oil, Spices..." value={catForm.name} onChange={e => setCatForm({ ...catForm, name: e.target.value })} />
         </div>
+
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>ক্যাটাগরির ছবি</label>
+          <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>Category Image</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {catImagePreview && <img src={catImagePreview} alt="preview" style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '10px', border: '1.5px solid #e5e7eb' }} />}
             <label style={{ display: 'inline-block', padding: '10px 16px', background: '#f3f4f6', border: '2px dashed #d1d5db', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', color: '#6b7280' }}>
-              📷 ছবি বেছে নিন
+              📷 Choose Image
               <input type="file" accept="image/*" onChange={handleCatImageSelect} style={{ display: 'none' }} />
             </label>
             {catImageFile && <span style={{ fontSize: '12px', color: '#10b981' }}>✅ {catImageFile.name}</span>}
           </div>
         </div>
+
         <button style={{ ...s.btn, background: '#059669', opacity: catUploading ? 0.7 : 1 }} onClick={addCategory} disabled={catUploading}>
-          {catUploading ? 'আপলোড হচ্ছে...' : '+ ক্যাটাগরি যোগ করুন'}
+          {catUploading ? 'Uploading...' : '+ Add Category'}
         </button>
       </div>
 
-      {/* Categories List */}
+      {/* Category List */}
       <div style={s.card}>
-        <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: '#1e1b4b' }}>ক্যাটাগরি তালিকা ({categories.length})</h3>
-        {categories.length === 0 && <p style={{ color: '#6b7280', fontSize: '13px' }}>কোনো ক্যাটাগরি নেই</p>}
+        <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: '#1e1b4b' }}>Category List ({categories.length})</h3>
+        {categories.length === 0 && <p style={{ color: '#6b7280', fontSize: '13px' }}>No categories found</p>}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
           {categories.map(cat => (
             <div key={cat.id} style={{ border: `1.5px solid ${editingId === cat.id ? '#6366f1' : '#f3f4f6'}`, borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', background: editingId === cat.id ? '#f5f3ff' : 'white' }}>
-              
-              {/* Image */}
+
               <div style={{ width: '60px', height: '60px', borderRadius: '12px', overflow: 'hidden', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {(editingId === cat.id ? editImagePreview : cat.image_url)
                   ? <img src={editingId === cat.id ? editImagePreview : cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span style={{ fontSize: '28px' }}>📦</span>}
               </div>
 
-              {/* Edit mode */}
               {editingId === cat.id ? (
                 <>
                   <input
@@ -170,20 +168,17 @@ export default function CategoriesTab() {
                     onChange={e => setEditForm({ name: e.target.value })}
                   />
                   <label style={{ fontSize: '11px', color: '#6366f1', cursor: 'pointer', textDecoration: 'underline' }}>
-                    📷 ছবি বদলান
+                    📷 Change Image
                     <input type="file" accept="image/*" onChange={handleEditImageSelect} style={{ display: 'none' }} />
                   </label>
                   <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
-                    <button
-                      onClick={() => saveEdit(cat)}
-                      disabled={editUploading}
-                      style={{ ...s.btn, background: '#059669', color: 'white', padding: '5px 10px', fontSize: '12px', flex: 1, opacity: editUploading ? 0.7 : 1 }}>
-                      {editUploading ? '...' : '✅ সেভ'}
+                    <button onClick={() => saveEdit(cat)} disabled={editUploading}
+                      style={{ ...s.btn, background: '#059669', padding: '5px 10px', fontSize: '12px', flex: 1, opacity: editUploading ? 0.7 : 1 }}>
+                      {editUploading ? '...' : '✅ Save'}
                     </button>
-                    <button
-                      onClick={cancelEdit}
+                    <button onClick={cancelEdit}
                       style={{ ...s.btn, background: '#f3f4f6', color: '#374151', padding: '5px 10px', fontSize: '12px', flex: 1 }}>
-                      ✕
+                      ✕ Cancel
                     </button>
                   </div>
                 </>
@@ -191,15 +186,13 @@ export default function CategoriesTab() {
                 <>
                   <span style={{ fontWeight: '600', fontSize: '14px', textAlign: 'center' }}>{cat.name}</span>
                   <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
-                    <button
-                      onClick={() => startEdit(cat)}
+                    <button onClick={() => startEdit(cat)}
                       style={{ ...s.btn, background: '#ede9fe', color: '#6d28d9', padding: '5px 10px', fontSize: '12px', flex: 1 }}>
-                      ✏️ এডিট
+                      ✏️ Edit
                     </button>
-                    <button
-                      onClick={() => deleteCategory(cat.id)}
+                    <button onClick={() => deleteCategory(cat.id)}
                       style={{ ...s.btn, background: '#fee2e2', color: '#dc2626', padding: '5px 10px', fontSize: '12px', flex: 1 }}>
-                      🗑
+                      🗑 Delete
                     </button>
                   </div>
                 </>
