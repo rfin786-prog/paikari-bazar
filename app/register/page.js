@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -8,15 +8,39 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({
-    name: '', shop_name: '', phone: '', area: '', password: '', confirm: ''
+    name: '', shop_name: '', phone: '', district: '', thana: '', address: '', password: '', confirm: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [areas, setAreas] = useState([]);
+
+  useEffect(() => {
+    const loadAreas = async () => {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/delivery_areas?active=eq.true&order=district.asc,thana.asc`,
+          { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+        );
+        const data = await res.json();
+        setAreas(Array.isArray(data) ? data : []);
+      } catch {}
+    };
+    loadAreas();
+  }, []);
+
+  // Unique districts
+  const districts = [...new Set(areas.map(a => a.district))];
+
+  // Thanas for selected district
+  const thanas = areas.filter(a => a.district === form.district).map(a => a.thana);
 
   const handleSubmit = async () => {
     setError('');
     if (!form.name) return setError('নাম দিন');
     if (form.phone.length !== 11) return setError('সঠিক ফোন নম্বর দিন');
+    if (!form.district) return setError('জেলা বাছুন');
+    if (!form.thana) return setError('থানা বাছুন');
+    if (!form.address) return setError('ঠিকানা দিন');
     if (form.password.length < 6) return setError('পাসওয়ার্ড কমপক্ষে ৬ অক্ষর');
     if (form.password !== form.confirm) return setError('পাসওয়ার্ড মিলছে না');
 
@@ -25,21 +49,23 @@ export default function RegisterPage() {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
         method: 'POST',
         headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
+          Prefer: 'return=representation',
         },
         body: JSON.stringify({
           name: form.name,
           shop_name: form.shop_name,
           phone: form.phone,
-          area: form.area,
+          district: form.district,
+          thana: form.thana,
+          address: form.address,
           password: form.password,
           role: 'user',
           status: 'active',
-          wallet: 0
-        })
+          wallet: 0,
+        }),
       });
 
       if (res.status === 201) {
@@ -59,15 +85,12 @@ export default function RegisterPage() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         .reg-page {
           min-height: 100vh;
           background: #f0f4ff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          display: flex; align-items: center; justify-content: center;
           padding: 20px;
           font-family: 'Hind Siliguri', sans-serif;
         }
@@ -76,130 +99,83 @@ export default function RegisterPage() {
           background: #fff;
           border-radius: 24px;
           padding: 36px 32px;
-          width: 100%;
-          max-width: 440px;
-          box-shadow: 0 20px 60px rgba(14, 36, 66, 0.12);
+          width: 100%; max-width: 480px;
+          box-shadow: 0 20px 60px rgba(14,36,66,0.12);
         }
 
         .reg-logo {
-          display: flex;
-          align-items: center;
-          gap: 10px;
+          display: flex; align-items: center; gap: 10px;
           margin-bottom: 28px;
         }
 
         .reg-logo-icon {
-          width: 42px; height: 42px;
-          background: #e8a020;
-          border-radius: 12px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 20px;
+          width: 42px; height: 42px; background: #e8a020;
+          border-radius: 12px; display: flex; align-items: center;
+          justify-content: center; font-size: 20px;
         }
 
-        .reg-logo-text {
-          font-size: 20px;
-          font-weight: 700;
-          color: #0f2442;
-        }
-
+        .reg-logo-text { font-size: 20px; font-weight: 700; color: #0f2442; }
         .reg-logo-text span { color: #e8a020; }
 
-        .reg-title {
-          font-size: 22px;
-          font-weight: 700;
-          color: #0f2442;
-          margin-bottom: 4px;
-        }
+        .reg-title { font-size: 22px; font-weight: 700; color: #0f2442; margin-bottom: 4px; }
+        .reg-sub { font-size: 14px; color: #64748b; margin-bottom: 24px; }
 
-        .reg-sub {
-          font-size: 14px;
-          color: #64748b;
-          margin-bottom: 24px;
-        }
+        .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .field-full { margin-bottom: 12px; }
 
-        .field-group {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-          margin-bottom: 12px;
-        }
+        label { display: block; font-size: 12px; font-weight: 600; color: #0f2442; margin-bottom: 5px; letter-spacing: 0.3px; }
 
-        .field-full {
-          margin-bottom: 12px;
-        }
-
-        label {
-          display: block;
-          font-size: 12px;
-          font-weight: 600;
-          color: #0f2442;
-          margin-bottom: 5px;
-          letter-spacing: 0.3px;
-        }
-
-        input {
-          width: 100%;
-          padding: 11px 14px;
-          border: 1.5px solid #e2e8f0;
-          border-radius: 10px;
-          font-size: 14px;
-          font-family: 'Hind Siliguri', sans-serif;
-          color: #0f2442;
-          background: #f8fafc;
+        input, select, textarea {
+          width: 100%; padding: 11px 14px;
+          border: 1.5px solid #e2e8f0; border-radius: 10px;
+          font-size: 14px; font-family: 'Hind Siliguri', sans-serif;
+          color: #0f2442; background: #f8fafc;
           transition: border-color 0.2s, background 0.2s;
           outline: none;
         }
 
-        input:focus {
-          border-color: #e8a020;
-          background: #fff;
+        input:focus, select:focus, textarea:focus {
+          border-color: #e8a020; background: #fff;
         }
 
-        input::placeholder { color: #94a3b8; }
+        input::placeholder, textarea::placeholder { color: #94a3b8; }
+
+        select { cursor: pointer; }
+        select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        textarea { resize: none; height: 72px; }
 
         .error-msg {
-          background: #fff1f2;
-          color: #e11d48;
-          padding: 10px 14px;
-          border-radius: 10px;
-          font-size: 13px;
-          font-weight: 500;
-          margin-bottom: 14px;
-          border-left: 3px solid #e11d48;
+          background: #fff1f2; color: #e11d48;
+          padding: 10px 14px; border-radius: 10px;
+          font-size: 13px; font-weight: 500;
+          margin-bottom: 14px; border-left: 3px solid #e11d48;
+        }
+
+        .divider {
+          font-size: 11px; font-weight: 700; color: #94a3b8;
+          text-transform: uppercase; letter-spacing: 0.5px;
+          margin: 16px 0 12px; display: flex; align-items: center; gap: 8px;
+        }
+        .divider::before, .divider::after {
+          content: ''; flex: 1; height: 1px; background: #e2e8f0;
         }
 
         .submit-btn {
-          width: 100%;
-          padding: 13px;
-          background: #0f2442;
-          color: #fff;
-          border: none;
-          border-radius: 12px;
-          font-size: 15px;
-          font-weight: 700;
+          width: 100%; padding: 13px;
+          background: #0f2442; color: #fff;
+          border: none; border-radius: 12px;
+          font-size: 15px; font-weight: 700;
           font-family: 'Hind Siliguri', sans-serif;
-          cursor: pointer;
-          margin-top: 8px;
+          cursor: pointer; margin-top: 8px;
           transition: background 0.2s, transform 0.1s;
         }
-
         .submit-btn:hover { background: #1a3a5c; }
         .submit-btn:active { transform: scale(0.99); }
         .submit-btn:disabled { background: #94a3b8; cursor: not-allowed; }
 
-        .login-link {
-          text-align: center;
-          margin-top: 16px;
-          font-size: 13px;
-          color: #64748b;
-        }
-
-        .login-link a {
-          color: #e8a020;
-          font-weight: 700;
-          text-decoration: none;
-          cursor: pointer;
-        }
+        .login-link { text-align: center; margin-top: 16px; font-size: 13px; color: #64748b; }
+        .login-link a { color: #e8a020; font-weight: 700; text-decoration: none; cursor: pointer; }
 
         @media (max-width: 480px) {
           .reg-card { padding: 28px 20px; }
@@ -216,58 +192,82 @@ export default function RegisterPage() {
           </div>
 
           <div className="reg-title">নতুন অ্যাকাউন্ট</div>
-          <div className="reg-sub">আপনার দোকানের তথ্য দিয়ে নিবন্ধন করুন</div>
+          <div className="reg-sub">আপনার তথ্য দিয়ে নিবন্ধন করুন</div>
 
           {error && <div className="error-msg">⚠️ {error}</div>}
+
+          {/* ব্যক্তিগত তথ্য */}
+          <div className="divider">ব্যক্তিগত তথ্য</div>
 
           <div className="field-group">
             <div>
               <label>আপনার নাম *</label>
-              <input placeholder="রহিম মিয়া"
-                value={form.name}
-                onChange={e => setForm({ ...form, name: e.target.value })}
-              />
+              <input placeholder="রহিম মিয়া" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
             </div>
             <div>
               <label>দোকানের নাম</label>
-              <input placeholder="রহিম স্টোর"
-                value={form.shop_name}
-                onChange={e => setForm({ ...form, shop_name: e.target.value })}
-              />
+              <input placeholder="রহিম স্টোর" value={form.shop_name} onChange={e => setForm({ ...form, shop_name: e.target.value })} />
             </div>
           </div>
 
-          <div className="field-group">
-            <div>
-              <label>ফোন নম্বর *</label>
-              <input placeholder="01XXXXXXXXX"
-                value={form.phone}
-                onChange={e => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-            <div>
-              <label>এলাকা</label>
-              <input placeholder="ঢাকা"
-                value={form.area}
-                onChange={e => setForm({ ...form, area: e.target.value })}
-              />
-            </div>
+          <div className="field-full">
+            <label>ফোন নম্বর *</label>
+            <input placeholder="01XXXXXXXXX" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
           </div>
+
+          {/* ডেলিভারি ঠিকানা */}
+          <div className="divider">ডেলিভারি ঠিকানা</div>
+
+          {areas.length === 0 ? (
+            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#c2410c', marginBottom: '12px' }}>
+              ⚠️ এখনো কোনো ডেলিভারি এলাকা সেট করা হয়নি
+            </div>
+          ) : (
+            <div className="field-group">
+              <div>
+                <label>জেলা *</label>
+                <select
+                  value={form.district}
+                  onChange={e => setForm({ ...form, district: e.target.value, thana: '' })}
+                >
+                  <option value="">জেলা বাছুন</option>
+                  {districts.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label>থানা / উপজেলা *</label>
+                <select
+                  value={form.thana}
+                  onChange={e => setForm({ ...form, thana: e.target.value })}
+                  disabled={!form.district}
+                >
+                  <option value="">থানা বাছুন</option>
+                  {thanas.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
+
+          <div className="field-full">
+            <label>পূর্ণ ঠিকানা *</label>
+            <textarea
+              placeholder="বাড়ি নম্বর / রাস্তা / এলাকা"
+              value={form.address}
+              onChange={e => setForm({ ...form, address: e.target.value })}
+            />
+          </div>
+
+          {/* পাসওয়ার্ড */}
+          <div className="divider">পাসওয়ার্ড</div>
 
           <div className="field-group">
             <div>
               <label>পাসওয়ার্ড *</label>
-              <input type="password" placeholder="কমপক্ষে ৬ অক্ষর"
-                value={form.password}
-                onChange={e => setForm({ ...form, password: e.target.value })}
-              />
+              <input type="password" placeholder="কমপক্ষে ৬ অক্ষর" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
             </div>
             <div>
               <label>পাসওয়ার্ড নিশ্চিত *</label>
-              <input type="password" placeholder="আবার লিখুন"
-                value={form.confirm}
-                onChange={e => setForm({ ...form, confirm: e.target.value })}
-              />
+              <input type="password" placeholder="আবার লিখুন" value={form.confirm} onChange={e => setForm({ ...form, confirm: e.target.value })} />
             </div>
           </div>
 
