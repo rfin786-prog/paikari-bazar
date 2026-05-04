@@ -93,9 +93,6 @@ export default function Navbar() {
                 👤 {user.shop_name || user.name || 'আপনি'}
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '2px 0' }} />
-              <button onClick={() => { router.push('/orders'); setMenuOpen(false); }} style={menuBtnStyle}>
-                📦 আমার অর্ডার
-              </button>
               <button onClick={() => { router.push('/dashboard'); setMenuOpen(false); }} style={menuBtnStyle}>
                 📊 ড্যাশবোর্ড
               </button>
