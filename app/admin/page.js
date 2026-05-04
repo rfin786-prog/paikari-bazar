@@ -6,13 +6,15 @@ import ProductsTab from './_components/ProductsTab';
 import CategoriesTab from './_components/CategoriesTab';
 import OrdersTab from './_components/OrdersTab';
 import UsersTab from './_components/UsersTab';
+import DeliveryAreasTab from './_components/DeliveryAreasTab';
 
 const TABS = [
-  { key: 'dashboard',  label: 'Dashboard', icon: '▪' },
-  { key: 'products',   label: 'Products',  icon: '▪' },
-  { key: 'categories', label: 'Categories',icon: '▪' },
-  { key: 'orders',     label: 'Orders',    icon: '▪' },
-  { key: 'users',      label: 'Users',     icon: '▪' },
+  { key: 'dashboard',      label: 'Dashboard',  icon: '🏠' },
+  { key: 'products',       label: 'Products',   icon: '📦' },
+  { key: 'categories',     label: 'Categories', icon: '🏷️' },
+  { key: 'orders',         label: 'Orders',     icon: '🛒' },
+  { key: 'users',          label: 'Users',      icon: '👥' },
+  { key: 'delivery_areas', label: 'Delivery',   icon: '🗺️' },
 ];
 
 export default function AdminPage() {
@@ -28,14 +30,6 @@ export default function AdminPage() {
   const logout = () => {
     localStorage.removeItem('user');
     router.push('/login');
-  };
-
-  const TAB_EMOJIS = {
-    dashboard:  '🏠',
-    products:   '📦',
-    categories: '🏷️',
-    orders:     '🛒',
-    users:      '👥',
   };
 
   const FONT = 'var(--font-hind-siliguri), sans-serif';
@@ -71,8 +65,8 @@ export default function AdminPage() {
         </div>
 
         {/* Nav Items */}
-        <nav style={{ flex: 1, padding: '12px 8px' }}>
-          {TABS.map(({ key, label }) => (
+        <nav style={{ flex: 1, padding: '12px 8px', overflowY: 'auto' }}>
+          {TABS.map(({ key, label, icon }) => (
             <button key={key} onClick={() => setTab(key)} style={{
               width: '100%',
               display: 'flex',
@@ -93,7 +87,7 @@ export default function AdminPage() {
               transition: 'all .15s',
               whiteSpace: 'nowrap',
             }}>
-              <span style={{ fontSize: '16px', flexShrink: 0 }}>{TAB_EMOJIS[key]}</span>
+              <span style={{ fontSize: '16px', flexShrink: 0 }}>{icon}</span>
               {!collapsed && label}
             </button>
           ))}
@@ -106,7 +100,7 @@ export default function AdminPage() {
               <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(129,140,248,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#818cf8', fontWeight: '700' }}>A</div>
               <div>
                 <div style={{ fontSize: '12px', color: '#fff', fontWeight: '600' }}>Admin</div>
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,.35)' }}>01700000000</div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,.35)' }}>পাইকারি বাজার</div>
               </div>
             </div>
           )}
@@ -134,11 +128,12 @@ export default function AdminPage() {
 
       {/* Main Content */}
       <main style={{ flex: 1, padding: '28px', overflowY: 'auto', minHeight: '100vh' }}>
-        {tab === 'dashboard'  && <DashboardTab setTab={setTab} />}
-        {tab === 'products'   && <ProductsTab />}
-        {tab === 'categories' && <CategoriesTab />}
-        {tab === 'orders'     && <OrdersTab />}
-        {tab === 'users'      && <UsersTab />}
+        {tab === 'dashboard'      && <DashboardTab setTab={setTab} />}
+        {tab === 'products'       && <ProductsTab />}
+        {tab === 'categories'     && <CategoriesTab />}
+        {tab === 'orders'         && <OrdersTab />}
+        {tab === 'users'          && <UsersTab />}
+        {tab === 'delivery_areas' && <DeliveryAreasTab />}
       </main>
     </div>
   );
