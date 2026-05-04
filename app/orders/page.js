@@ -7,13 +7,113 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const STATUS_CONFIG = {
-  pending:    { label: 'অপেক্ষমান',   color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-  processing: { label: 'প্রক্রিয়াধীন', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  shipped:    { label: 'পাঠানো হয়েছে', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  pending:    { label: 'অপেক্ষমান',     color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+  confirmed:  { label: 'প্রক্রিয়াধীন',  color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  processing: { label: 'প্রক্রিয়াধীন',  color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  shipped:    { label: 'পাঠানো হয়েছে',  color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
   delivered:  { label: 'ডেলিভারি হয়েছে', color: 'bg-green-100 text-green-700 border-green-200' },
-  cancelled:  { label: 'বাতিল',        color: 'bg-red-100 text-red-700 border-red-200' },
+  cancelled:  { label: 'বাতিল',          color: 'bg-red-100 text-red-700 border-red-200' },
 };
 
+// ─── Timeline steps ───────────────────────────────────────────────────────────
+const TIMELINE_STEPS = [
+  { value: 'pending',   label: 'অর্ডার দেওয়া হয়েছে', sub: 'আমরা আপনার অর্ডার পেয়েছি',         icon: '📋' },
+  { value: 'confirmed', label: 'প্রক্রিয়াধীন',        sub: 'আপনার অর্ডার প্রস্তুত করা হচ্ছে',   icon: '⚙️' },
+  { value: 'shipped',   label: 'মাল পাঠানো হয়েছে',   sub: 'পণ্য রওনা দিয়েছে',                  icon: '🚚' },
+  { value: 'delivered', label: 'ডেলিভারি সম্পন্ন',   sub: 'পণ্য পৌঁছে গেছে',                   icon: '✅' },
+];
+const STEP_ORDER = ['pending', 'confirmed', 'shipped', 'delivered'];
+// map processing → confirmed for timeline display
+const normalizeStatus = (s) => s === 'processing' ? 'confirmed' : s;
+
+function getStepIndex(status) {
+  const idx = STEP_ORDER.indexOf(normalizeStatus(status));
+  return idx === -1 ? 0 : idx;
+}
+
+// ─── Tracking Timeline (inline inside expanded card) ─────────────────────────
+function TrackingTimeline({ status }) {
+  const currentIdx = getStepIndex(status);
+  const isCancelled = status === 'cancelled';
+
+  if (isCancelled) {
+    return (
+      <div className="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-100">
+        <span className="text-2xl">❌</span>
+        <div>
+          <p className="font-semibold text-red-700 text-sm">অর্ডার বাতিল করা হয়েছে</p>
+          <p className="text-xs text-red-400 mt-0.5">এই অর্ডারটি বাতিল হয়েছে</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-4">
+      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">অর্ডার ট্র্যাকিং</p>
+      <div>
+        {TIMELINE_STEPS.map((step, idx) => {
+          const isDone = idx <= currentIdx;
+          const isCurrent = idx === currentIdx;
+          const isPending = idx > currentIdx;
+          const isLast = idx === TIMELINE_STEPS.length - 1;
+
+          return (
+            <div key={step.value} className="flex gap-3">
+              {/* Icon + line */}
+              <div className="flex flex-col items-center" style={{ width: 36, flexShrink: 0 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: isCurrent ? 16 : 14,
+                  background: isCurrent ? '#f59e0b' : isDone ? '#10b981' : '#f3f4f6',
+                  border: isCurrent ? '2.5px solid #fcd34d' : isDone ? '2.5px solid #6ee7b7' : '2.5px solid #e5e7eb',
+                  boxShadow: isCurrent ? '0 0 0 3px rgba(245,158,11,0.15)' : isDone ? '0 0 0 3px rgba(16,185,129,0.1)' : 'none',
+                  color: isPending ? '#9ca3af' : '#fff',
+                  fontWeight: 700,
+                  transition: 'all 0.3s',
+                  flexShrink: 0,
+                }}>
+                  {isPending ? (idx + 1) : (isDone && !isCurrent ? '✓' : step.icon)}
+                </div>
+                {!isLast && (
+                  <div style={{
+                    width: 3, flex: 1, minHeight: 24,
+                    background: idx < currentIdx ? '#10b981' : '#e5e7eb',
+                    margin: '3px 0', borderRadius: 2,
+                  }} />
+                )}
+              </div>
+
+              {/* Text */}
+              <div style={{ flex: 1, paddingBottom: isLast ? 0 : 16 }}>
+                <p style={{
+                  fontWeight: 700, fontSize: 13,
+                  color: isPending ? '#9ca3af' : '#111827',
+                  marginBottom: 1,
+                }}>
+                  {step.label}
+                  {isCurrent && (
+                    <span style={{
+                      marginLeft: 8, fontSize: 10, fontWeight: 700,
+                      background: '#fef3c7', color: '#92400e',
+                      padding: '1px 7px', borderRadius: 20,
+                    }}>বর্তমান</span>
+                  )}
+                </p>
+                <p style={{ fontSize: 11, color: isPending ? '#d1d5db' : '#6b7280' }}>
+                  {isPending ? 'অপেক্ষমান' : step.sub}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-600 border-gray-200' };
   return (
@@ -23,6 +123,7 @@ function StatusBadge({ status }) {
   );
 }
 
+// ─── Order Card ───────────────────────────────────────────────────────────────
 function OrderCard({ order, onExpand, expanded, isNew }) {
   const items = Array.isArray(order.items) ? order.items : [];
   const date = new Date(order.created_at);
@@ -33,7 +134,7 @@ function OrderCard({ order, onExpand, expanded, isNew }) {
     <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 ${
       isNew ? 'border-green-300 ring-2 ring-green-200' : 'border-gray-100'
     }`}>
-      {/* নতুন badge */}
+      {/* New order banner */}
       {isNew && (
         <div className="bg-green-500 text-white text-xs font-bold text-center py-1.5 tracking-wide">
           ✓ অর্ডার সফলভাবে দেওয়া হয়েছে
@@ -46,7 +147,9 @@ function OrderCard({ order, onExpand, expanded, isNew }) {
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="text-xs font-mono text-gray-400">#{order.id?.slice(0, 8)?.toUpperCase()}</span>
             <StatusBadge status={order.status || 'pending'} />
-            {isNew && <span className="text-xs bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">নতুন</span>}
+            {isNew && (
+              <span className="text-xs bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">নতুন</span>
+            )}
           </div>
           <p className="font-semibold text-gray-800 text-sm truncate">{order.shop_name || 'অজানা দোকান'}</p>
           <p className="text-xs text-gray-400 mt-0.5">{dateStr} · {timeStr}</p>
@@ -57,7 +160,7 @@ function OrderCard({ order, onExpand, expanded, isNew }) {
         </div>
       </div>
 
-      {/* Item preview */}
+      {/* Item preview tags */}
       {items.length > 0 && (
         <div className="px-4 pb-2">
           <div className="flex gap-1.5 flex-wrap">
@@ -86,11 +189,18 @@ function OrderCard({ order, onExpand, expanded, isNew }) {
       {/* Expanded details */}
       {expanded && (
         <div className="border-t border-gray-100 bg-gray-50 p-4 space-y-3">
+
+          {/* 🆕 Tracking Timeline */}
+          <TrackingTimeline status={order.status || 'pending'} />
+
+          {/* Items list */}
           <div className="space-y-2">
             {items.map((item, idx) => (
               <div key={idx} className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-md flex items-center justify-center text-xs font-bold">{item.qty}</span>
+                  <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-md flex items-center justify-center text-xs font-bold">
+                    {item.qty}
+                  </span>
                   <span className="text-gray-700">{item.name}</span>
                   {item.unit && <span className="text-xs text-gray-400">({item.unit})</span>}
                 </div>
@@ -99,6 +209,7 @@ function OrderCard({ order, onExpand, expanded, isNew }) {
             ))}
           </div>
 
+          {/* Price summary */}
           <div className="border-t border-gray-200 pt-3 space-y-1.5">
             <div className="flex justify-between text-sm text-gray-500">
               <span>পণ্যের মূল্য</span>
@@ -119,6 +230,7 @@ function OrderCard({ order, onExpand, expanded, isNew }) {
   );
 }
 
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 animate-pulse space-y-3">
@@ -141,6 +253,7 @@ function SkeletonCard() {
   );
 }
 
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -160,11 +273,10 @@ export default function OrdersPage() {
       setLoading(false);
     }
 
-    // নতুন order ID check করো
     const nid = localStorage.getItem('new_order_id');
     if (nid) {
       setNewOrderId(nid);
-      setExpandedId(nid); // auto expand করো
+      setExpandedId(nid);
       localStorage.removeItem('new_order_id');
     }
   }, []);
@@ -247,6 +359,7 @@ export default function OrdersPage() {
           {user && <p className="text-sm text-gray-500 mt-0.5">{user.shop_name || user.phone}</p>}
         </div>
 
+        {/* Filter buttons */}
         <div className="flex gap-2 flex-wrap mb-5">
           {statusFilters.map((s) => {
             const cfg = STATUS_CONFIG[s];
@@ -280,7 +393,9 @@ export default function OrdersPage() {
           <div className="text-center py-16 text-red-500">
             <div className="text-5xl mb-3">⚠️</div>
             <p>{error}</p>
-            <button onClick={() => fetchOrders(user.id)} className="mt-4 text-sm text-indigo-600 underline">আবার চেষ্টা করুন</button>
+            <button onClick={() => fetchOrders(user.id)} className="mt-4 text-sm text-indigo-600 underline">
+              আবার চেষ্টা করুন
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-24 text-gray-400">
