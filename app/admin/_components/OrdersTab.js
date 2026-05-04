@@ -1,13 +1,292 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { SUPABASE_URL, headers, STATUS_OPTIONS, s } from './constants';
 
+// ─── Timeline Config ──────────────────────────────────────────────────────────
+const TIMELINE_STEPS = [
+  { value: 'pending',    label: 'অর্ডার দেওয়া হয়েছে', icon: '📋', step: 1 },
+  { value: 'confirmed', label: 'প্রক্রিয়াধীন',         icon: '⚙️', step: 2 },
+  { value: 'shipped',   label: 'মাল পাঠানো হয়েছে',    icon: '🚚', step: 3 },
+  { value: 'delivered', label: 'ডেলিভারি সম্পন্ন',    icon: '✅', step: 4 },
+];
+const STEP_ORDER = ['pending', 'confirmed', 'shipped', 'delivered'];
+
+function getStepIndex(status) {
+  const idx = STEP_ORDER.indexOf(status);
+  return idx === -1 ? 0 : idx;
+}
+
+// ─── Tracking Timeline Modal ──────────────────────────────────────────────────
+function TrackingModal({ order, onClose, onUpdateStatus, isUpdating }) {
+  const items = Array.isArray(order.items) ? order.items : [];
+  const userInfo = order.users || {};
+  const currentStepIdx = getStepIndex(order.status);
+  const phone = userInfo.phone || order.phone || '';
+  const address = order.address || order.delivery_address || '';
+
+  const storageKey = `tracking_notes_${order.id}`;
+  const savedNotes = (() => {
+    try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { return {}; }
+  })();
+
+  const [notes, setNotes] = useState(savedNotes);
+  const [editingNote, setEditingNote] = useState(null);
+  const [noteInput, setNoteInput] = useState('');
+
+  const saveNote = (stepValue) => {
+    const updated = { ...notes, [stepValue]: noteInput.trim() };
+    setNotes(updated);
+    localStorage.setItem(storageKey, JSON.stringify(updated));
+    setEditingNote(null);
+    setNoteInput('');
+  };
+
+  const formatDateTime = (iso) => {
+    if (!iso) return null;
+    return new Date(iso).toLocaleString('bn-BD', {
+      day: 'numeric', month: 'long', year: 'numeric',
+      hour: 'numeric', minute: '2-digit',
+    });
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 10000,
+      background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '16px',
+    }} onClick={onClose}>
+      <div style={{
+        background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '520px',
+        maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+        fontFamily: 'Hind Siliguri, sans-serif',
+      }} onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{
+          background: 'linear-gradient(135deg, #1e1b4b 0%, #3730a3 100%)',
+          borderRadius: '20px 20px 0 0', padding: '20px 24px', color: '#fff',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>
+                অর্ডার #{order.id?.slice(0, 8)?.toUpperCase()}
+              </div>
+              <div style={{ fontSize: '18px', fontWeight: '700' }}>
+                {order.shop_name || userInfo.shop_name || 'অজানা'}
+              </div>
+              <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>
+                {formatDateTime(order.created_at)} · {items.length} টি পণ্য · ৳{Number(order.total || 0).toLocaleString()}
+              </div>
+            </div>
+            <button onClick={onClose} style={{
+              background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff',
+              width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer',
+              fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>✕</button>
+          </div>
+
+          {(() => {
+            const cfg = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];
+            return (
+              <div style={{
+                display: 'inline-block', marginTop: '12px',
+                background: cfg.bg, color: cfg.color,
+                padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700',
+              }}>{cfg.label}</div>
+            );
+          })()}
+        </div>
+
+        <div style={{ padding: '24px' }}>
+
+          {/* ── Timeline ── */}
+          <div style={{ marginBottom: '24px' }}>
+            {TIMELINE_STEPS.map((step, idx) => {
+              const isDone = idx <= currentStepIdx;
+              const isCurrent = idx === currentStepIdx;
+              const isPending = idx > currentStepIdx;
+              const isLast = idx === TIMELINE_STEPS.length - 1;
+              const noteText = notes[step.value] || '';
+              const isEditingThis = editingNote === step.value;
+
+              return (
+                <div key={step.value} style={{ display: 'flex', gap: '16px' }}>
+                  {/* Icon + connector line */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '40px', flexShrink: 0 }}>
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '50%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: isCurrent ? '18px' : '16px',
+                      background: isCurrent ? '#f59e0b' : isDone ? '#10b981' : '#e5e7eb',
+                      border: isCurrent ? '3px solid #fcd34d' : isDone ? '3px solid #6ee7b7' : '3px solid #e5e7eb',
+                      boxShadow: isCurrent ? '0 0 0 4px rgba(245,158,11,0.15)' : isDone ? '0 0 0 4px rgba(16,185,129,0.1)' : 'none',
+                      transition: 'all 0.3s',
+                      color: isPending ? '#9ca3af' : '#fff',
+                      fontWeight: '700',
+                    }}>
+                      {isPending ? step.step : (isDone && !isCurrent ? '✓' : step.icon)}
+                    </div>
+                    {!isLast && (
+                      <div style={{
+                        width: '3px', flex: 1, minHeight: '32px',
+                        background: idx < currentStepIdx ? '#10b981' : '#e5e7eb',
+                        margin: '4px 0', borderRadius: '2px',
+                      }} />
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div style={{ flex: 1, paddingBottom: isLast ? 0 : '16px' }}>
+                    <div style={{ fontWeight: '700', fontSize: '14px', color: isPending ? '#9ca3af' : '#111827' }}>
+                      {step.label}
+                    </div>
+
+                    {isDone && (
+                      <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+                        {formatDateTime(isCurrent ? (order.updated_at || order.created_at) : order.created_at)}
+                      </div>
+                    )}
+                    {isPending && (
+                      <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>অপেক্ষমান</div>
+                    )}
+
+                    {/* Note display */}
+                    {noteText && !isEditingThis && (
+                      <div style={{
+                        marginTop: '8px', background: '#f9fafb', border: '1px solid #e5e7eb',
+                        borderRadius: '8px', padding: '8px 10px', fontSize: '12px', color: '#374151',
+                      }}>
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', display: 'block', marginBottom: '2px' }}>Admin নোট</span>
+                        {noteText}
+                        {isDone && (
+                          <button onClick={() => { setEditingNote(step.value); setNoteInput(noteText); }}
+                            style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'Hind Siliguri, sans-serif' }}>
+                            ✏️ সম্পাদনা
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Note editor */}
+                    {isEditingThis && (
+                      <div style={{ marginTop: '8px' }}>
+                        <textarea
+                          value={noteInput}
+                          onChange={e => setNoteInput(e.target.value)}
+                          placeholder="নোট লিখুন..."
+                          rows={2}
+                          style={{
+                            width: '100%', borderRadius: '8px', border: '1.5px solid #6366f1',
+                            padding: '8px', fontSize: '12px', fontFamily: 'Hind Siliguri, sans-serif',
+                            resize: 'none', outline: 'none', boxSizing: 'border-box',
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                          <button onClick={() => saveNote(step.value)} style={{
+                            fontSize: '11px', padding: '4px 10px', borderRadius: '6px',
+                            background: '#1e1b4b', color: '#fff', border: 'none', cursor: 'pointer',
+                            fontFamily: 'Hind Siliguri, sans-serif',
+                          }}>সংরক্ষণ</button>
+                          <button onClick={() => setEditingNote(null)} style={{
+                            fontSize: '11px', padding: '4px 10px', borderRadius: '6px',
+                            background: '#e5e7eb', color: '#374151', border: 'none', cursor: 'pointer',
+                            fontFamily: 'Hind Siliguri, sans-serif',
+                          }}>বাতিল</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Add note button */}
+                    {isDone && !noteText && !isEditingThis && (
+                      <button onClick={() => { setEditingNote(step.value); setNoteInput(''); }}
+                        style={{
+                          marginTop: '6px', fontSize: '11px', color: '#6366f1',
+                          background: 'none', border: '1px dashed #c7d2fe', borderRadius: '6px',
+                          cursor: 'pointer', padding: '3px 8px', fontFamily: 'Hind Siliguri, sans-serif',
+                        }}>
+                        + নোট যোগ করুন
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Status Update Buttons ── */}
+          <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginBottom: '20px' }}>
+            <div style={{ fontSize: '12px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
+              স্ট্যাটাস আপডেট করুন
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {TIMELINE_STEPS.map(step => {
+                const isCurrent = order.status === step.value;
+                return (
+                  <button key={step.value}
+                    disabled={isCurrent || isUpdating}
+                    onClick={() => onUpdateStatus(order.id, step.value, order.shop_name || order.users?.shop_name)}
+                    style={{
+                      padding: '7px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
+                      border: isCurrent ? '2px solid #1e1b4b' : '2px solid #e5e7eb',
+                      background: isCurrent ? '#1e1b4b' : '#fff',
+                      color: isCurrent ? '#fff' : '#374151',
+                      cursor: isCurrent || isUpdating ? 'default' : 'pointer',
+                      opacity: isUpdating && !isCurrent ? 0.5 : 1,
+                      fontFamily: 'Hind Siliguri, sans-serif', transition: 'all 0.2s',
+                    }}>
+                    {step.icon} {step.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Order Items ── */}
+          <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
+              পণ্য তালিকা
+            </div>
+            {items.map((item, idx) => (
+              <div key={idx} style={{
+                display: 'flex', justifyContent: 'space-between', fontSize: '13px',
+                padding: '6px 0', borderBottom: idx < items.length - 1 ? '1px solid #e5e7eb' : 'none',
+              }}>
+                <span style={{ color: '#374151' }}>{item.name} × {item.qty || item.quantity || 1}</span>
+                <span style={{ fontWeight: '700', color: '#1e1b4b' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '700', paddingTop: '10px', marginTop: '4px', borderTop: '2px solid #1e1b4b' }}>
+              <span>সর্বমোট</span>
+              <span style={{ color: '#1e1b4b' }}>৳{Number(order.total || 0).toLocaleString()}</span>
+            </div>
+          </div>
+
+          {(phone || address) && (
+            <div style={{ marginTop: '12px', fontSize: '12px', color: '#6b7280' }}>
+              {phone && <div>📞 {phone}</div>}
+              {address && <div style={{ marginTop: '2px' }}>📍 {address}</div>}
+            </div>
+          )}
+          {order.note && (
+            <div style={{ marginTop: '10px', fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>
+              📝 নোট: {order.note}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main OrdersTab ───────────────────────────────────────────────────────────
 export default function OrdersTab() {
   const [orders, setOrders] = useState([]);
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [toast, setToast] = useState(null); // { message, type }
+  const [toast, setToast] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
+  const [trackingOrder, setTrackingOrder] = useState(null);
 
   useEffect(() => {
     loadOrders();
@@ -39,6 +318,10 @@ export default function OrdersTab() {
         const statusCfg = STATUS_OPTIONS.find(st => st.value === status);
         showToast(`✅ "${shopName || 'অর্ডার'}" → ${statusCfg?.label || status}`, 'success');
         await loadOrders();
+        // Keep modal in sync
+        if (trackingOrder?.id === id) {
+          setTrackingOrder(prev => ({ ...prev, status }));
+        }
       } else {
         showToast('❌ আপডেট ব্যর্থ হয়েছে, আবার চেষ্টা করুন', 'error');
       }
@@ -98,7 +381,6 @@ export default function OrdersTab() {
             <div style="margin-top:6px"><span class="status-badge">${statusCfg.label}</span></div>
           </div>
         </div>
-
         <div class="section">
           <div class="info-grid">
             <div class="info-box">
@@ -115,7 +397,6 @@ export default function OrdersTab() {
             </div>
           </div>
         </div>
-
         <div class="section">
           <div class="section-title">পণ্য তালিকা</div>
           <table>
@@ -136,9 +417,7 @@ export default function OrdersTab() {
             </tbody>
           </table>
         </div>
-
         ${o.note ? `<div class="section"><div class="section-title">নোট</div><p style="font-size:13px;color:#6b7280;font-style:italic">📝 ${o.note}</p></div>` : ''}
-
         <div class="footer">পাইকারি বাজার · ধন্যবাদ আপনার অর্ডারের জন্য</div>
       </body>
       </html>
@@ -155,7 +434,7 @@ export default function OrdersTab() {
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Toast Notification */}
+      {/* Toast */}
       {toast && (
         <div style={{
           position: 'fixed', top: '20px', right: '20px', zIndex: 9999,
@@ -171,11 +450,22 @@ export default function OrdersTab() {
         </div>
       )}
 
+      {/* Tracking Modal */}
+      {trackingOrder && (
+        <TrackingModal
+          order={trackingOrder}
+          onClose={() => setTrackingOrder(null)}
+          onUpdateStatus={updateOrderStatus}
+          isUpdating={updatingId === trackingOrder.id}
+        />
+      )}
+
       <style>{`
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
       `}</style>
 
-      <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '20px', color: '#1e1b4b' }}>
+      <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '20px', color: '#1e1b4b', fontFamily: 'Hind Siliguri, sans-serif' }}>
         অর্ডার ব্যবস্থাপনা ({orders.length})
       </h2>
 
@@ -198,8 +488,11 @@ export default function OrdersTab() {
         })}
       </div>
 
+      {/* Orders List */}
       <div style={{ ...s.card, padding: '8px', background: '#f9fafb' }}>
-        {filteredOrders.length === 0 && <p style={{ color: '#6b7280', fontSize: '13px' }}>কোনো অর্ডার নেই</p>}
+        {filteredOrders.length === 0 && (
+          <p style={{ color: '#6b7280', fontSize: '13px', fontFamily: 'Hind Siliguri, sans-serif' }}>কোনো অর্ডার নেই</p>
+        )}
         {filteredOrders.map(o => {
           const items = Array.isArray(o.items) ? o.items : [];
           const date = new Date(o.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -211,53 +504,52 @@ export default function OrdersTab() {
           const isUpdating = updatingId === o.id;
 
           return (
-            <div key={o.id} style={{ border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '14px 16px', marginBottom: '12px', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <div key={o.id} style={{
+              border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '14px 16px',
+              marginBottom: '12px', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              fontFamily: 'Hind Siliguri, sans-serif',
+            }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#6b7280' }}>#{o.id?.slice(0, 8)?.toUpperCase()}</span>
                     <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '20px', background: statusCfg.bg, color: statusCfg.color }}>{statusCfg.label}</span>
                   </div>
-
-                  {/* Shop name */}
                   <div style={{ fontWeight: '700', fontSize: '14px', color: '#111827' }}>
                     {o.shop_name || userInfo.shop_name || 'অজানা'}
                   </div>
-
-                  {/* Phone */}
-                  {phone && (
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                      📞 {phone}
-                    </div>
-                  )}
-
-                  {/* Order summary */}
+                  {phone && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>📞 {phone}</div>}
                   <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
                     {date} · {items.length} টি পণ্য · ৳{Number(o.total || 0).toLocaleString()}
                   </div>
-
-                  {/* Delivery address */}
-                  {address && (
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>📍 {address}</div>
-                  )}
+                  {address && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>📍 {address}</div>}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                  {/* Status select */}
                   <select
                     value={o.status || 'pending'}
                     disabled={isUpdating}
                     onChange={e => updateOrderStatus(o.id, e.target.value, o.shop_name || userInfo.shop_name)}
                     style={{
                       padding: '6px 10px', borderRadius: '8px', border: '1.5px solid #e5e7eb',
-                      fontFamily: 'Hind Siliguri, sans-serif', fontSize: '13px', cursor: isUpdating ? 'wait' : 'pointer',
-                      outline: 'none', opacity: isUpdating ? 0.6 : 1,
+                      fontFamily: 'Hind Siliguri, sans-serif', fontSize: '13px',
+                      cursor: isUpdating ? 'wait' : 'pointer', outline: 'none', opacity: isUpdating ? 0.6 : 1,
                     }}>
                     {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                   </select>
 
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    {/* Invoice button */}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {/* 🆕 Tracking Button */}
+                    <button
+                      onClick={() => setTrackingOrder(o)}
+                      style={{
+                        fontSize: '12px', color: '#fff', background: '#f59e0b',
+                        border: 'none', cursor: 'pointer', padding: '5px 10px',
+                        borderRadius: '8px', fontFamily: 'Hind Siliguri, sans-serif', fontWeight: '600',
+                      }}>
+                      📦 ট্র্যাকিং
+                    </button>
+
                     <button
                       onClick={() => printInvoice(o)}
                       style={{
@@ -268,7 +560,6 @@ export default function OrdersTab() {
                       🧾 ইনভয়েস
                     </button>
 
-                    {/* Expand toggle */}
                     <button
                       onClick={() => setExpandedOrder(isExpanded ? null : o.id)}
                       style={{ fontSize: '12px', color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -280,22 +571,18 @@ export default function OrdersTab() {
 
               {isExpanded && (
                 <div style={{ marginTop: '12px', background: '#eef0f5', borderRadius: '10px', padding: '12px' }}>
-                  {/* Buyer info */}
                   <div style={{ marginBottom: '10px', padding: '8px', background: '#fff', borderRadius: '8px', border: '1px solid #f3f4f6' }}>
                     <div style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>ক্রেতার তথ্য</div>
                     <div style={{ fontSize: '13px', fontWeight: '600', color: '#111' }}>{o.shop_name || userInfo.shop_name || 'অজানা'}</div>
-                    {(userInfo.name && userInfo.name !== o.shop_name) && (
-                      <div style={{ fontSize: '12px', color: '#6b7280' }}>👤 {userInfo.name}</div>
-                    )}
+                    {(userInfo.name && userInfo.name !== o.shop_name) && <div style={{ fontSize: '12px', color: '#6b7280' }}>👤 {userInfo.name}</div>}
                     {phone && <div style={{ fontSize: '12px', color: '#6b7280' }}>📞 {phone}</div>}
                     {address && <div style={{ fontSize: '12px', color: '#6b7280' }}>📍 {address}</div>}
                     {o.delivery_type && <div style={{ fontSize: '12px', color: '#6b7280' }}>🚚 {o.delivery_type}</div>}
                   </div>
 
-                  {/* Items */}
                   {items.map((item, idx) => (
                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '6px 0', borderBottom: idx < items.length - 1 ? '1px solid #e5e7eb' : 'none', color: '#111827' }}>
-                      <span style={{ fontWeight: '500', color: '#111827' }}>{item.name} × {item.qty || item.quantity || 1}</span>
+                      <span style={{ fontWeight: '500' }}>{item.name} × {item.qty || item.quantity || 1}</span>
                       <span style={{ fontWeight: '700', color: '#1e1b4b' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
                     </div>
                   ))}
@@ -304,9 +591,7 @@ export default function OrdersTab() {
                     <span>মোট</span><span style={{ color: '#1e1b4b' }}>৳{Number(o.total || 0).toLocaleString()}</span>
                   </div>
 
-                  {o.note && (
-                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>📝 নোট: {o.note}</div>
-                  )}
+                  {o.note && <div style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>📝 নোট: {o.note}</div>}
                 </div>
               )}
             </div>
