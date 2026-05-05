@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function FeaturesSection() {
   const cardsRef = useRef([]);
+  const router = useRouter();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -19,36 +21,24 @@ export default function FeaturesSection() {
     return () => observer.disconnect();
   }, []);
 
-  const features = [
+  const cards = [
     {
-      icon: '🛒',
-      title: 'Easy Ordering',
-      desc: 'Order thousands of products in just a few clicks from verified wholesalers.',
+      icon: '🏢',
+      title: 'About Us',
+      desc: 'Learn more about our platform and mission.',
+      href: '/about',
     },
     {
-      icon: '💰',
-      title: 'Best Prices',
-      desc: 'Buy directly from wholesalers — no middlemen, no hidden charges.',
-    },
-    {
-      icon: '📦',
-      title: 'Order Tracking',
-      desc: 'Track your orders in real-time from dispatch to doorstep delivery.',
-    },
-    {
-      icon: '🚚',
-      title: 'Fast Delivery',
-      desc: 'Choose from Standard, Express, Scheduled, or Self Pickup options.',
-    },
-    {
-      icon: '🧾',
-      title: 'Invoice & Reports',
-      desc: 'Download or print professional invoices for every order instantly.',
+      icon: '📄',
+      title: 'Terms & Conditions',
+      desc: 'Read our terms of service before using the platform.',
+      href: '/terms',
     },
     {
       icon: '🔒',
-      title: 'Secure & Trusted',
-      desc: 'Your data and transactions are always safe and encrypted.',
+      title: 'Privacy Policy',
+      desc: 'Understand how we collect and protect your data.',
+      href: '/privacy',
     },
   ];
 
@@ -57,95 +47,50 @@ export default function FeaturesSection() {
       <style>{`
         .feature-card {
           opacity: 0;
-          transform: translateY(24px);
+          transform: translateY(20px);
           transition: opacity 0.5s ease, transform 0.5s ease;
+          cursor: pointer;
         }
         .feature-card.visible {
           opacity: 1;
           transform: translateY(0);
         }
+        .feature-card:hover {
+          border-color: #e8a020 !important;
+        }
       `}</style>
 
-      <div style={{
-        background: '#f8fafc',
-        padding: '60px 20px',
-      }}>
-        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-
-          {/* Section Header */}
-          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <p style={{
-              fontSize: '12px',
-              fontWeight: '600',
-              letterSpacing: '1.5px',
-              color: '#e8a020',
-              textTransform: 'uppercase',
-              marginBottom: '8px',
-            }}>
-              Why Choose Us
-            </p>
-            <h2 style={{
-              fontSize: 'clamp(22px, 4vw, 32px)',
-              fontWeight: '800',
-              color: '#0f172a',
-              margin: '0',
-              lineHeight: '1.3',
-            }}>
-              Everything your business needs
-            </h2>
-            <p style={{
-              fontSize: '14px',
-              color: '#64748b',
-              marginTop: '10px',
-            }}>
-              A complete wholesale platform built for Bangladeshi retailers
-            </p>
-          </div>
-
-          {/* Cards Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '16px',
-          }}>
-            {features.map((item, i) => (
-              <div
-                key={i}
-                ref={(el) => (cardsRef.current[i] = el)}
-                className="feature-card"
-                style={{
-                  background: '#ffffff',
-                  borderRadius: '16px',
-                  padding: '24px 20px',
-                  border: '1px solid #e2e8f0',
-                  transitionDelay: `${i * 0.08}s`,
-                }}
-              >
-                <div style={{
-                  fontSize: '24px',
-                  marginBottom: '14px',
-                }}>
-                  {item.icon}
-                </div>
-                <div style={{
-                  fontSize: '15px',
-                  fontWeight: '700',
-                  color: '#0f172a',
-                  marginBottom: '8px',
-                }}>
-                  {item.title}
-                </div>
-                <div style={{
-                  fontSize: '13px',
-                  color: '#64748b',
-                  lineHeight: '1.6',
-                }}>
-                  {item.desc}
-                </div>
+      <div style={{ background: '#f8fafc', padding: '50px 20px' }}>
+        <div style={{
+          maxWidth: '800px',
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '16px',
+        }}>
+          {cards.map((item, i) => (
+            <div
+              key={i}
+              ref={(el) => (cardsRef.current[i] = el)}
+              className="feature-card"
+              onClick={() => router.push(item.href)}
+              style={{
+                background: '#ffffff',
+                borderRadius: '14px',
+                padding: '20px 18px',
+                border: '1px solid #e2e8f0',
+                transitionDelay: `${i * 0.1}s`,
+              }}
+            >
+              <div style={{ fontSize: '22px', marginBottom: '10px' }}>{item.icon}</div>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', marginBottom: '6px' }}>
+                {item.title}
               </div>
-            ))}
-          </div>
-
+              <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.6' }}>
+                {item.desc}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </>
