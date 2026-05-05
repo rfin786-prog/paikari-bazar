@@ -30,12 +30,24 @@ const headers = {
 
 // ─── Tracking Timeline (customer read-only) ───────────────────────────────────
 function TrackingTimeline({ order }) {
+  // cancelled হলে timeline দেখাবে না
+  if (order.status === 'cancelled') {
+    return (
+      <div style={{ marginTop: '16px', padding: '14px 16px', background: '#fee2e2', borderRadius: '12px', border: '1px solid #fca5a5' }}>
+        <div style={{ fontSize: '13px', fontWeight: '700', color: '#991b1b' }}>❌ এই অর্ডারটি বাতিল করা হয়েছে</div>
+      </div>
+    );
+  }
+
+  // processing → confirmed হিসেবে দেখাও
   const status = order.status === 'processing' ? 'confirmed' : order.status;
   const currentStepIdx = STEP_ORDER.indexOf(status);
 
-  const notes = (() => {
-    try { return JSON.parse(localStorage.getItem(`tracking_notes_${order.id}`) || '{}'); } catch { return {}; }
-  })();
+  // DB থেকে tracking_history নাও
+  const trackingHistory = Array.isArray(order.tracking_history) ? order.tracking_history : [];
+
+  const getHistoryEntry = (stepValue) =>
+    trackingHistory.find(h => h.status === stepValue) || null;
 
   const formatDateTime = (iso) => {
     if (!iso) return null;
@@ -55,7 +67,17 @@ function TrackingTimeline({ order }) {
         const isCurrent = idx === currentStepIdx;
         const isPending = idx > currentStepIdx;
         const isLast = idx === TIMELINE_STEPS.length - 1;
-        const noteText = notes[step.value] || '';
+
+        // DB tracking_history থেকে এই step-এর data নাও
+        const histEntry = getHistoryEntry(step.value);
+        const noteText = histEntry?.note || '';
+
+        // সঠিক time: history থেকে → না পেলে created_at (pending-এর জন্য)
+        const displayTime = histEntry?.time
+          ? histEntry.time
+          : idx === 0
+            ? order.created_at
+            : null;
 
         return (
           <div key={step.value} style={{ display: 'flex', gap: '14px' }}>
@@ -87,9 +109,10 @@ function TrackingTimeline({ order }) {
               <div style={{ fontWeight: '700', fontSize: '14px', color: isPending ? '#9ca3af' : '#111827' }}>
                 {step.label}
               </div>
-              {isDone && (
+
+              {isDone && displayTime && (
                 <div style={{ fontSize: '11px', color: isCurrent ? '#f59e0b' : '#10b981', marginTop: '2px', fontWeight: '600' }}>
-                  📅 {formatDateTime(isCurrent ? (order.updated_at || order.created_at) : order.created_at)}
+                  📅 {formatDateTime(displayTime)}
                 </div>
               )}
               {isPending && (
@@ -98,7 +121,8 @@ function TrackingTimeline({ order }) {
               {isDone && (
                 <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>{step.sub}</div>
               )}
-              {/* Admin note — read only */}
+
+              {/* Admin note — DB থেকে, read only */}
               {noteText && (
                 <div style={{
                   marginTop: '8px', background: '#fff', border: '1px solid #e5e7eb',
@@ -203,7 +227,7 @@ export default function Dashboard() {
 
   const logout = () => {
     localStorage.removeItem('user');
-    localStorage.removeItem('paikari_cart');
+    localStorage.removeItem('cart');
     router.push('/login');
   };
 
@@ -410,7 +434,7 @@ export default function Dashboard() {
                       </div>
                     )}
 
-                    {/* Tracking Timeline */}
+                    {/* Tracking Timeline — DB থেকে data */}
                     {isExpanded && <TrackingTimeline order={order} />}
                   </div>
                 );
