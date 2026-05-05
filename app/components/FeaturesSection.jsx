@@ -9,111 +9,145 @@ export default function FeaturesSection() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.style.opacity = 1;
-            entry.target.style.transform = 'translateY(0)';
+            entry.target.classList.add('visible');
           }
         });
       },
       { threshold: 0.2 }
     );
-
     cardsRef.current.forEach((el) => el && observer.observe(el));
-
     return () => observer.disconnect();
   }, []);
 
   const features = [
     {
       icon: '🛒',
-      title: 'সহজ অর্ডার',
-      desc: 'মাত্র কয়েক ক্লিকে হাজার হাজার পণ্য অর্ডার করুন',
-      color: '#f59e0b',
+      title: 'Easy Ordering',
+      desc: 'Order thousands of products in just a few clicks from verified wholesalers.',
     },
     {
       icon: '💰',
-      title: 'সেরা দাম',
-      desc: 'সরাসরি পাইকার থেকে কিনুন, মধ্যস্বত্বভোগী নেই',
-      color: '#22c55e',
+      title: 'Best Prices',
+      desc: 'Buy directly from wholesalers — no middlemen, no hidden charges.',
     },
     {
-      icon: '📊',
-      title: 'অর্ডার ট্র্যাকিং',
-      desc: 'রিয়েল-টাইম আপনার অর্ডারের অবস্থা জানুন',
-      color: '#3b82f6',
+      icon: '📦',
+      title: 'Order Tracking',
+      desc: 'Track your orders in real-time from dispatch to doorstep delivery.',
+    },
+    {
+      icon: '🚚',
+      title: 'Fast Delivery',
+      desc: 'Choose from Standard, Express, Scheduled, or Self Pickup options.',
+    },
+    {
+      icon: '🧾',
+      title: 'Invoice & Reports',
+      desc: 'Download or print professional invoices for every order instantly.',
+    },
+    {
+      icon: '🔒',
+      title: 'Secure & Trusted',
+      desc: 'Your data and transactions are always safe and encrypted.',
     },
   ];
 
   return (
-    <div style={{
-      background: '#f8fafc',
-      padding: '40px 12px',
-    }}>
+    <>
+      <style>{`
+        .feature-card {
+          opacity: 0;
+          transform: translateY(24px);
+          transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .feature-card.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      `}</style>
 
       <div style={{
-        display: 'flex',
-        gap: '14px',
-        overflowX: 'auto',
-        scrollSnapType: 'x mandatory',
-        WebkitOverflowScrolling: 'touch',
-        paddingBottom: '10px',
+        background: '#f8fafc',
+        padding: '60px 20px',
       }}>
-        {features.map((item, i) => (
-          <div
-            key={i}
-            ref={(el) => (cardsRef.current[i] = el)}
-            style={{
-              flex: '0 0 75%',
-              maxWidth: '220px',
-              scrollSnapAlign: 'center',
-              background: '#fff',
-              borderRadius: '22px',
-              padding: '20px 16px',
-              textAlign: 'center',
-              boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
 
-              // animation initial
-              opacity: 0,
-              transform: 'translateY(30px)',
-              transition: `all 0.6s ease ${i * 0.15}s`,
-            }}
-          >
-
-            <div style={{
-              fontSize: '30px',
-              marginBottom: '12px',
-            }}>
-              {item.icon}
-            </div>
-
-            <div style={{
-              fontSize: '15px',
-              fontWeight: '700',
-              marginBottom: '8px',
-              color: '#0f172a',
-            }}>
-              {item.title}
-            </div>
-
-            <div style={{
+          {/* Section Header */}
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <p style={{
               fontSize: '12px',
-              color: '#64748b',
-              lineHeight: '1.5',
+              fontWeight: '600',
+              letterSpacing: '1.5px',
+              color: '#e8a020',
+              textTransform: 'uppercase',
+              marginBottom: '8px',
             }}>
-              {item.desc}
-            </div>
-
-            <div style={{
-              width: '6px',
-              height: '6px',
-              background: item.color,
-              borderRadius: '50%',
-              margin: '12px auto 0',
-              opacity: 0.6,
-            }} />
+              Why Choose Us
+            </p>
+            <h2 style={{
+              fontSize: 'clamp(22px, 4vw, 32px)',
+              fontWeight: '800',
+              color: '#0f172a',
+              margin: '0',
+              lineHeight: '1.3',
+            }}>
+              Everything your business needs
+            </h2>
+            <p style={{
+              fontSize: '14px',
+              color: '#64748b',
+              marginTop: '10px',
+            }}>
+              A complete wholesale platform built for Bangladeshi retailers
+            </p>
           </div>
-        ))}
-      </div>
 
-    </div>
+          {/* Cards Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: '16px',
+          }}>
+            {features.map((item, i) => (
+              <div
+                key={i}
+                ref={(el) => (cardsRef.current[i] = el)}
+                className="feature-card"
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '16px',
+                  padding: '24px 20px',
+                  border: '1px solid #e2e8f0',
+                  transitionDelay: `${i * 0.08}s`,
+                }}
+              >
+                <div style={{
+                  fontSize: '24px',
+                  marginBottom: '14px',
+                }}>
+                  {item.icon}
+                </div>
+                <div style={{
+                  fontSize: '15px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  marginBottom: '8px',
+                }}>
+                  {item.title}
+                </div>
+                <div style={{
+                  fontSize: '13px',
+                  color: '#64748b',
+                  lineHeight: '1.6',
+                }}>
+                  {item.desc}
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </div>
+    </>
   );
 }
