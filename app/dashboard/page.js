@@ -400,6 +400,14 @@ export default function Dashboard() {
                             <span className="status-dot" style={{ background: st.dot }}></span>
                             {st.label}
                           </span>
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', fontSize: '11px', fontWeight: '700',
+                            padding: '3px 10px', borderRadius: '20px', marginLeft: '4px',
+                            background: order.payment_status === 'paid' ? '#d1fae5' : '#fee2e2',
+                            color: order.payment_status === 'paid' ? '#065f46' : '#991b1b',
+                          }}>
+                            {order.payment_status === 'paid' ? '✅ PAID' : '⚠️ DUE'}
+                          </span>
                         </div>
                         <div className="order-date">{date}</div>
                         <div style={{ fontSize: '12px', color: '#9ca3af' }}>{items.length} টি পণ্য</div>
