@@ -402,16 +402,10 @@ export default function Dashboard() {
                           </span>
                         </div>
                         <div className="order-date">{date}</div>
-                        <div>
-                          {items.slice(0, 3).map((item, i) => (
-                            <span key={i} className="item-tag">{item.emoji || ''} {item.name} × {item.qty || item.quantity || 1}</span>
-                          ))}
-                          {items.length > 3 && <span className="item-tag" style={{ color: '#6b7280' }}>+{items.length - 3} আরও</span>}
-                        </div>
+                        <div style={{ fontSize: '12px', color: '#9ca3af' }}>{items.length} টি পণ্য</div>
                       </div>
                       <div style={{ flexShrink: 0, textAlign: 'right' }}>
                         <div className="order-amount">৳{Number(order.total || 0).toLocaleString()}</div>
-                        <div className="order-count">{items.length} টি পণ্য</div>
                       </div>
                     </div>
 
@@ -421,14 +415,28 @@ export default function Dashboard() {
 
                     {isExpanded && (
                       <div className="order-detail">
-                        {items.map((item, i) => (
-                          <div key={i} className="detail-row">
-                            <span>{item.emoji || ''} {item.name} × {item.qty || item.quantity || 1}</span>
-                            <span style={{ fontWeight: '700', color: '#0f2442' }}>৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
-                          </div>
-                        ))}
+                        {/* Table header */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px', padding: '6px 0 8px', borderBottom: '2px solid #e5e7eb', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Item</span>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>Unit Price</span>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center' }}>Qty</span>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>Amount</span>
+                        </div>
+                        {/* Table rows */}
+                        {items.map((item, i) => {
+                          const qty = item.qty || item.quantity || 1;
+                          const total = item.price * qty;
+                          return (
+                            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px', padding: '7px 0', borderBottom: i < items.length - 1 ? '1px dashed #f0f0f0' : 'none', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: '#374151' }}>{item.emoji || ''} {item.name}</span>
+                              <span style={{ fontSize: '13px', color: '#6b7280', textAlign: 'right' }}>৳{Number(item.price).toLocaleString()}</span>
+                              <span style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', background: '#f3f4f6', borderRadius: '6px', padding: '2px 8px' }}>×{qty}</span>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f2442', textAlign: 'right' }}>৳{total.toLocaleString()}</span>
+                            </div>
+                          );
+                        })}
                         <div className="detail-total">
-                          <span>মোট</span>
+                          <span>Total</span>
                           <span>৳{Number(order.total || 0).toLocaleString()}</span>
                         </div>
                       </div>
