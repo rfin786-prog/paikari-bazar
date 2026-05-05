@@ -16,29 +16,32 @@ function getStepIndex(status) {
   return idx === -1 ? 0 : idx;
 }
 
+// ─── tracking_history helpers ─────────────────────────────────────────────────
+// tracking_history is an array of { status, note, time } objects in DB
+function getHistoryEntry(trackingHistory, stepValue) {
+  if (!Array.isArray(trackingHistory)) return null;
+  return trackingHistory.find(h => h.status === stepValue) || null;
+}
+
 // ─── Tracking Timeline Modal ──────────────────────────────────────────────────
-function TrackingModal({ order, onClose, onUpdateStatus, isUpdating }) {
+function TrackingModal({ order, onClose, onUpdateStatus, onSaveNote, isUpdating }) {
   const items = Array.isArray(order.items) ? order.items : [];
   const userInfo = order.users || {};
   const currentStepIdx = getStepIndex(order.status);
   const phone = userInfo.phone || order.phone || '';
   const address = order.address || order.delivery_address || '';
+  const trackingHistory = Array.isArray(order.tracking_history) ? order.tracking_history : [];
 
-  const storageKey = `tracking_notes_${order.id}`;
-  const savedNotes = (() => {
-    try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { return {}; }
-  })();
-
-  const [notes, setNotes] = useState(savedNotes);
   const [editingNote, setEditingNote] = useState(null);
   const [noteInput, setNoteInput] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
 
-  const saveNote = (stepValue) => {
-    const updated = { ...notes, [stepValue]: noteInput.trim() };
-    setNotes(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
+  const saveNote = async (stepValue) => {
+    setSavingNote(true);
+    await onSaveNote(order.id, stepValue, noteInput.trim(), trackingHistory);
     setEditingNote(null);
     setNoteInput('');
+    setSavingNote(false);
   };
 
   const formatDateTime = (iso) => {
@@ -107,7 +110,21 @@ function TrackingModal({ order, onClose, onUpdateStatus, isUpdating }) {
               const isCurrent = idx === currentStepIdx;
               const isPending = idx > currentStepIdx;
               const isLast = idx === TIMELINE_STEPS.length - 1;
-              const noteText = notes[step.value] || '';
+
+              // Get note & time from DB tracking_history
+              const histEntry = getHistoryEntry(trackingHistory, step.value);
+              const noteText = histEntry?.note || '';
+              const stepTime = histEntry?.time || null;
+
+              // fallback: pending step uses created_at, current step uses updated_at
+              const displayTime = stepTime
+                ? stepTime
+                : isCurrent
+                  ? (order.updated_at || order.created_at)
+                  : idx === 0
+                    ? order.created_at
+                    : null;
+
               const isEditingThis = editingNote === step.value;
 
               return (
@@ -142,11 +159,9 @@ function TrackingModal({ order, onClose, onUpdateStatus, isUpdating }) {
                       {step.label}
                     </div>
 
-                    {isDone && (
+                    {isDone && displayTime && (
                       <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px', fontWeight: isCurrent ? '600' : '400' }}>
-                        {/* বর্তমান ধাপের জন্য updated_at এবং আগের ধাপের জন্য created_at */}
-                        {isCurrent ? 'আপডেট: ' : 'সময়: '} 
-                        {formatDateTime(isCurrent ? (order.updated_at || order.created_at) : order.created_at)}
+                        📅 {formatDateTime(displayTime)}
                       </div>
                     )}
                     {isPending && (
@@ -185,11 +200,16 @@ function TrackingModal({ order, onClose, onUpdateStatus, isUpdating }) {
                           }}
                         />
                         <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
-                          <button onClick={() => saveNote(step.value)} style={{
-                            fontSize: '11px', padding: '4px 10px', borderRadius: '6px',
-                            background: '#1e1b4b', color: '#fff', border: 'none', cursor: 'pointer',
-                            fontFamily: 'Hind Siliguri, sans-serif',
-                          }}>সংরক্ষণ</button>
+                          <button
+                            onClick={() => saveNote(step.value)}
+                            disabled={savingNote}
+                            style={{
+                              fontSize: '11px', padding: '4px 10px', borderRadius: '6px',
+                              background: '#1e1b4b', color: '#fff', border: 'none', cursor: 'pointer',
+                              fontFamily: 'Hind Siliguri, sans-serif', opacity: savingNote ? 0.6 : 1,
+                            }}>
+                            {savingNote ? '⏳' : 'সংরক্ষণ'}
+                          </button>
                           <button onClick={() => setEditingNote(null)} style={{
                             fontSize: '11px', padding: '4px 10px', borderRadius: '6px',
                             background: '#e5e7eb', color: '#374151', border: 'none', cursor: 'pointer',
@@ -227,7 +247,7 @@ function TrackingModal({ order, onClose, onUpdateStatus, isUpdating }) {
                 return (
                   <button key={step.value}
                     disabled={isCurrent || isUpdating}
-                    onClick={() => onUpdateStatus(order.id, step.value, order.shop_name || order.users?.shop_name)}
+                    onClick={() => onUpdateStatus(order.id, step.value, order.shop_name || order.users?.shop_name, trackingHistory)}
                     style={{
                       padding: '7px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
                       border: isCurrent ? '2px solid #1e1b4b' : '2px solid #e5e7eb',
@@ -308,34 +328,81 @@ export default function OrdersTab() {
     setOrders(Array.isArray(data) ? data : []);
   };
 
-  const updateOrderStatus = async (id, status, shopName) => {
+  // ── Status update: tracking_history-তে নতুন entry push করে ──────────────────
+  const updateOrderStatus = async (id, status, shopName, currentHistory = []) => {
     setUpdatingId(id);
     const now = new Date().toISOString();
+
+    // আগের history রাখো, নতুন status entry যোগ করো (duplicate হলে replace করো)
+    const existingHistory = Array.isArray(currentHistory) ? currentHistory : [];
+    const filtered = existingHistory.filter(h => h.status !== status);
+    const newHistory = [...filtered, { status, note: '', time: now }];
+
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
         method: 'PATCH',
         headers,
-        body: JSON.stringify({ 
-            status: status,
-            updated_at: now // ডাটাবেজে আপডেট সময় পাঠানো হচ্ছে
+        body: JSON.stringify({
+          status,
+          updated_at: now,
+          tracking_history: newHistory,
         }),
       });
       if (res.ok || res.status === 204) {
         const statusCfg = STATUS_OPTIONS.find(st => st.value === status);
         showToast(`✅ "${shopName || 'অর্ডার'}" → ${statusCfg?.label || status}`, 'success');
         await loadOrders();
-        
-        // মডাল খোলা থাকলে সেটিকেও আপডেট করুন
+
+        // Modal খোলা থাকলে আপডেট করো
         if (trackingOrder?.id === id) {
-          setTrackingOrder(prev => ({ ...prev, status, updated_at: now }));
+          setTrackingOrder(prev => ({ ...prev, status, updated_at: now, tracking_history: newHistory }));
         }
       } else {
-        showToast('❌ আপডেট ব্যর্থ হয়েছে, আবার চেষ্টা করুন', 'error');
+        showToast('❌ আপডেট ব্যর্থ হয়েছে', 'error');
       }
-    } catch (e) {
+    } catch {
       showToast('❌ নেটওয়ার্ক সমস্যা', 'error');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  // ── Note save: tracking_history-এর ঐ step-এর note আপডেট করো ─────────────────
+  const saveTrackingNote = async (orderId, stepValue, noteText, currentHistory = []) => {
+    const existingHistory = Array.isArray(currentHistory) ? currentHistory : [];
+
+    // ঐ step-এর entry আছে কিনা চেক করো
+    const hasEntry = existingHistory.some(h => h.status === stepValue);
+    let newHistory;
+
+    if (hasEntry) {
+      // আছে → note আপডেট করো, time ঠিক রাখো
+      newHistory = existingHistory.map(h =>
+        h.status === stepValue ? { ...h, note: noteText } : h
+      );
+    } else {
+      // নেই → নতুন entry (note আছে কিন্তু time নেই, কারণ manually নোট দিচ্ছে)
+      newHistory = [...existingHistory, { status: stepValue, note: noteText, time: null }];
+    }
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ tracking_history: newHistory }),
+      });
+      if (res.ok || res.status === 204) {
+        showToast('✅ নোট সংরক্ষিত হয়েছে', 'success');
+        await loadOrders();
+        // Modal আপডেট করো
+        if (trackingOrder?.id === orderId) {
+          setTrackingOrder(prev => ({ ...prev, tracking_history: newHistory }));
+        }
+      } else {
+        showToast('❌ নোট সেভ ব্যর্থ হয়েছে', 'error');
+      }
+    } catch {
+      showToast('❌ নেটওয়ার্ক সমস্যা', 'error');
     }
   };
 
@@ -463,6 +530,7 @@ export default function OrdersTab() {
           order={trackingOrder}
           onClose={() => setTrackingOrder(null)}
           onUpdateStatus={updateOrderStatus}
+          onSaveNote={saveTrackingNote}
           isUpdating={updatingId === trackingOrder.id}
         />
       )}
@@ -509,6 +577,7 @@ export default function OrdersTab() {
           const phone = userInfo.phone || o.phone || '';
           const address = o.address || o.delivery_address || '';
           const isUpdating = updatingId === o.id;
+          const currentHistory = Array.isArray(o.tracking_history) ? o.tracking_history : [];
 
           return (
             <div key={o.id} style={{
@@ -536,7 +605,7 @@ export default function OrdersTab() {
                   <select
                     value={o.status || 'pending'}
                     disabled={isUpdating}
-                    onChange={e => updateOrderStatus(o.id, e.target.value, o.shop_name || userInfo.shop_name)}
+                    onChange={e => updateOrderStatus(o.id, e.target.value, o.shop_name || userInfo.shop_name, currentHistory)}
                     style={{
                       padding: '6px 10px', borderRadius: '8px', border: '1.5px solid #e5e7eb',
                       fontFamily: 'Hind Siliguri, sans-serif', fontSize: '13px',
