@@ -406,6 +406,29 @@ export default function OrdersTab() {
     }
   };
 
+  // ── Payment status toggle ─────────────────────────────────────────────────────
+  const togglePaymentStatus = async (id, currentPaymentStatus, shopName) => {
+    const newStatus = currentPaymentStatus === 'paid' ? 'due' : 'paid';
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ payment_status: newStatus }),
+      });
+      if (res.ok || res.status === 204) {
+        showToast(`✅ "${shopName}" → Payment ${newStatus.toUpperCase()}`, 'success');
+        await loadOrders();
+        if (trackingOrder?.id === id) {
+          setTrackingOrder(prev => ({ ...prev, payment_status: newStatus }));
+        }
+      } else {
+        showToast('❌ আপডেট ব্যর্থ হয়েছে', 'error');
+      }
+    } catch {
+      showToast('❌ নেটওয়ার্ক সমস্যা', 'error');
+    }
+  };
+
   const printInvoice = (o) => {
     const items = Array.isArray(o.items) ? o.items : [];
     const date = new Date(o.created_at).toLocaleDateString('bn-BD', {
@@ -417,82 +440,114 @@ export default function OrdersTab() {
     const buyerName = userInfo.name || o.shop_name || 'অজানা';
     const address = o.address || o.delivery_address || '';
 
+    const isPaid = o.payment_status === 'paid';
     const html = `
       <!DOCTYPE html>
       <html lang="bn">
       <head>
         <meta charset="UTF-8"/>
-        <title>ইনভয়েস #${o.id?.slice(0,8)?.toUpperCase()}</title>
+        <title>Invoice #${o.id?.slice(0,8)?.toUpperCase()}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Hind Siliguri', sans-serif; color: #111; padding: 32px; max-width: 600px; margin: auto; }
-          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 2px solid #1e1b4b; padding-bottom: 16px; }
-          .brand { font-size: 24px; font-weight: 700; color: #1e1b4b; }
-          .brand span { display: block; font-size: 12px; font-weight: 400; color: #6b7280; }
-          .invoice-meta { text-align: right; font-size: 12px; color: #6b7280; }
-          .invoice-meta strong { display: block; font-size: 16px; color: #111; margin-bottom: 4px; }
-          .section { margin-bottom: 20px; }
-          .section-title { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-          .info-box { background: #f9fafb; border-radius: 8px; padding: 12px; }
-          .info-box p { font-size: 13px; margin-bottom: 4px; }
-          .info-box strong { font-size: 14px; }
-          table { width: 100%; border-collapse: collapse; }
-          th { background: #1e1b4b; color: #fff; padding: 8px 12px; font-size: 12px; text-align: left; }
-          td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
-          .total-row td { font-weight: 700; font-size: 15px; border-top: 2px solid #1e1b4b; border-bottom: none; }
-          .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background: ${statusCfg.bg}; color: ${statusCfg.color}; }
-          .footer { margin-top: 32px; text-align: center; font-size: 11px; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 16px; }
+          body { font-family: 'Hind Siliguri', sans-serif; color: #111; padding: 36px; max-width: 640px; margin: auto; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 3px solid #1e1b4b; }
+          .brand-name { font-size: 26px; font-weight: 800; color: #1e1b4b; letter-spacing: -0.5px; }
+          .brand-sub { font-size: 11px; font-weight: 400; color: #9ca3af; margin-top: 2px; }
+          .invoice-meta { text-align: right; }
+          .invoice-title { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
+          .invoice-num { font-size: 20px; font-weight: 800; color: #1e1b4b; margin: 4px 0; }
+          .invoice-date { font-size: 12px; color: #6b7280; }
+          .badges { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
+          .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+          .badge-order { background: ${statusCfg.bg}; color: ${statusCfg.color}; }
+          .badge-paid { background: #d1fae5; color: #065f46; }
+          .badge-due { background: #fee2e2; color: #991b1b; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+          .info-box { background: #f9fafb; border-radius: 10px; padding: 14px; border: 1px solid #f3f4f6; }
+          .info-label { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+          .info-box strong { font-size: 14px; color: #111; display: block; margin-bottom: 4px; }
+          .info-box p { font-size: 12px; color: #6b7280; margin-top: 3px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+          thead tr { background: #1e1b4b; }
+          th { color: #fff; padding: 10px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
+          th:last-child, th:nth-child(2), th:nth-child(3) { text-align: right; }
+          td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+          td:last-child, td:nth-child(2), td:nth-child(3) { text-align: right; }
+          tbody tr:last-child td { border-bottom: none; }
+          .total-section { border-top: 2px solid #1e1b4b; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+          .total-label { font-size: 14px; font-weight: 700; color: #1e1b4b; }
+          .total-amount { font-size: 20px; font-weight: 800; color: #1e1b4b; }
+          .payment-box { margin-top: 20px; padding: 14px 16px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; background: ${isPaid ? '#f0fdf4' : '#fef2f2'}; border: 1.5px solid ${isPaid ? '#6ee7b7' : '#fca5a5'}; }
+          .payment-label { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+          .payment-status { font-size: 15px; font-weight: 800; color: ${isPaid ? '#065f46' : '#991b1b'}; }
+          .footer { margin-top: 28px; text-align: center; font-size: 11px; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 16px; }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="brand">পাইকারি বাজার <span>B2B পাইকারি প্ল্যাটফর্ম</span></div>
+          <div>
+            <div class="brand-name">পাইকারি বাজার</div>
+            <div class="brand-sub">B2B Wholesale Platform</div>
+          </div>
           <div class="invoice-meta">
-            <strong>ইনভয়েস #${o.id?.slice(0,8)?.toUpperCase()}</strong>
-            <div>${date}</div>
-            <div style="margin-top:6px"><span class="status-badge">${statusCfg.label}</span></div>
-          </div>
-        </div>
-        <div class="section">
-          <div class="info-grid">
-            <div class="info-box">
-              <div class="section-title">ক্রেতার তথ্য</div>
-              <strong>${buyerName}</strong>
-              ${phone ? `<p>📞 ${phone}</p>` : ''}
-              ${address ? `<p>📍 ${address}</p>` : ''}
-            </div>
-            <div class="info-box">
-              <div class="section-title">ডেলিভারি তথ্য</div>
-              ${address ? `<strong>${address}</strong>` : '<p style="color:#9ca3af">ঠিকানা দেওয়া হয়নি</p>'}
-              ${o.delivery_type ? `<p>🚚 ${o.delivery_type}</p>` : ''}
-              ${o.delivery_date ? `<p>📅 ${o.delivery_date}</p>` : ''}
+            <div class="invoice-title">Invoice</div>
+            <div class="invoice-num">#${o.id?.slice(0,8)?.toUpperCase()}</div>
+            <div class="invoice-date">${date}</div>
+            <div class="badges">
+              <span class="badge badge-order">${statusCfg.label}</span>
+              <span class="badge ${isPaid ? 'badge-paid' : 'badge-due'}">${isPaid ? '✅ PAID' : '⚠️ DUE'}</span>
             </div>
           </div>
         </div>
-        <div class="section">
-          <div class="section-title">পণ্য তালিকা</div>
-          <table>
-            <thead><tr><th>পণ্যের নাম</th><th>পরিমাণ</th><th>একক মূল্য</th><th>মোট</th></tr></thead>
-            <tbody>
-              ${items.map(item => `
-                <tr>
-                  <td>${item.name || ''}</td>
-                  <td>${item.qty || item.quantity || 1}</td>
-                  <td>৳${Number(item.price || 0).toLocaleString()}</td>
-                  <td>৳${Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</td>
-                </tr>
-              `).join('')}
-              <tr class="total-row">
-                <td colspan="3">সর্বমোট</td>
-                <td>৳${Number(o.total || 0).toLocaleString()}</td>
+
+        <div class="info-grid">
+          <div class="info-box">
+            <div class="info-label">Bill To</div>
+            <strong>${buyerName}</strong>
+            ${phone ? `<p>📞 ${phone}</p>` : ''}
+            ${address ? `<p>📍 ${address}</p>` : ''}
+          </div>
+          <div class="info-box">
+            <div class="info-label">Delivery Info</div>
+            ${address ? `<strong>${address}</strong>` : '<p style="color:#9ca3af">No address provided</p>'}
+            ${o.delivery_type ? `<p>🚚 ${o.delivery_type}</p>` : ''}
+            ${o.delivery_date ? `<p>📅 ${o.delivery_date}</p>` : ''}
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Unit Price</th>
+              <th>Qty</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(item => `
+              <tr>
+                <td>${item.name || ''}</td>
+                <td>৳${Number(item.price || 0).toLocaleString()}</td>
+                <td>${item.qty || item.quantity || 1}</td>
+                <td>৳${Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</td>
               </tr>
-            </tbody>
-          </table>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="total-section">
+          <span class="total-label">Total Amount</span>
+          <span class="total-amount">৳${Number(o.total || 0).toLocaleString()}</span>
         </div>
-        ${o.note ? `<div class="section"><div class="section-title">নোট</div><p style="font-size:13px;color:#6b7280;font-style:italic">📝 ${o.note}</p></div>` : ''}
-        <div class="footer">পাইকারি বাজার · ধন্যবাদ আপনার অর্ডারের জন্য</div>
+
+        <div class="payment-box">
+          <span class="payment-label">Payment Status</span>
+          <span class="payment-status">${isPaid ? '✅ PAID' : '⚠️ PAYMENT DUE'}</span>
+        </div>
+
+        ${o.note ? `<div style="margin-top:16px;font-size:12px;color:#6b7280;font-style:italic">📝 Note: ${o.note}</div>` : ''}
+        <div class="footer">পাইকারি বাজার · Thank you for your business</div>
       </body>
       </html>
     `;
@@ -578,10 +633,11 @@ export default function OrdersTab() {
           const address = o.address || o.delivery_address || '';
           const isUpdating = updatingId === o.id;
           const currentHistory = Array.isArray(o.tracking_history) ? o.tracking_history : [];
+          const isPaid = o.payment_status === 'paid';
 
           return (
             <div key={o.id} style={{
-              border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '14px 16px',
+              border: `1.5px solid ${isPaid ? '#6ee7b7' : '#e5e7eb'}`, borderRadius: '12px', padding: '14px 16px',
               marginBottom: '12px', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
               fontFamily: 'Hind Siliguri, sans-serif',
             }}>
@@ -590,6 +646,9 @@ export default function OrdersTab() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#6b7280' }}>#{o.id?.slice(0, 8)?.toUpperCase()}</span>
                     <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '20px', background: statusCfg.bg, color: statusCfg.color }}>{statusCfg.label}</span>
+                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px', background: isPaid ? '#d1fae5' : '#fee2e2', color: isPaid ? '#065f46' : '#991b1b' }}>
+                      {isPaid ? '✅ PAID' : '⚠️ DUE'}
+                    </span>
                   </div>
                   <div style={{ fontWeight: '700', fontSize: '14px', color: '#111827' }}>
                     {o.shop_name || userInfo.shop_name || 'অজানা'}
@@ -615,6 +674,18 @@ export default function OrdersTab() {
                   </select>
 
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={() => togglePaymentStatus(o.id, o.payment_status, o.shop_name || userInfo.shop_name)}
+                      style={{
+                        fontSize: '12px', fontWeight: '700',
+                        color: isPaid ? '#065f46' : '#991b1b',
+                        background: isPaid ? '#d1fae5' : '#fee2e2',
+                        border: `1.5px solid ${isPaid ? '#6ee7b7' : '#fca5a5'}`,
+                        cursor: 'pointer', padding: '5px 10px',
+                        borderRadius: '8px', fontFamily: 'Hind Siliguri, sans-serif',
+                      }}>
+                      {isPaid ? '✅ PAID' : '⚠️ Mark Paid'}
+                    </button>
                     <button
                       onClick={() => setTrackingOrder(o)}
                       style={{
