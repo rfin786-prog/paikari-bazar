@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -10,34 +10,28 @@ export default function CheckoutPage() {
   const router = useRouter();
 
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState(null); // order data after success
-
-  const [editMode, setEditMode] = useState(false);
-  const [editedAddress, setEditedAddress] = useState({});
+  const [orderSuccess, setOrderSuccess] = useState(null);
 
   const [deliveryMethod, setDeliveryMethod] = useState('standard');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cod');
-  const [couponCode, setCouponCode] = useState('');
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponApplied, setCouponApplied] = useState(false);
   const [note, setNote] = useState('');
 
   const deliveryOptions = [
-    { id: 'standard', name: 'standard', info: '3-5 days', price: 60 },
-    { id: 'express', name: 'express', info: '1-2 days', price: 120 },
-    { id: 'scheduled', name: 'scheduled', info: 'pick date', price: 80 },
-    { id: 'pickup', name: 'pickup', info: 'from warehouse', price: 0 },
+    { id: 'standard', name: 'স্ট্যান্ডার্ড', info: '৩-৫ কার্যদিবস', price: 60 },
+    { id: 'express', name: 'এক্সপ্রেস', info: '১-২ কার্যদিবস', price: 120 },
+    { id: 'scheduled', name: 'নির্ধারিত তারিখ', info: 'তারিখ বেছে নিন', price: 80 },
+    { id: 'pickup', name: 'সেলফ পিকআপ', info: 'গুদাম থেকে নিন', price: 0 },
   ];
 
   const paymentOptions = [
-    { id: 'cod', icon: '💵', name: 'Cash on Delivery' },
-    { id: 'mobile', icon: '📱', name: 'Bkash / Nagad' },
-    { id: 'bank', icon: '🏦', name: 'Bank Transfer' },
+    { id: 'cod', icon: '💵', name: 'ক্যাশ অন ডেলিভারি' },
+    { id: 'mobile', icon: '📱', name: 'বিকাশ / নগদ' },
+    { id: 'bank', icon: '🏦', name: 'ব্যাংক ট্রান্সফার' },
+    { id: 'credit', icon: '📒', name: 'বাকি' },
   ];
 
   useEffect(() => {
@@ -45,14 +39,6 @@ export default function CheckoutPage() {
     if (!saved) { router.push('/login'); return; }
     const u = JSON.parse(saved);
     setUser(u);
-    setProfile(u);
-    setEditedAddress({
-      shop_name: u.shop_name || '',
-      phone: u.phone || '',
-      district: u.district || '',
-      thana: u.thana || '',
-      address: u.address || '',
-    });
     const cart = localStorage.getItem('paikari_cart');
     if (cart) setCartItems(JSON.parse(cart));
     setLoading(false);
@@ -60,29 +46,12 @@ export default function CheckoutPage() {
 
   const deliveryCost = deliveryOptions.find(d => d.id === deliveryMethod)?.price || 0;
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * (item.qty || item.quantity || 1), 0);
-  const grandTotal = Math.max(0, subtotal + deliveryCost - couponDiscount);
-
-  function applyCoupon() {
-    const code = couponCode.trim().toUpperCase();
-    if (code === 'PAIKA10') {
-      setCouponDiscount(Math.round(subtotal * 0.1));
-      setCouponApplied(true);
-    } else {
-      alert('Invalid coupon code.');
-      setCouponDiscount(0);
-      setCouponApplied(false);
-    }
-  }
-
-  function saveAddress() {
-    setProfile(prev => ({ ...prev, ...editedAddress }));
-    setEditMode(false);
-  }
+  const grandTotal = Math.max(0, subtotal + deliveryCost);
 
   async function placeOrder() {
-    if (cartItems.length === 0) { alert('Cart is empty.'); return; }
+    if (cartItems.length === 0) { alert('কার্টে কোনো পণ্য নেই।'); return; }
     if (deliveryMethod === 'scheduled' && !deliveryDate) {
-      alert('Please select a delivery date.'); return;
+      alert('অনুগ্রহ করে ডেলিভারি তারিখ বেছে নিন।'); return;
     }
     setPlacing(true);
     try {
@@ -102,11 +71,15 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           user_id: user.id,
-          shop_name: profile?.shop_name,
+          shop_name: user.shop_name,
           items: normalizedItems,
           subtotal,
           delivery: deliveryCost,
           total: grandTotal,
+          payment_method: paymentMethod,
+          delivery_method: deliveryMethod,
+          delivery_date: deliveryDate || null,
+          note: note || null,
           status: 'pending',
         }),
       });
@@ -115,93 +88,54 @@ export default function CheckoutPage() {
       if (!res.ok) throw new Error(data.message || 'Error');
 
       localStorage.removeItem('paikari_cart');
-      // নতুন order ID localStorage এ save করো যাতে orders page হাইলাইট করতে পারে
-      if (Array.isArray(data) && data[0]) {
-        localStorage.setItem('new_order_id', data[0].id);
-        setOrderSuccess(data[0]);
-      } else {
-        setOrderSuccess({ total: grandTotal, items: normalizedItems });
-      }
+      setOrderSuccess(Array.isArray(data) ? data[0] : data);
     } catch (err) {
       console.error(err);
-      alert('Order failed. Please try again.');
+      alert('অর্ডার দেওয়া যায়নি। আবার চেষ্টা করুন।');
     } finally {
       setPlacing(false);
     }
   }
 
-  // ── Success Screen ─────────────────────────────────────
+  const s = {
+    page: { background: '#0a1628', minHeight: '100vh', padding: '24px 16px 60px', fontFamily: 'Hind Siliguri, sans-serif' },
+    wrap: { maxWidth: '520px', margin: '0 auto' },
+    card: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '16px', marginBottom: '12px' },
+    label: { color: 'rgba(232,160,32,0.8)', fontSize: '10px', fontWeight: '700', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '12px', display: 'block' },
+    input: { width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', fontSize: '14px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'Hind Siliguri, sans-serif' },
+  };
+
+  // ── Success Screen ────────────────────────────────────
   if (orderSuccess) {
     return (
-      <div style={{
-        minHeight: '100vh', background: '#f9fafb',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '1rem', fontFamily: 'Hind Siliguri, sans-serif',
-      }}>
-        <div style={{
-          background: '#fff', borderRadius: '20px', padding: '2.5rem 2rem',
-          maxWidth: '420px', width: '100%', textAlign: 'center',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.08)',
-          border: '1px solid #E5E7EB',
-        }}>
-          {/* Animated checkmark */}
-          <div style={{
-            width: '80px', height: '80px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #1D9E75, #22c55e)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 1.5rem',
-            boxShadow: '0 8px 24px rgba(29,158,117,0.3)',
-            fontSize: '36px',
-          }}>✓</div>
-
-          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#111827', margin: '0 0 8px' }}>
-            অর্ডার সফল হয়েছে!
-          </h2>
-          <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 1.5rem', lineHeight: '1.6' }}>
-            আপনার অর্ডার গ্রহণ করা হয়েছে। শীঘ্রই আমরা আপনার সাথে যোগাযোগ করব।
+      <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '24px', padding: '2.5rem 2rem', maxWidth: '380px', width: '100%', textAlign: 'center' }}>
+          <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, #1D9E75, #22c55e)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', fontSize: '36px' }}>✓</div>
+          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#fff', margin: '0 0 8px' }}>অর্ডার সফল হয়েছে!</h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', margin: '0 0 1.5rem', lineHeight: '1.6' }}>
+            আপনার অর্ডার গ্রহণ করা হয়েছে। শীঘ্রই আমরা যোগাযোগ করব।
           </p>
-
-          {/* Order details */}
-          <div style={{
-            background: '#F9FAFB', borderRadius: '12px', padding: '1rem',
-            marginBottom: '1.5rem', textAlign: 'left',
-          }}>
+          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'left' }}>
             {orderSuccess.id && (
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', color: '#6B7280' }}>অর্ডার ID</span>
-                <span style={{ fontSize: '13px', fontWeight: '700', color: '#111827', fontFamily: 'monospace' }}>
-                  #{orderSuccess.id.slice(0, 8).toUpperCase()}
-                </span>
+                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>অর্ডার ID</span>
+                <span style={{ fontSize: '13px', fontWeight: '700', color: '#e8a020', fontFamily: 'monospace' }}>#{String(orderSuccess.id).slice(0, 8).toUpperCase()}</span>
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '13px', color: '#6B7280' }}>মোট পরিমাণ</span>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: '#1D9E75' }}>
-                ৳{Number(orderSuccess.total || grandTotal).toLocaleString()}
-              </span>
+              <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>মোট পরিমাণ</span>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: '#1D9E75' }}>৳{Number(orderSuccess.total || grandTotal).toLocaleString()}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '13px', color: '#6B7280' }}>স্ট্যাটাস</span>
-              <span style={{
-                fontSize: '12px', fontWeight: '600', color: '#92400e',
-                background: '#FEF3C7', padding: '2px 10px', borderRadius: '20px',
-              }}>অপেক্ষমান</span>
+              <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>স্ট্যাটাস</span>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: '#e8a020', background: 'rgba(232,160,32,0.15)', padding: '2px 10px', borderRadius: '20px' }}>অপেক্ষমান</span>
             </div>
           </div>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <Link href="/orders" style={{
-              display: 'block', background: '#1D9E75', color: '#fff',
-              padding: '13px', borderRadius: '12px', fontWeight: '700',
-              fontSize: '15px', textDecoration: 'none',
-            }}>
+            <Link href="/orders" style={{ display: 'block', background: 'linear-gradient(135deg, #e8a020, #f5c842)', color: '#0a1628', padding: '13px', borderRadius: '12px', fontWeight: '800', fontSize: '15px', textDecoration: 'none' }}>
               📦 আমার অর্ডার দেখুন
             </Link>
-            <Link href="/products" style={{
-              display: 'block', background: '#F3F4F6', color: '#374151',
-              padding: '13px', borderRadius: '12px', fontWeight: '600',
-              fontSize: '14px', textDecoration: 'none',
-            }}>
+            <Link href="/products" style={{ display: 'block', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', padding: '13px', borderRadius: '12px', fontWeight: '600', fontSize: '14px', textDecoration: 'none' }}>
               🛒 আরও কেনাকাটা করুন
             </Link>
           </div>
@@ -211,156 +145,118 @@ export default function CheckoutPage() {
   }
 
   if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-      <p style={{ color: '#6B7280', fontSize: '14px' }}>Loading…</p>
+    <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>লোড হচ্ছে...</p>
     </div>
   );
 
   return (
-    <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1rem 1rem 3rem', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid #E5E7EB' }}>
-        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#1D9E75', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '15px', fontWeight: '600' }}>P</div>
-        <div>
-          <h1 style={{ fontSize: '17px', fontWeight: '600', color: '#111827', margin: 0 }}>Paikari Bazar</h1>
-          <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>Order Checkout</p>
+    <div style={s.page}>
+      <div style={s.wrap}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg,#e8a020,#f5c842)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '800', color: '#0a1628' }}>প</div>
+          <div>
+            <div style={{ color: '#fff', fontSize: '16px', fontWeight: '700' }}>পাইকারি বাজার</div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>অর্ডার চেকআউট</div>
+          </div>
         </div>
-      </div>
 
-      {/* Delivery Address */}
-      <div style={cardStyle}>
-        <SectionTitle>Delivery Address</SectionTitle>
-        {!editMode ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <p style={{ fontSize: '15px', fontWeight: '600', color: '#111827', margin: '0 0 2px' }}>{profile?.shop_name || 'No shop name'}</p>
-              <p style={{ fontSize: '13px', color: '#6B7280', margin: '0 0 2px' }}>{profile?.phone}</p>
-              <p style={{ fontSize: '13px', color: '#6B7280', margin: 0, lineHeight: '1.5' }}>
-                {profile?.address}<br />{profile?.thana && `${profile.thana}, `}{profile?.district}
-              </p>
-            </div>
-            <button onClick={() => setEditMode(true)} style={editBtnStyle}>Edit</button>
+        {/* Delivery Address */}
+        <div style={s.card}>
+          <span style={s.label}>ডেলিভারি ঠিকানা</span>
+          <div style={{ color: '#fff', fontSize: '15px', fontWeight: '700', marginBottom: '4px' }}>{user?.shop_name || 'দোকানের নাম নেই'}</div>
+          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', marginBottom: '2px' }}>{user?.phone}</div>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', lineHeight: '1.5' }}>
+            {user?.address}{user?.thana ? `, ${user.thana}` : ''}{user?.district ? `, ${user.district}` : ''}
           </div>
-        ) : (
-          <div style={{ marginTop: '4px' }}>
-            <Field label="Shop Name"><input style={inputStyle} value={editedAddress.shop_name} onChange={e => setEditedAddress(p => ({ ...p, shop_name: e.target.value }))} /></Field>
-            <Field label="Phone"><input style={inputStyle} value={editedAddress.phone} onChange={e => setEditedAddress(p => ({ ...p, phone: e.target.value }))} /></Field>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <Field label="District">
-                <select style={inputStyle} value={editedAddress.district} onChange={e => setEditedAddress(p => ({ ...p, district: e.target.value }))}>
-                  {['Dhaka', 'Chittagong', 'Rajshahi', 'Sylhet', 'Khulna', 'Barisal', 'Mymensingh', 'Rangpur'].map(d => <option key={d}>{d}</option>)}
-                </select>
-              </Field>
-              <Field label="Thana"><input style={inputStyle} value={editedAddress.thana} onChange={e => setEditedAddress(p => ({ ...p, thana: e.target.value }))} /></Field>
-            </div>
-            <Field label="Full Address"><textarea style={{ ...inputStyle, height: '64px', resize: 'none' }} value={editedAddress.address} onChange={e => setEditedAddress(p => ({ ...p, address: e.target.value }))} /></Field>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-              <button onClick={saveAddress} style={{ ...greenBtnStyle, padding: '7px 16px', fontSize: '13px' }}>Save</button>
-              <button onClick={() => setEditMode(false)} style={{ padding: '7px 16px', fontSize: '13px', background: 'none', border: '1px solid #D1D5DB', borderRadius: '8px', cursor: 'pointer', color: '#6B7280' }}>Cancel</button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Delivery Method */}
-      <div style={cardStyle}>
-        <SectionTitle>Delivery Method</SectionTitle>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          {deliveryOptions.map(opt => (
-            <div key={opt.id} onClick={() => setDeliveryMethod(opt.id)}
-              style={{ border: deliveryMethod === opt.id ? '2px solid #1D9E75' : '1px solid #E5E7EB', borderRadius: '10px', padding: '10px 12px', cursor: 'pointer', background: deliveryMethod === opt.id ? '#F0FBF7' : 'transparent' }}>
-              <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: '0 0 2px' }}>{opt.name}</p>
-              <p style={{ fontSize: '11px', color: '#6B7280', margin: '0 0 4px' }}>{opt.info}</p>
-              <p style={{ fontSize: '12px', color: '#1D9E75', fontWeight: '600', margin: 0 }}>{opt.price === 0 ? 'Free' : `${opt.price} BDT`}</p>
-            </div>
-          ))}
         </div>
-        {deliveryMethod === 'scheduled' && (
-          <div style={{ marginTop: '10px' }}>
-            <Field label="Delivery Date">
-              <input type="date" style={inputStyle} value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} min={new Date().toISOString().split('T')[0]} />
-            </Field>
-          </div>
-        )}
-      </div>
 
-      {/* Order Summary */}
-      <div style={cardStyle}>
-        <SectionTitle>Order Summary</SectionTitle>
-        <div style={{ borderBottom: '1px solid #F3F4F6', marginBottom: '12px', paddingBottom: '12px' }}>
-          {cartItems.length === 0 ? (
-            <p style={{ fontSize: '13px', color: '#6B7280', textAlign: 'center', padding: '1rem 0' }}>Cart is empty</p>
-          ) : cartItems.map((item, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
-              <div>
-                <p style={{ fontSize: '13px', color: '#111827', margin: '0 0 1px' }}>{item.emoji} {item.name}</p>
-                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{item.qty || item.quantity} &times; {item.price.toLocaleString()} ৳</p>
+        {/* Delivery Method */}
+        <div style={s.card}>
+          <span style={s.label}>ডেলিভারি পদ্ধতি</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            {deliveryOptions.map(opt => {
+              const active = deliveryMethod === opt.id;
+              return (
+                <div key={opt.id} onClick={() => setDeliveryMethod(opt.id)} style={{ border: `${active ? '2px solid #e8a020' : '1px solid rgba(255,255,255,0.1)'}`, borderRadius: '10px', padding: '10px', cursor: 'pointer', background: active ? 'rgba(232,160,32,0.08)' : 'transparent', transition: 'all 0.15s' }}>
+                  <div style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '2px' }}>{opt.name}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', marginBottom: '4px' }}>{opt.info}</div>
+                  <div style={{ color: opt.price === 0 ? '#1D9E75' : '#e8a020', fontSize: '12px', fontWeight: '700' }}>{opt.price === 0 ? 'বিনামূল্যে' : `৳${opt.price}`}</div>
+                </div>
+              );
+            })}
+          </div>
+          {deliveryMethod === 'scheduled' && (
+            <div style={{ marginTop: '10px' }}>
+              <label style={{ ...s.label, marginBottom: '6px' }}>ডেলিভারি তারিখ</label>
+              <input type="date" style={s.input} value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} min={new Date().toISOString().split('T')[0]} />
+            </div>
+          )}
+        </div>
+
+        {/* Order Summary */}
+        <div style={s.card}>
+          <span style={s.label}>অর্ডার সারসংক্ষেপ</span>
+          <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', marginBottom: '12px' }}>
+            {cartItems.length === 0 ? (
+              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '13px', textAlign: 'center', padding: '1rem 0' }}>কার্টে কোনো পণ্য নেই</p>
+            ) : cartItems.map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
+                <div>
+                  <div style={{ color: '#fff', fontSize: '13px', marginBottom: '1px' }}>{item.name}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>{item.qty || item.quantity} x ৳{item.price.toLocaleString()}</div>
+                </div>
+                <div style={{ color: '#e8a020', fontSize: '13px', fontWeight: '700' }}>৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</div>
               </div>
-              <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{(item.price * (item.qty || item.quantity || 1)).toLocaleString()} ৳</p>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '3px 0', color: 'rgba(255,255,255,0.5)' }}>
+            <span>সাবটোটাল</span><span>৳{subtotal.toLocaleString()}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '3px 0', color: 'rgba(255,255,255,0.5)' }}>
+            <span>ডেলিভারি চার্জ</span><span>{deliveryCost === 0 ? 'বিনামূল্যে' : `৳${deliveryCost}`}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '800', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '8px' }}>
+            <span style={{ color: '#fff' }}>সর্বমোট</span>
+            <span style={{ color: '#e8a020' }}>৳{grandTotal.toLocaleString()}</span>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-          <input style={{ ...inputStyle, flex: 1 }} placeholder="কুপন কোড..." value={couponCode}
-            onChange={e => { setCouponCode(e.target.value); setCouponApplied(false); setCouponDiscount(0); }} disabled={couponApplied} />
-          <button onClick={applyCoupon} disabled={couponApplied}
-            style={{ padding: '8px 14px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap', color: couponApplied ? '#1D9E75' : '#374151' }}>
-            {couponApplied ? 'Applied ✓' : 'Apply'}
+
+        {/* Payment */}
+        <div style={s.card}>
+          <span style={s.label}>পেমেন্ট পদ্ধতি</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
+            {paymentOptions.map(opt => {
+              const active = paymentMethod === opt.id;
+              return (
+                <div key={opt.id} onClick={() => setPaymentMethod(opt.id)} style={{ border: `${active ? '2px solid #e8a020' : '1px solid rgba(255,255,255,0.1)'}`, borderRadius: '10px', padding: '12px', textAlign: 'center', cursor: 'pointer', background: active ? 'rgba(232,160,32,0.08)' : 'transparent', transition: 'all 0.15s' }}>
+                  <div style={{ fontSize: '22px', marginBottom: '6px' }}>{opt.icon}</div>
+                  <div style={{ color: active ? '#e8a020' : 'rgba(255,255,255,0.6)', fontSize: '12px', fontWeight: '700' }}>{opt.name}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <label style={{ ...s.label, marginBottom: '6px' }}>বিশেষ নোট (ঐচ্ছিক)</label>
+          <textarea
+            style={{ ...s.input, height: '70px', resize: 'none', marginBottom: '14px' }}
+            placeholder="ডেলিভারি বা অর্ডার সম্পর্কে কিছু জানাতে চাইলে লিখুন..."
+            value={note}
+            onChange={e => setNote(e.target.value)}
+          />
+
+          <button
+            onClick={placeOrder}
+            disabled={placing}
+            style={{ width: '100%', padding: '14px', background: placing ? 'rgba(232,160,32,0.4)' : 'linear-gradient(135deg,#e8a020,#f5c842)', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '800', color: '#0a1628', cursor: placing ? 'not-allowed' : 'pointer', fontFamily: 'Hind Siliguri, sans-serif', transition: 'all 0.2s' }}
+          >
+            {placing ? 'অর্ডার হচ্ছে...' : 'অর্ডার নিশ্চিত করুন →'}
           </button>
         </div>
-        <SummaryRow label="সাবটোটাল" value={`৳${subtotal.toLocaleString()}`} />
-        <SummaryRow label="ডেলিভারি" value={deliveryCost === 0 ? 'ফ্রি' : `৳${deliveryCost}`} />
-        {couponDiscount > 0 && <SummaryRow label="ছাড়" value={`- ৳${couponDiscount.toLocaleString()}`} green />}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: '600', color: '#111827', paddingTop: '10px', borderTop: '1px solid #F3F4F6', marginTop: '6px' }}>
-          <span>মোট</span><span>৳{grandTotal.toLocaleString()}</span>
-        </div>
-      </div>
 
-      {/* Payment */}
-      <div style={cardStyle}>
-        <SectionTitle>Payment</SectionTitle>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
-          {paymentOptions.map(opt => (
-            <div key={opt.id} onClick={() => setPaymentMethod(opt.id)}
-              style={{ border: paymentMethod === opt.id ? '2px solid #1D9E75' : '1px solid #E5E7EB', borderRadius: '10px', padding: '10px', textAlign: 'center', cursor: 'pointer', background: paymentMethod === opt.id ? '#F0FBF7' : 'transparent' }}>
-              <div style={{ fontSize: '18px', marginBottom: '4px' }}>{opt.icon}</div>
-              <p style={{ fontSize: '11px', fontWeight: '600', color: '#111827', margin: 0 }}>{opt.name}</p>
-            </div>
-          ))}
-        </div>
-        <Field label="বিশেষ নোট (ঐচ্ছিক)">
-          <textarea style={{ ...inputStyle, height: '60px', resize: 'none' }} placeholder="ডেলিভারি বা অর্ডার সম্পর্কে কিছু জানাতে চাইলে লিখুন..." value={note} onChange={e => setNote(e.target.value)} />
-        </Field>
-        <button onClick={placeOrder} disabled={placing}
-          style={{ ...greenBtnStyle, width: '100%', padding: '13px', fontSize: '15px', marginTop: '8px', opacity: placing ? 0.7 : 1 }}>
-          {placing ? 'অর্ডার হচ্ছে...' : 'অর্ডার নিশ্চিত করুন'}
-        </button>
       </div>
     </div>
   );
 }
-
-function SectionTitle({ children }) {
-  return <p style={{ fontSize: '12px', fontWeight: '500', color: '#6B7280', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{children}</p>;
-}
-
-function Field({ label, children }) {
-  return (
-    <div style={{ marginBottom: '8px' }}>
-      <label style={{ display: 'block', fontSize: '12px', color: '#6B7280', marginBottom: '3px' }}>{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function SummaryRow({ label, value, green }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '4px 0', color: green ? '#1D9E75' : '#6B7280' }}>
-      <span>{label}</span><span>{value}</span>
-    </div>
-  );
-}
-
-const cardStyle = { background: '#fff', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '12px' };
-const inputStyle = { width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', color: '#111827', background: '#fff', outline: 'none', boxSizing: 'border-box' };
-const editBtnStyle = { fontSize: '12px', color: '#1D9E75', border: '1px solid #1D9E75', padding: '5px 12px', borderRadius: '20px', cursor: 'pointer', background: 'none', whiteSpace: 'nowrap', flexShrink: 0 };
-const greenBtnStyle = { background: '#1D9E75', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer', display: 'block' };
