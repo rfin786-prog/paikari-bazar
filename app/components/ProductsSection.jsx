@@ -91,6 +91,10 @@ function ProductCard({ product, onAddToCart, cartItems }) {
     setTimeout(() => setAdded(false), 1500);
   };
 
+  const discount = product.mrp && product.mrp > product.price
+    ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+    : null;
+
   return (
     <div style={{
       background: 'rgba(255,255,255,0.06)', borderRadius: '16px',
@@ -107,9 +111,17 @@ function ProductCard({ product, onAddToCart, cartItems }) {
           position: 'absolute', top: '10px', left: '10px',
           background: '#1D9E75', color: '#fff',
           fontSize: '11px', fontWeight: '700',
-          padding: '2px 8px', borderRadius: '20px',
-          zIndex: 2,
+          padding: '2px 8px', borderRadius: '20px', zIndex: 2,
         }}>🛒 {inCart.qty}</div>
+      )}
+
+      {discount && (
+        <div style={{
+          position: 'absolute', top: '10px', right: '10px',
+          background: '#e8a020', color: '#412402',
+          fontSize: '10px', fontWeight: '800',
+          padding: '2px 7px', borderRadius: '20px', zIndex: 2,
+        }}>{discount}% ছাড়</div>
       )}
 
       {product.stock === 0 && (
@@ -159,6 +171,7 @@ function ProductCard({ product, onAddToCart, cartItems }) {
           fontSize: '13px', fontWeight: '700', cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
           fontFamily: 'Hind Siliguri, sans-serif',
           transition: 'all 0.2s',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
           background: product.stock === 0
             ? 'rgba(255,255,255,0.08)'
             : added
@@ -174,7 +187,51 @@ function ProductCard({ product, onAddToCart, cartItems }) {
           border: inCart && !added ? '1.5px solid #1D9E75' : '1.5px solid transparent',
         }}
       >
-        {product.stock === 0 ? 'স্টক নেই' : added ? '✓ যোগ হয়েছে!' : inCart ? `🛒 আছে (${inCart.qty})` : '🚛 মাল তুলুন'}
+        {product.stock === 0
+          ? 'স্টক নেই'
+          : added
+          ? '✓ যোগ হয়েছে!'
+          : inCart
+          ? `🛒 আছে (${inCart.qty})`
+          : <><span style={{ fontSize: '14px' }}>+</span> কার্টে যোগ করুন</>
+        }
+      </button>
+    </div>
+  );
+}
+
+// ── Floating Cart Bar ─────────────────────────────────────
+function FloatingCart({ cartItems, onOrder }) {
+  const totalQty = cartItems.reduce((s, i) => s + i.qty, 0);
+  const totalPrice = cartItems.reduce((s, i) => s + i.qty * Number(i.price), 0);
+
+  if (totalQty === 0) return null;
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: '20px', left: '50%',
+      transform: 'translateX(-50%)',
+      background: 'linear-gradient(135deg, #e8a020, #f5c842)',
+      borderRadius: '16px', padding: '14px 20px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      width: 'min(480px, calc(100vw - 32px))',
+      zIndex: 999, boxShadow: '0 8px 32px rgba(232,160,32,0.4)',
+    }}>
+      <div>
+        <p style={{ color: '#412402', fontSize: '12px', fontWeight: '600', margin: 0 }}>কার্টে {totalQty}টি</p>
+        <p style={{ color: '#412402', fontSize: '18px', fontWeight: '800', margin: 0 }}>মোট ৳{totalPrice.toLocaleString()}</p>
+      </div>
+      <button
+        onClick={onOrder}
+        style={{
+          background: '#0f2442', color: '#fff', border: 'none',
+          padding: '11px 20px', borderRadius: '12px',
+          fontSize: '14px', fontWeight: '700', cursor: 'pointer',
+          fontFamily: 'Hind Siliguri, sans-serif',
+          display: 'flex', alignItems: 'center', gap: '6px',
+        }}
+      >
+        অর্ডার করুন →
       </button>
     </div>
   );
@@ -242,7 +299,7 @@ export default function ProductsSection() {
   return (
     <div style={{
       background: '#0a1628',
-      padding: '48px clamp(16px, 5vw, 80px) 60px',
+      padding: '48px clamp(16px, 5vw, 80px) 100px',
       fontFamily: 'Hind Siliguri, sans-serif',
     }}>
       <style>{`
@@ -257,91 +314,14 @@ export default function ProductsSection() {
         @media (min-width: 1024px) {
           .product-grid { grid-template-columns: repeat(5, 1fr); }
         }
+        .cat-scroll::-webkit-scrollbar { display: none; }
       `}</style>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h2 style={{
-            color: '#fff', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: '800',
-            margin: '0 0 8px', fontFamily: 'Tiro Bangla, serif',
-          }}>
-            পাইকারি পণ্য
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '14px', margin: 0 }}>
-            সরাসরি সাপ্লায়ার থেকে সেরা দামে
-          </p>
-        </div>
-
-        {!loading && categories.length > 0 && (
-          <div style={{ marginBottom: '36px' }}>
-            <p style={{
-              color: 'rgba(255,255,255,0.4)', fontSize: '11px', fontWeight: '700',
-              letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '14px',
-            }}>
-              ক্যাটাগরি বেছে নিন
-            </p>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setSelectedCategory(null)}
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                  padding: 'clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 22px)',
-                  borderRadius: '16px', cursor: 'pointer',
-                  border: `2px solid ${!selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
-                  background: !selectedCategory ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
-                  transition: 'all 0.2s', minWidth: 'clamp(80px, 8vw, 110px)',
-                }}
-              >
-                <div style={{
-                  width: 'clamp(44px, 5vw, 64px)', height: 'clamp(44px, 5vw, 64px)',
-                  borderRadius: '14px',
-                  background: !selectedCategory ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 'clamp(20px, 2.5vw, 28px)',
-                }}>🏪</div>
-                <span style={{ color: !selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px, 1.2vw, 14px)', fontWeight: '700' }}>সব</span>
-                <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{products.length} টি</span>
-              </button>
-
-              {categories.map((cat, idx) => {
-                const count = products.filter(p => p.category_id === cat.id).length;
-                const isActive = selectedCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                      padding: 'clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 22px)',
-                      borderRadius: '16px', cursor: 'pointer',
-                      border: `2px solid ${isActive ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
-                      background: isActive ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
-                      transition: 'all 0.2s', minWidth: 'clamp(80px, 8vw, 110px)',
-                    }}
-                  >
-                    <div style={{
-                      width: 'clamp(44px, 5vw, 64px)', height: 'clamp(44px, 5vw, 64px)',
-                      borderRadius: '14px', overflow: 'hidden',
-                      background: isActive ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      {cat.image_url
-                        ? <img src={cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : <span style={{ fontSize: 'clamp(20px, 2.5vw, 28px)' }}>{CATEGORY_EMOJIS[idx % CATEGORY_EMOJIS.length]}</span>
-                      }
-                    </div>
-                    <span style={{ color: isActive ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px, 1.2vw, 14px)', fontWeight: '700', whiteSpace: 'nowrap' }}>{cat.name}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{count} টি</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
+        {/* Search + Count একসাথে */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px' }}>🔍</span>
+            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: 'rgba(255,255,255,0.4)' }}>🔍</span>
             <input
               placeholder="পণ্য খুঁজুন..."
               value={search}
@@ -361,19 +341,106 @@ export default function ProductsSection() {
               borderRadius: '10px', padding: '8px 14px',
               color: '#e8a020', fontSize: '13px', fontWeight: '600', whiteSpace: 'nowrap',
             }}>
-              {selectedCatName} — {filtered.length} টি পণ্য
+              {selectedCatName} — {filtered.length} টি
             </div>
           )}
         </div>
 
+        {/* Category horizontal scroll */}
+        {!loading && categories.length > 0 && (
+          <div
+            className="cat-scroll"
+            style={{
+              display: 'flex', gap: '10px',
+              overflowX: 'auto', paddingBottom: '8px',
+              marginBottom: '28px', scrollbarWidth: 'none',
+            }}
+          >
+            <button
+              onClick={() => setSelectedCategory(null)}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
+                padding: 'clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 22px)',
+                borderRadius: '16px', cursor: 'pointer',
+                border: `2px solid ${!selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
+                background: !selectedCategory ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
+                transition: 'all 0.2s', minWidth: 'clamp(80px, 8vw, 110px)', flexShrink: 0,
+              }}
+            >
+              <div style={{
+                width: 'clamp(44px, 5vw, 64px)', height: 'clamp(44px, 5vw, 64px)',
+                borderRadius: '14px',
+                background: !selectedCategory ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 'clamp(20px, 2.5vw, 28px)',
+              }}>🏪</div>
+              <span style={{ color: !selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px, 1.2vw, 14px)', fontWeight: '700' }}>সব</span>
+              <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{products.length} টি</span>
+            </button>
+
+            {categories.map((cat, idx) => {
+              const count = products.filter(p => p.category_id === cat.id).length;
+              const isActive = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
+                    padding: 'clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 22px)',
+                    borderRadius: '16px', cursor: 'pointer',
+                    border: `2px solid ${isActive ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
+                    background: isActive ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
+                    transition: 'all 0.2s', minWidth: 'clamp(80px, 8vw, 110px)', flexShrink: 0,
+                  }}
+                >
+                  <div style={{
+                    width: 'clamp(44px, 5vw, 64px)', height: 'clamp(44px, 5vw, 64px)',
+                    borderRadius: '14px', overflow: 'hidden',
+                    background: isActive ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {cat.image_url
+                      ? <img src={cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ fontSize: 'clamp(20px, 2.5vw, 28px)' }}>{CATEGORY_EMOJIS[idx % CATEGORY_EMOJIS.length]}</span>
+                    }
+                  </div>
+                  <span style={{ color: isActive ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px, 1.2vw, 14px)', fontWeight: '700', whiteSpace: 'nowrap' }}>{cat.name}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{count} টি</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Products */}
         {loading ? (
           <div className="product-grid">
             {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔍</div>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>কোনো পণ্য পাওয়া যায়নি</p>
+          <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+            <div style={{
+              width: '80px', height: '80px', borderRadius: '50%',
+              background: 'rgba(255,255,255,0.05)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '36px', margin: '0 auto 16px',
+            }}>🔍</div>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>কোনো পণ্য পাওয়া যায়নি</p>
+            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '13px' }}>অন্য কিছু দিয়ে খোঁজার চেষ্টা করুন</p>
+            {selectedCategory && (
+              <button
+                onClick={() => setSelectedCategory(null)}
+                style={{
+                  marginTop: '16px', background: 'rgba(232,160,32,0.12)',
+                  border: '1px solid rgba(232,160,32,0.3)', color: '#e8a020',
+                  padding: '8px 20px', borderRadius: '10px', fontSize: '13px',
+                  fontWeight: '600', cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif',
+                }}
+              >
+                সব পণ্য দেখুন
+              </button>
+            )}
           </div>
         ) : (
           <div className="product-grid">
@@ -387,9 +454,9 @@ export default function ProductsSection() {
             ))}
           </div>
         )}
-
       </div>
 
+      <FloatingCart cartItems={cartItems} onOrder={() => router.push('/cart')} />
       <ToastContainer toasts={toasts} />
     </div>
   );
