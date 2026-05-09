@@ -245,6 +245,19 @@ export default function ProductsSection() {
       padding: '48px clamp(16px, 5vw, 80px) 60px',
       fontFamily: 'Hind Siliguri, sans-serif',
     }}>
+      <style>{`
+        .product-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 14px;
+        }
+        @media (min-width: 640px) {
+          .product-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (min-width: 1024px) {
+          .product-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+      `}</style>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
@@ -354,11 +367,7 @@ export default function ProductsSection() {
         </div>
 
         {loading ? (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '14px',
-          }}>
+          <div className="product-grid">
             {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
@@ -367,11 +376,7 @@ export default function ProductsSection() {
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>কোনো পণ্য পাওয়া যায়নি</p>
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '14px',
-          }}>
+          <div className="product-grid">
             {filtered.map(product => (
               <ProductCard
                 key={product.id}
