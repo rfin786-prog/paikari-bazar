@@ -456,7 +456,7 @@ export default function ProductsSection() {
         )}
       </div>
 
-      <FloatingCart cartItems={cartItems} onOrder={() => router.push('/cart')} />
+      <FloatingCart cartItems={cartItems} onOrder={() => router.push('/checkout')} />
       <ToastContainer toasts={toasts} />
     </div>
   );
