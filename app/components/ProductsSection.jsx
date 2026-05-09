@@ -70,7 +70,7 @@ function SkeletonCard() {
       background: 'rgba(255,255,255,0.05)', borderRadius: '16px',
       padding: '14px', border: '1px solid rgba(255,255,255,0.08)',
     }}>
-      <div style={{ height: '110px', borderRadius: '10px', background: 'rgba(255,255,255,0.08)', marginBottom: '10px', animation: 'pulse 1.5s infinite' }} />
+      <div style={{ height: 'clamp(110px, 15vw, 180px)', borderRadius: '10px', background: 'rgba(255,255,255,0.08)', marginBottom: '10px', animation: 'pulse 1.5s infinite' }} />
       <div style={{ height: '12px', borderRadius: '6px', background: 'rgba(255,255,255,0.08)', marginBottom: '6px', width: '75%', animation: 'pulse 1.5s infinite' }} />
       <div style={{ height: '10px', borderRadius: '6px', background: 'rgba(255,255,255,0.06)', marginBottom: '10px', width: '50%', animation: 'pulse 1.5s infinite' }} />
       <div style={{ height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.08)', animation: 'pulse 1.5s infinite' }} />
@@ -131,7 +131,7 @@ function ProductCard({ product, onAddToCart, cartItems }) {
       )}
 
       <div style={{
-        width: '100%', height: '110px', borderRadius: '10px',
+        width: '100%', height: 'clamp(110px, 15vw, 180px)', borderRadius: '10px',
         overflow: 'hidden', background: 'rgba(255,255,255,0.06)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
@@ -240,12 +240,16 @@ export default function ProductsSection() {
   const CATEGORY_EMOJIS = ['🌾', '🫙', '🛒', '🫘', '🥛', '🧂', '🌶️', '🍬'];
 
   return (
-    <div style={{ background: '#0a1628', padding: '48px 16px 60px', fontFamily: 'Hind Siliguri, sans-serif' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+    <div style={{
+      background: '#0a1628',
+      padding: '48px clamp(16px, 5vw, 80px) 60px',
+      fontFamily: 'Hind Siliguri, sans-serif',
+    }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <h2 style={{
-            color: '#fff', fontSize: '28px', fontWeight: '800',
+            color: '#fff', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: '800',
             margin: '0 0 8px', fontFamily: 'Tiro Bangla, serif',
           }}>
             পাইকারি পণ্য
@@ -257,7 +261,10 @@ export default function ProductsSection() {
 
         {!loading && categories.length > 0 && (
           <div style={{ marginBottom: '36px' }}>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', fontWeight: '700', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '14px' }}>
+            <p style={{
+              color: 'rgba(255,255,255,0.4)', fontSize: '11px', fontWeight: '700',
+              letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '14px',
+            }}>
               ক্যাটাগরি বেছে নিন
             </p>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -265,18 +272,21 @@ export default function ProductsSection() {
                 onClick={() => setSelectedCategory(null)}
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                  padding: '14px 18px', borderRadius: '16px', cursor: 'pointer',
+                  padding: 'clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 22px)',
+                  borderRadius: '16px', cursor: 'pointer',
                   border: `2px solid ${!selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
                   background: !selectedCategory ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
-                  transition: 'all 0.2s', minWidth: '80px',
+                  transition: 'all 0.2s', minWidth: 'clamp(80px, 8vw, 110px)',
                 }}
               >
                 <div style={{
-                  width: '52px', height: '52px', borderRadius: '14px',
+                  width: 'clamp(44px, 5vw, 64px)', height: 'clamp(44px, 5vw, 64px)',
+                  borderRadius: '14px',
                   background: !selectedCategory ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 'clamp(20px, 2.5vw, 28px)',
                 }}>🏪</div>
-                <span style={{ color: !selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: '12px', fontWeight: '700' }}>সব</span>
+                <span style={{ color: !selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px, 1.2vw, 14px)', fontWeight: '700' }}>সব</span>
                 <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{products.length} টি</span>
               </button>
 
@@ -289,24 +299,25 @@ export default function ProductsSection() {
                     onClick={() => setSelectedCategory(cat.id)}
                     style={{
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                      padding: '14px 18px', borderRadius: '16px', cursor: 'pointer',
+                      padding: 'clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 22px)',
+                      borderRadius: '16px', cursor: 'pointer',
                       border: `2px solid ${isActive ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
                       background: isActive ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
-                      transition: 'all 0.2s', minWidth: '80px',
+                      transition: 'all 0.2s', minWidth: 'clamp(80px, 8vw, 110px)',
                     }}
                   >
                     <div style={{
-                      width: '52px', height: '52px', borderRadius: '14px',
-                      overflow: 'hidden',
+                      width: 'clamp(44px, 5vw, 64px)', height: 'clamp(44px, 5vw, 64px)',
+                      borderRadius: '14px', overflow: 'hidden',
                       background: isActive ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       {cat.image_url
                         ? <img src={cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : <span style={{ fontSize: '24px' }}>{CATEGORY_EMOJIS[idx % CATEGORY_EMOJIS.length]}</span>
+                        : <span style={{ fontSize: 'clamp(20px, 2.5vw, 28px)' }}>{CATEGORY_EMOJIS[idx % CATEGORY_EMOJIS.length]}</span>
                       }
                     </div>
-                    <span style={{ color: isActive ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: '12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{cat.name}</span>
+                    <span style={{ color: isActive ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px, 1.2vw, 14px)', fontWeight: '700', whiteSpace: 'nowrap' }}>{cat.name}</span>
                     <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{count} টি</span>
                   </button>
                 );
@@ -343,7 +354,11 @@ export default function ProductsSection() {
         </div>
 
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '14px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
+            gap: '14px',
+          }}>
             {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
@@ -352,7 +367,11 @@ export default function ProductsSection() {
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>কোনো পণ্য পাওয়া যায়নি</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '14px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
+            gap: '14px',
+          }}>
             {filtered.map(product => (
               <ProductCard
                 key={product.id}
