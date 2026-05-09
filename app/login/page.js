@@ -24,12 +24,15 @@ export default function LoginPage() {
 
   useEffect(() => {
     const text = 'Sareng';
-    let i = 0;
+    const chars = text.split('');
+    let index = 0;
     const timer = setTimeout(() => {
       const interval = setInterval(() => {
-        setTitleText(prev => prev + text[i]);
-        i++;
-        if (i >= text.length) {
+        if (index < chars.length) {
+          const char = chars[index];
+          setTitleText(prev => prev + char);
+          index++;
+        } else {
           clearInterval(interval);
           setShowDot(true);
         }
@@ -84,6 +87,36 @@ export default function LoginPage() {
     display: 'inline-block',
   };
 
+  const fieldWrapStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    background: '#161616',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '10px',
+    padding: '0 12px',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  };
+
+  const inputStyle = {
+    background: 'none',
+    border: 'none',
+    outline: 'none',
+    color: '#fff',
+    fontSize: '15px',
+    padding: '12px 0',
+    width: '100%',
+    fontFamily: 'inherit',
+  };
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: '11px',
+    color: 'rgba(255,255,255,0.4)',
+    marginBottom: '6px',
+    letterSpacing: '0.5px',
+    textTransform: 'uppercase',
+  };
+
   return (
     <>
       <style>{`
@@ -93,66 +126,37 @@ export default function LoginPage() {
         @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
         @keyframes spin { to{transform:rotate(360deg)} }
         .red-dot { display:inline-block; width:7px; height:7px; background:#ff3b3b; border-radius:50%; margin-left:3px; vertical-align:middle; margin-bottom:3px; animation:blink 1.2s ease-in-out infinite; }
-        .field-wrap:focus-within { border-color:#e8a020 !important; box-shadow:0 0 0 3px rgba(232,160,32,0.12) !important; }
+        .fw:focus-within { border-color:#e8a020 !important; box-shadow:0 0 0 3px rgba(232,160,32,0.12) !important; }
         .fade1{opacity:0;animation:fadeup 0.5s ease forwards 0.1s}
         .fade2{opacity:0;animation:fadeup 0.5s ease forwards 0.2s}
         .fade3{opacity:0;animation:fadeup 0.5s ease forwards 0.3s}
         .fade4{opacity:0;animation:fadeup 0.5s ease forwards 0.4s}
         .fade5{opacity:0;animation:fadeup 0.5s ease forwards 0.5s}
         .fade6{opacity:0;animation:fadeup 0.5s ease forwards 0.6s}
-        .shake-anim { animation:shake 0.4s ease; }
-        .spinner { width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto; }
-        input { -webkit-text-fill-color: #fff !important; }
+        .shake-anim{animation:shake 0.4s ease;}
+        .spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto;}
       `}</style>
 
-      <div style={{
-        minHeight: '100vh',
-        background: '#0a0a0a',
-        display: 'flex',
-        flexDirection: 'column',
-        fontFamily: "'Hind Siliguri', sans-serif",
-      }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', fontFamily: "'Hind Siliguri', sans-serif" }}>
 
         {/* MOBILE TOP BAR */}
         {isMobile && (
-          <div style={{
-            background: '#000',
-            padding: '20px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-          }}>
+          <div style={{ background: '#000', padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
               <span style={{ fontSize: '22px', fontWeight: '800', ...shimmerStyle }}>Sareng</span>
               <span className="red-dot" />
             </div>
-            <span
-              onClick={() => router.push('/')}
-              style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}
-            >
+            <span onClick={() => router.push('/')} style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}>
               ← হোমে যান
             </span>
           </div>
         )}
 
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-        }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
 
           {/* LEFT — desktop only */}
           {!isMobile && (
-            <div style={{
-              flex: '0 0 260px',
-              background: '#000',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              padding: '48px 36px',
-              borderRight: '1px solid rgba(255,255,255,0.06)',
-            }}>
+            <div style={{ flex: '0 0 260px', background: '#000', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 36px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
               <div onClick={() => router.push('/')} style={{ cursor: 'pointer', marginBottom: '12px' }}>
                 <span style={{ fontSize: '28px', fontWeight: '800', ...shimmerStyle }}>Sareng</span>
                 <span className="red-dot" />
@@ -163,23 +167,12 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* RIGHT — form */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: isMobile ? 'flex-start' : 'center',
-            justifyContent: 'center',
-            padding: isMobile ? '32px 24px' : '48px',
-          }}>
+          {/* FORM */}
+          <div style={{ flex: 1, display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'center', padding: isMobile ? '32px 24px' : '48px' }}>
             <div style={{ width: '100%', maxWidth: '320px' }}>
 
-              {/* Back — desktop only */}
               {!isMobile && (
-                <div
-                  className="fade1"
-                  onClick={() => router.push('/')}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.35)', fontSize: '12px', cursor: 'pointer', marginBottom: '32px' }}
-                >
+                <div className="fade1" onClick={() => router.push('/')} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.35)', fontSize: '12px', cursor: 'pointer', marginBottom: '32px' }}>
                   ← হোমে যান
                 </div>
               )}
@@ -192,10 +185,8 @@ export default function LoginPage() {
 
               {/* Phone */}
               <div className="fade3" style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                  ফোন নম্বর
-                </label>
-                <div className="field-wrap" style={{ display: 'flex', alignItems: 'center', background: '#161616', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '0 12px', transition: 'border-color 0.2s, box-shadow 0.2s' }}>
+                <label style={labelStyle}>ফোন নম্বর</label>
+                <div className="fw" style={fieldWrapStyle}>
                   <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', marginRight: '8px' }}>📞</span>
                   <input
                     type="tel"
@@ -203,20 +194,15 @@ export default function LoginPage() {
                     value={form.phone}
                     onChange={e => setForm({ ...form, phone: e.target.value })}
                     onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                    style={{ background: 'none', border: 'none', outline: 'none', color: '#fff', fontSize: '15px', padding: '12px 0', width: '100%', fontFamily: 'inherit' }}
+                    style={inputStyle}
                   />
                 </div>
               </div>
 
               {/* Password */}
               <div className="fade4" style={{ marginBottom: '8px' }}>
-                <label style={{ display: 'block', fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                  পাসওয়ার্ড
-                </label>
-                <div
-                  className={`field-wrap${shakePass ? ' shake-anim' : ''}`}
-                  style={{ display: 'flex', alignItems: 'center', background: '#161616', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '0 12px', transition: 'border-color 0.2s, box-shadow 0.2s' }}
-                >
+                <label style={labelStyle}>পাসওয়ার্ড</label>
+                <div className={`fw${shakePass ? ' shake-anim' : ''}`} style={fieldWrapStyle}>
                   <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', marginRight: '8px' }}>🔒</span>
                   <input
                     type="password"
@@ -224,12 +210,10 @@ export default function LoginPage() {
                     value={form.password}
                     onChange={e => setForm({ ...form, password: e.target.value })}
                     onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                    style={{ background: 'none', border: 'none', outline: 'none', color: '#fff', fontSize: '15px', padding: '12px 0', width: '100%', fontFamily: 'inherit' }}
+                    style={inputStyle}
                   />
                 </div>
-                {error && (
-                  <p style={{ fontSize: '12px', color: '#ff5555', marginTop: '6px', paddingLeft: '4px' }}>{error}</p>
-                )}
+                {error && <p style={{ fontSize: '12px', color: '#ff5555', marginTop: '6px', paddingLeft: '4px' }}>{error}</p>}
               </div>
 
               {/* Button */}
