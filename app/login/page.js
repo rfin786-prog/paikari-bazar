@@ -11,8 +11,6 @@ export default function LoginPage() {
   const [form, setForm] = useState({ phone: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [titleText, setTitleText] = useState('');
-  const [showDot, setShowDot] = useState(false);
   const [shakePass, setShakePass] = useState(false);
 
   useEffect(() => {
@@ -20,26 +18,6 @@ export default function LoginPage() {
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
-  }, []);
-
-  useEffect(() => {
-    const text = 'Sareng';
-    const chars = text.split('');
-    let index = 0;
-    const timer = setTimeout(() => {
-      const interval = setInterval(() => {
-        if (index < chars.length) {
-          const char = chars[index];
-          setTitleText(prev => prev + char);
-          index++;
-        } else {
-          clearInterval(interval);
-          setShowDot(true);
-        }
-      }, 80);
-      return () => clearInterval(interval);
-    }, 400);
-    return () => clearTimeout(timer);
   }, []);
 
   const handleSubmit = async () => {
@@ -132,7 +110,6 @@ export default function LoginPage() {
         .fade3{opacity:0;animation:fadeup 0.5s ease forwards 0.3s}
         .fade4{opacity:0;animation:fadeup 0.5s ease forwards 0.4s}
         .fade5{opacity:0;animation:fadeup 0.5s ease forwards 0.5s}
-        .fade6{opacity:0;animation:fadeup 0.5s ease forwards 0.6s}
         .shake-anim{animation:shake 0.4s ease;}
         .spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto;}
       `}</style>
@@ -172,19 +149,13 @@ export default function LoginPage() {
             <div style={{ width: '100%', maxWidth: '320px' }}>
 
               {!isMobile && (
-                <div className="fade1" onClick={() => router.push('/')} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.35)', fontSize: '12px', cursor: 'pointer', marginBottom: '32px' }}>
+                <div className="fade1" onClick={() => router.push('/')} style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', cursor: 'pointer', marginBottom: '32px' }}>
                   ← হোমে যান
                 </div>
               )}
 
-              {/* Title */}
-              <div className="fade2" style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', marginBottom: '28px' }}>
-                <span style={{ fontSize: '26px', fontWeight: '800', ...shimmerStyle }}>{titleText}</span>
-                {showDot && <span className="red-dot" />}
-              </div>
-
               {/* Phone */}
-              <div className="fade3" style={{ marginBottom: '14px' }}>
+              <div className="fade2" style={{ marginBottom: '14px' }}>
                 <label style={labelStyle}>ফোন নম্বর</label>
                 <div className="fw" style={fieldWrapStyle}>
                   <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', marginRight: '8px' }}>📞</span>
@@ -200,7 +171,7 @@ export default function LoginPage() {
               </div>
 
               {/* Password */}
-              <div className="fade4" style={{ marginBottom: '8px' }}>
+              <div className="fade3" style={{ marginBottom: '8px' }}>
                 <label style={labelStyle}>পাসওয়ার্ড</label>
                 <div className={`fw${shakePass ? ' shake-anim' : ''}`} style={fieldWrapStyle}>
                   <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', marginRight: '8px' }}>🔒</span>
@@ -217,7 +188,7 @@ export default function LoginPage() {
               </div>
 
               {/* Button */}
-              <div className="fade5">
+              <div className="fade4">
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
@@ -228,7 +199,7 @@ export default function LoginPage() {
               </div>
 
               {/* Register */}
-              <p className="fade6" style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: 'rgba(255,255,255,0.3)' }}>
+              <p className="fade5" style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: 'rgba(255,255,255,0.3)' }}>
                 অ্যাকাউন্ট নেই?{' '}
                 <span onClick={() => router.push('/register')} style={{ color: '#e8a020', fontWeight: '700', cursor: 'pointer' }}>
                   নিবন্ধন করুন
