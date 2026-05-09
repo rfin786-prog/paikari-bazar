@@ -12,79 +12,128 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav style={{
-      background: '#0f2442',
-      padding: '12px 18px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      borderBottom: '1px solid rgba(255,255,255,0.08)',
-    }}>
-      {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => router.push('/')}>
-        <div style={{
-          width: '38px', height: '38px',
-          background: '#e8a020', borderRadius: '10px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '18px', flexShrink: 0,
-        }}>🚚</div>
-        <div style={{ fontSize: '19px', color: '#fff', fontWeight: '700' }}>
-          পাইকারি<span style={{ color: '#e8a020' }}>বাজার</span>
+    <>
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: 200% center; }
+          100% { background-position: -200% center; }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        .sareng-logo {
+          font-size: 22px;
+          font-weight: 700;
+          line-height: 1;
+          background: linear-gradient(90deg, #fff 0%, #fff 40%, #e8a020 50%, #fff 60%, #fff 100%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: shimmer 2.5s linear infinite;
+        }
+        .red-dot {
+          width: 8px; height: 8px;
+          border-radius: 50%;
+          background: #ff3b3b;
+          flex-shrink: 0;
+          margin-bottom: 2px;
+          animation: blink 1.2s ease-in-out infinite;
+        }
+        .nav-icon-btn {
+          background: none !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+          -webkit-appearance: none !important;
+          padding: 0;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .nav-icon-btn:focus,
+        .nav-icon-btn:active,
+        .nav-icon-btn:hover {
+          background: none !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+      `}</style>
+
+      <nav style={{
+        background: '#000',
+        padding: '12px 18px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+      }}>
+        {/* Logo */}
+        <div
+          style={{ display: 'flex', alignItems: 'flex-end', gap: '5px', cursor: 'pointer' }}
+          onClick={() => router.push('/')}
+        >
+          <span className="sareng-logo">Sareng</span>
+          <span className="red-dot" />
         </div>
-      </div>
 
-      {/* Right side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {/* Cart */}
-        <button onClick={() => router.push('/checkout')} style={{
-          background: 'rgba(255,255,255,0.1)',
-          color: '#fff', border: '1.5px solid rgba(255,255,255,0.2)',
-          padding: '7px 12px', borderRadius: '8px',
-          cursor: 'pointer', fontSize: '16px',
-          fontFamily: 'inherit', position: 'relative',
-        }}>
-          🛒
-          <CartCount />
-        </button>
+        {/* Right */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button className="nav-icon-btn" onClick={() => router.push('/checkout')}>
+            <CartIcon />
+            <CartCount />
+          </button>
 
-        {/* Profile or Login */}
-        {user ? (
-          <button onClick={() => router.push('/dashboard')} style={{
-            background: '#e8a020',
-            color: '#0f2442', border: 'none',
-            padding: '7px 14px', borderRadius: '8px',
-            cursor: 'pointer', fontSize: '14px',
-            fontFamily: 'inherit', fontWeight: '700',
-          }}>
-            👤 {user.shop_name || user.name || 'প্রোফাইল'}
-          </button>
-        ) : (
-          <button onClick={() => router.push('/login')} style={{
-            background: '#e8a020',
-            color: '#0f2442', border: 'none',
-            padding: '7px 14px', borderRadius: '8px',
-            cursor: 'pointer', fontSize: '14px',
-            fontFamily: 'inherit', fontWeight: '700',
-          }}>
-            লগইন
-          </button>
-        )}
-      </div>
-    </nav>
+          {user ? (
+            <button className="nav-icon-btn" onClick={() => router.push('/dashboard')}>
+              <UserIcon color="#e8a020" />
+            </button>
+          ) : (
+            <button className="nav-icon-btn" onClick={() => router.push('/login')}>
+              <UserIcon color="#e8a020" />
+            </button>
+          )}
+        </div>
+      </nav>
+    </>
+  );
+}
+
+function CartIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <path d="M16 10a4 4 0 01-8 0"/>
+    </svg>
+  );
+}
+
+function UserIcon({ color }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
   );
 }
 
 function CartCount() {
   const [count, setCount] = useState(0);
   useEffect(() => {
-    const cart = JSON.parse(localStorage.getItem('paikari_cart') || '[]');
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     setCount(cart.length);
   }, []);
   if (count === 0) return null;
   return (
     <span style={{
       position: 'absolute', top: '-6px', right: '-6px',
-      background: '#e8a020', color: '#0f2442',
+      background: '#e8a020', color: '#000',
       borderRadius: '50%', width: '18px', height: '18px',
       fontSize: '11px', fontWeight: '700',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
