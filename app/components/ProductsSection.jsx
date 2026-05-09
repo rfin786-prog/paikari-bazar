@@ -356,7 +356,7 @@ export default function ProductsSection() {
         {loading ? (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
+            gridTemplateColumns: 'repeat(2, 1fr)',
             gap: '14px',
           }}>
             {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -369,7 +369,7 @@ export default function ProductsSection() {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
+            gridTemplateColumns: 'repeat(2, 1fr)',
             gap: '14px',
           }}>
             {filtered.map(product => (
