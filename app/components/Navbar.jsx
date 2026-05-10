@@ -24,7 +24,6 @@ export default function Navbar() {
           border-radius: 50%;
           background: #ff3b3b;
           flex-shrink: 0;
-          margin-bottom: 4px;
           animation: blink 1.2s ease-in-out infinite;
         }
         .nav-icon-btn {
@@ -58,7 +57,7 @@ export default function Navbar() {
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}>
         <div
-          style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}
           onClick={() => router.push('/')}
         >
           <Image
@@ -68,7 +67,7 @@ export default function Navbar() {
             height={30}
             style={{ objectFit: 'contain', mixBlendMode: 'screen', display: 'block' }}
           />
-          <span className="red-dot" />
+          <span className="red-dot" style={{ marginTop: '-8px' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button className="nav-icon-btn" onClick={() => router.push('/checkout')}>
