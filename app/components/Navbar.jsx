@@ -50,7 +50,7 @@ export default function Navbar() {
       `}</style>
       <nav style={{
         background: '#000',
-        padding: '4px 18px',
+        padding: '0px 18px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
