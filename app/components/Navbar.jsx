@@ -66,7 +66,7 @@ export default function Navbar() {
             alt="আড়ৎ"
             width={90}
             height={42}
-            style={{ objectFit: 'contain' }}
+            style={{ objectFit: 'contain', mixBlendMode: 'screen' }}
           />
           <span className="red-dot" />
         </div>
