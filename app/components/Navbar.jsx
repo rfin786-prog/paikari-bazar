@@ -19,13 +19,6 @@ export default function Navbar() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
         }
-        .red-dot {
-          width: 7px; height: 7px;
-          border-radius: 50%;
-          background: #ff3b3b;
-          flex-shrink: 0;
-          animation: blink 1.2s ease-in-out infinite;
-        }
         .nav-icon-btn {
           background: none !important;
           border: none !important;
@@ -57,7 +50,7 @@ export default function Navbar() {
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}>
         <div
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', cursor: 'pointer' }}
+          style={{ display: 'inline-flex', alignItems: 'flex-end', cursor: 'pointer' }}
           onClick={() => router.push('/')}
         >
           <Image
@@ -67,7 +60,11 @@ export default function Navbar() {
             height={32}
             style={{ objectFit: 'contain', mixBlendMode: 'screen', display: 'block' }}
           />
-          <span className="red-dot" style={{ marginLeft: '6px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginLeft: '3px', marginBottom: '3px' }}>
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#ff3b3b', flexShrink: 0, animation: 'blink 1.2s ease-in-out infinite' }} />
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#e8a020', flexShrink: 0, animation: 'blink 1.2s ease-in-out infinite 0.4s' }} />
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e', flexShrink: 0, animation: 'blink 1.2s ease-in-out infinite 0.8s' }} />
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button className="nav-icon-btn" onClick={() => router.push('/checkout')}>
