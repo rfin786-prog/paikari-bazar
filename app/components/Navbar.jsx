@@ -51,7 +51,7 @@ export default function Navbar() {
       `}</style>
       <nav style={{
         background: '#000',
-        padding: '6px 18px',
+        padding: '4px 18px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -64,9 +64,9 @@ export default function Navbar() {
           <Image
             src="/logo.png"
             alt="আড়ৎ"
-            width={80}
-            height={35}
-            style={{ objectFit: 'contain', mixBlendMode: 'screen' }}
+            width={75}
+            height={30}
+            style={{ objectFit: 'contain', mixBlendMode: 'screen', display: 'block' }}
           />
           <span className="red-dot" />
         </div>
