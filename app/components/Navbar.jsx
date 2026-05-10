@@ -20,11 +20,11 @@ export default function Navbar() {
           50% { opacity: 0; }
         }
         .red-dot {
-          width: 7px; height: 7px;
+          width: 6px; height: 6px;
           border-radius: 50%;
           background: #ff3b3b;
           flex-shrink: 0;
-          margin-bottom: 6px;
+          margin-bottom: 4px;
           animation: blink 1.2s ease-in-out infinite;
         }
         .nav-icon-btn {
@@ -51,21 +51,21 @@ export default function Navbar() {
       `}</style>
       <nav style={{
         background: '#000',
-        padding: '10px 18px',
+        padding: '6px 18px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}>
         <div
-          style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', cursor: 'pointer' }}
           onClick={() => router.push('/')}
         >
           <Image
             src="/logo.png"
             alt="আড়ৎ"
-            width={90}
-            height={42}
+            width={80}
+            height={35}
             style={{ objectFit: 'contain', mixBlendMode: 'screen' }}
           />
           <span className="red-dot" />
@@ -92,7 +92,7 @@ export default function Navbar() {
 
 function CartIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
       stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
       <line x1="3" y1="6" x2="21" y2="6"/>
@@ -103,7 +103,7 @@ function CartIcon() {
 
 function UserIcon({ color }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
       stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
       <circle cx="12" cy="7" r="4"/>
