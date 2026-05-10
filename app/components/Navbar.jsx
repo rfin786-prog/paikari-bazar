@@ -20,11 +20,11 @@ export default function Navbar() {
           50% { opacity: 0; }
         }
         .red-dot {
-          width: 8px; height: 8px;
+          width: 7px; height: 7px;
           border-radius: 50%;
           background: #ff3b3b;
           flex-shrink: 0;
-          margin-bottom: 3px;
+          margin-bottom: 6px;
           animation: blink 1.2s ease-in-out infinite;
         }
         .nav-icon-btn {
@@ -51,21 +51,21 @@ export default function Navbar() {
       `}</style>
       <nav style={{
         background: '#000',
-        padding: '12px 18px',
+        padding: '10px 18px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}>
         <div
-          style={{ display: 'flex', alignItems: 'flex-end', gap: '5px', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', cursor: 'pointer' }}
           onClick={() => router.push('/')}
         >
           <Image
             src="/logo.png"
             alt="আড়ৎ"
-            width={80}
-            height={40}
+            width={90}
+            height={42}
             style={{ objectFit: 'contain' }}
           />
           <span className="red-dot" />
