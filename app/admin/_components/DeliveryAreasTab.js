@@ -4,181 +4,356 @@ import { useState, useEffect } from 'react';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const headers = {
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
-  'Content-Type': 'application/json',
-};
-
 const FONT = 'var(--font-hind-siliguri), sans-serif';
-
-const s = {
-  card: { background: '#1e1c2e', borderRadius: '14px', padding: '20px', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.06)' },
-  input: { background: '#2a2840', border: '1.5px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px 14px', color: '#fff', fontSize: '14px', fontFamily: FONT, outline: 'none', width: '100%' },
-  btn: { border: 'none', borderRadius: '8px', padding: '10px 18px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', fontFamily: FONT },
-};
 
 export default function DeliveryAreasTab() {
   const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ district: '', thana: '' });
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  useEffect(() => { loadAreas(); }, []);
+  // Add form state
+  const [newDistrict, setNewDistrict] = useState('');
+  const [newThana, setNewThana] = useState('');
 
-  const showToast = (msg, type = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+  // Edit state
+  const [editId, setEditId] = useState(null);
+  const [editDistrict, setEditDistrict] = useState('');
+  const [editThana, setEditThana] = useState('');
 
-  const loadAreas = async () => {
+  // Filter
+  const [filterDistrict, setFilterDistrict] = useState('');
+
+  const fetchAreas = async () => {
     setLoading(true);
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/delivery_areas?select=*&order=district.asc,thana.asc`, { headers });
-    const data = await res.json();
-    setAreas(Array.isArray(data) ? data : []);
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/delivery_areas?order=district.asc,thana.asc`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+      );
+      const data = await res.json();
+      setAreas(Array.isArray(data) ? data : []);
+    } catch {
+      setError('ডেটা লোড করতে সমস্যা হয়েছে');
+    }
     setLoading(false);
   };
 
-  const addArea = async () => {
-    if (!form.district.trim() || !form.thana.trim()) return showToast('জেলা ও থানা দিন', 'error');
+  useEffect(() => { fetchAreas(); }, []);
+
+  const showSuccess = (msg) => {
+    setSuccess(msg);
+    setTimeout(() => setSuccess(''), 3000);
+  };
+
+  const handleAdd = async () => {
+    if (!newDistrict.trim()) return setError('জেলার নাম দিন');
+    if (!newThana.trim()) return setError('থানার নাম দিন');
+    setError('');
     setSaving(true);
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/delivery_areas`, {
-      method: 'POST',
-      headers: { ...headers, Prefer: 'return=representation' },
-      body: JSON.stringify({ district: form.district.trim(), thana: form.thana.trim(), active: true }),
-    });
-    if (res.status === 201) {
-      setForm({ district: '', thana: '' });
-      showToast('✅ এলাকা যোগ হয়েছে');
-      await loadAreas();
-    } else {
-      showToast('❌ সমস্যা হয়েছে', 'error');
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/delivery_areas`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation',
+        },
+        body: JSON.stringify({ district: newDistrict.trim(), thana: newThana.trim(), active: true }),
+      });
+      if (res.ok) {
+        setNewDistrict('');
+        setNewThana('');
+        showSuccess('✅ নতুন এলাকা যোগ হয়েছে');
+        fetchAreas();
+      } else {
+        setError('যোগ করতে সমস্যা হয়েছে');
+      }
+    } catch {
+      setError('নেটওয়ার্ক সমস্যা');
     }
     setSaving(false);
   };
 
-  const toggleActive = async (id, current) => {
-    await fetch(`${SUPABASE_URL}/rest/v1/delivery_areas?id=eq.${id}`, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({ active: !current }),
-    });
-    await loadAreas();
+  const handleToggle = async (id, currentActive) => {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/delivery_areas?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ active: !currentActive }),
+      });
+      setAreas(prev => prev.map(a => a.id === id ? { ...a, active: !currentActive } : a));
+    } catch {
+      setError('আপডেট করতে সমস্যা হয়েছে');
+    }
   };
 
-  const deleteArea = async (id) => {
+  const handleDelete = async (id) => {
     if (!confirm('এই এলাকা মুছে ফেলবেন?')) return;
-    await fetch(`${SUPABASE_URL}/rest/v1/delivery_areas?id=eq.${id}`, { method: 'DELETE', headers });
-    showToast('🗑️ মুছে ফেলা হয়েছে');
-    await loadAreas();
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/delivery_areas?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+      });
+      setAreas(prev => prev.filter(a => a.id !== id));
+      showSuccess('🗑️ এলাকা মুছে ফেলা হয়েছে');
+    } catch {
+      setError('মুছতে সমস্যা হয়েছে');
+    }
   };
 
-  // Group by district
-  const grouped = areas.reduce((acc, area) => {
-    if (!acc[area.district]) acc[area.district] = [];
-    acc[area.district].push(area);
-    return acc;
-  }, {});
+  const startEdit = (area) => {
+    setEditId(area.id);
+    setEditDistrict(area.district);
+    setEditThana(area.thana);
+  };
+
+  const handleEditSave = async () => {
+    if (!editDistrict.trim() || !editThana.trim()) return;
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/delivery_areas?id=eq.${editId}`, {
+        method: 'PATCH',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ district: editDistrict.trim(), thana: editThana.trim() }),
+      });
+      setAreas(prev => prev.map(a => a.id === editId ? { ...a, district: editDistrict.trim(), thana: editThana.trim() } : a));
+      setEditId(null);
+      showSuccess('✏️ এলাকা আপডেট হয়েছে');
+    } catch {
+      setError('আপডেট করতে সমস্যা হয়েছে');
+    }
+  };
+
+  const districts = [...new Set(areas.map(a => a.district))];
+  const filtered = filterDistrict ? areas.filter(a => a.district === filterDistrict) : areas;
+
+  const inputStyle = {
+    background: '#1a1828',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '8px',
+    color: '#fff',
+    fontSize: '13px',
+    padding: '9px 12px',
+    fontFamily: FONT,
+    outline: 'none',
+    width: '100%',
+  };
 
   return (
     <div style={{ fontFamily: FONT }}>
-      {toast && (
-        <div style={{
-          position: 'fixed', top: '20px', right: '20px', zIndex: 9999,
-          background: toast.type === 'success' ? '#1a3a2a' : '#3a1a1a',
-          border: `1px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`,
-          color: toast.type === 'success' ? '#6ee7b7' : '#f87171',
-          padding: '12px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: '600',
-          fontFamily: FONT,
-        }}>{toast.msg}</div>
+      {/* Header */}
+      <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#fff', margin: 0 }}>🗺️ ডেলিভারি এলাকা</h2>
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>
+          {areas.length} টি এলাকা · {areas.filter(a => a.active).length} টি সক্রিয়
+        </p>
+      </div>
+
+      {/* Alerts */}
+      {error && (
+        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', padding: '10px 14px', color: '#f87171', fontSize: '13px', marginBottom: '16px' }}>
+          ⚠️ {error}
+          <span onClick={() => setError('')} style={{ float: 'right', cursor: 'pointer', opacity: 0.6 }}>✕</span>
+        </div>
+      )}
+      {success && (
+        <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '10px', padding: '10px 14px', color: '#4ade80', fontSize: '13px', marginBottom: '16px' }}>
+          {success}
+        </div>
       )}
 
-      <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#fff', marginBottom: '20px' }}>
-        🗺️ ডেলিভারি এলাকা
-      </h2>
-
-      {/* Add Form */}
-      <div style={s.card}>
-        <div style={{ fontSize: '13px', fontWeight: '700', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '14px' }}>
-          নতুন এলাকা যোগ করুন
-        </div>
+      {/* Add New Area */}
+      <div style={{ background: '#1a1828', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
+        <div style={{ fontSize: '14px', fontWeight: '600', color: '#818cf8', marginBottom: '14px' }}>➕ নতুন এলাকা যোগ করুন</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '10px', alignItems: 'end' }}>
           <div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px' }}>জেলা</div>
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>জেলা *</div>
             <input
-              style={s.input}
+              style={inputStyle}
               placeholder="যেমন: ঢাকা"
-              value={form.district}
-              onChange={e => setForm({ ...form, district: e.target.value })}
+              value={newDistrict}
+              onChange={e => setNewDistrict(e.target.value)}
+              onFocus={e => e.target.style.borderColor = '#818cf8'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
             />
           </div>
           <div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px' }}>থানা / উপজেলা</div>
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>থানা / উপজেলা *</div>
             <input
-              style={s.input}
+              style={inputStyle}
               placeholder="যেমন: মিরপুর"
-              value={form.thana}
-              onChange={e => setForm({ ...form, thana: e.target.value })}
-              onKeyDown={e => e.key === 'Enter' && addArea()}
+              value={newThana}
+              onChange={e => setNewThana(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAdd()}
+              onFocus={e => e.target.style.borderColor = '#818cf8'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
             />
           </div>
           <button
-            onClick={addArea}
+            onClick={handleAdd}
             disabled={saving}
-            style={{ ...s.btn, background: '#818cf8', color: '#fff', opacity: saving ? 0.6 : 1 }}
+            style={{
+              background: '#818cf8',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '9px 20px',
+              fontSize: '13px',
+              fontWeight: '600',
+              fontFamily: FONT,
+              cursor: saving ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.7 : 1,
+              whiteSpace: 'nowrap',
+            }}
           >
             {saving ? '...' : '+ যোগ করুন'}
           </button>
         </div>
       </div>
 
-      {/* Areas List */}
-      {loading ? (
-        <div style={{ color: 'rgba(255,255,255,0.4)', padding: '20px' }}>লোড হচ্ছে...</div>
-      ) : Object.keys(grouped).length === 0 ? (
-        <div style={{ ...s.card, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '40px' }}>
-          এখনো কোনো এলাকা যোগ করা হয়নি
+      {/* Filter by District */}
+      {districts.length > 0 && (
+        <div style={{ marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>ফিল্টার:</span>
+          <button
+            onClick={() => setFilterDistrict('')}
+            style={{
+              padding: '5px 12px', borderRadius: '20px', border: 'none',
+              background: !filterDistrict ? '#818cf8' : 'rgba(255,255,255,0.07)',
+              color: !filterDistrict ? '#fff' : 'rgba(255,255,255,0.5)',
+              fontSize: '12px', fontFamily: FONT, cursor: 'pointer',
+            }}
+          >সব</button>
+          {districts.map(d => (
+            <button key={d}
+              onClick={() => setFilterDistrict(d)}
+              style={{
+                padding: '5px 12px', borderRadius: '20px', border: 'none',
+                background: filterDistrict === d ? '#818cf8' : 'rgba(255,255,255,0.07)',
+                color: filterDistrict === d ? '#fff' : 'rgba(255,255,255,0.5)',
+                fontSize: '12px', fontFamily: FONT, cursor: 'pointer',
+              }}
+            >{d}</button>
+          ))}
         </div>
-      ) : Object.entries(grouped).map(([district, thanas]) => (
-        <div key={district} style={s.card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-            <span style={{ fontSize: '16px' }}>📍</span>
-            <span style={{ fontSize: '15px', fontWeight: '700', color: '#fff' }}>{district}</span>
-            <span style={{ fontSize: '11px', background: 'rgba(129,140,248,0.15)', color: '#818cf8', padding: '2px 8px', borderRadius: '20px' }}>
-              {thanas.length} টি থানা
-            </span>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {thanas.map(area => (
-              <div key={area.id} style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                background: area.active ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${area.active ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                borderRadius: '8px', padding: '6px 10px',
-              }}>
-                <span style={{ fontSize: '13px', color: area.active ? '#6ee7b7' : 'rgba(255,255,255,0.35)', fontWeight: '600' }}>
-                  {area.thana}
-                </span>
+      )}
+
+      {/* Areas Table */}
+      <div style={{ background: '#1a1828', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', overflow: 'hidden' }}>
+        {/* Table Header */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px 120px', padding: '12px 20px', background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          {['জেলা', 'থানা / উপজেলা', 'স্ট্যাটাস', 'অ্যাকশন'].map(h => (
+            <div key={h} style={{ fontSize: '11px', fontWeight: '600', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</div>
+          ))}
+        </div>
+
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>লোড হচ্ছে...</div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>কোনো এলাকা নেই</div>
+        ) : (
+          filtered.map((area, i) => (
+            <div key={area.id} style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 100px 120px',
+              padding: '12px 20px',
+              borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              alignItems: 'center',
+              background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
+            }}>
+              {/* District */}
+              <div>
+                {editId === area.id ? (
+                  <input
+                    style={{ ...inputStyle, padding: '6px 10px', fontSize: '13px' }}
+                    value={editDistrict}
+                    onChange={e => setEditDistrict(e.target.value)}
+                  />
+                ) : (
+                  <span style={{ fontSize: '14px', color: '#fff', fontWeight: '500' }}>{area.district}</span>
+                )}
+              </div>
+
+              {/* Thana */}
+              <div>
+                {editId === area.id ? (
+                  <input
+                    style={{ ...inputStyle, padding: '6px 10px', fontSize: '13px' }}
+                    value={editThana}
+                    onChange={e => setEditThana(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleEditSave()}
+                  />
+                ) : (
+                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>{area.thana}</span>
+                )}
+              </div>
+
+              {/* Status Toggle */}
+              <div>
                 <button
-                  onClick={() => toggleActive(area.id, area.active)}
-                  title={area.active ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0', lineHeight: 1 }}
+                  onClick={() => handleToggle(area.id, area.active)}
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    border: 'none',
+                    background: area.active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                    color: area.active ? '#4ade80' : '#f87171',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    fontFamily: FONT,
+                    cursor: 'pointer',
+                  }}
                 >
-                  {area.active ? '✅' : '⭕'}
-                </button>
-                <button
-                  onClick={() => deleteArea(area.id)}
-                  title="মুছুন"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#f87171', padding: '0', lineHeight: 1 }}
-                >
-                  ✕
+                  {area.active ? '● সক্রিয়' : '○ বন্ধ'}
                 </button>
               </div>
-            ))}
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {editId === area.id ? (
+                  <>
+                    <button onClick={handleEditSave} style={{ padding: '5px 10px', borderRadius: '6px', border: 'none', background: 'rgba(34,197,94,0.2)', color: '#4ade80', fontSize: '12px', cursor: 'pointer', fontFamily: FONT }}>✓ সেভ</button>
+                    <button onClick={() => setEditId(null)} style={{ padding: '5px 10px', borderRadius: '6px', border: 'none', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', fontSize: '12px', cursor: 'pointer', fontFamily: FONT }}>✕</button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => startEdit(area)} style={{ padding: '5px 10px', borderRadius: '6px', border: 'none', background: 'rgba(129,140,248,0.15)', color: '#818cf8', fontSize: '12px', cursor: 'pointer', fontFamily: FONT }}>✏️</button>
+                    <button onClick={() => handleDelete(area.id)} style={{ padding: '5px 10px', borderRadius: '6px', border: 'none', background: 'rgba(239,68,68,0.12)', color: '#f87171', fontSize: '12px', cursor: 'pointer', fontFamily: FONT }}>🗑️</button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Summary */}
+      {areas.length > 0 && (
+        <div style={{ marginTop: '16px', display: 'flex', gap: '16px' }}>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
+            মোট জেলা: <span style={{ color: '#818cf8', fontWeight: '600' }}>{districts.length}</span>
+          </div>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
+            মোট থানা: <span style={{ color: '#818cf8', fontWeight: '600' }}>{areas.length}</span>
+          </div>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
+            সক্রিয়: <span style={{ color: '#4ade80', fontWeight: '600' }}>{areas.filter(a => a.active).length}</span>
+          </div>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
+            বন্ধ: <span style={{ color: '#f87171', fontWeight: '600' }}>{areas.filter(a => !a.active).length}</span>
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
 }
