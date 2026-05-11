@@ -7,12 +7,20 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [isMobile, setIsMobile] = useState(false);
   const [form, setForm] = useState({
     name: '', shop_name: '', phone: '', district: '', thana: '', address: '', password: '', confirm: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [areas, setAreas] = useState([]);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     const loadAreas = async () => {
@@ -28,10 +36,7 @@ export default function RegisterPage() {
     loadAreas();
   }, []);
 
-  // Unique districts
   const districts = [...new Set(areas.map(a => a.district))];
-
-  // Thanas for selected district
   const thanas = areas.filter(a => a.district === form.district).map(a => a.thana);
 
   const handleSubmit = async () => {
@@ -81,204 +86,258 @@ export default function RegisterPage() {
     setLoading(false);
   };
 
+  const shimmerStyle = {
+    background: 'linear-gradient(90deg, #fff 0%, #fff 40%, #e8a020 50%, #fff 60%, #fff 100%)',
+    backgroundSize: '200% auto',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    animation: 'shimmer 2.5s linear infinite',
+    display: 'inline-block',
+  };
+
+  const fieldWrapStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    background: '#161616',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '10px',
+    padding: '0 12px',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  };
+
+  const inputStyle = {
+    background: 'none',
+    border: 'none',
+    outline: 'none',
+    color: '#fff',
+    fontSize: '14px',
+    padding: '11px 0',
+    width: '100%',
+    fontFamily: 'inherit',
+  };
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: '11px',
+    color: 'rgba(255,255,255,0.4)',
+    marginBottom: '6px',
+    letterSpacing: '0.5px',
+    textTransform: 'uppercase',
+  };
+
+  const dividerStyle = {
+    fontSize: '10px',
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.2)',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    margin: '20px 0 14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  };
+
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        .reg-page {
-          min-height: 100vh;
-          background: #f0f4ff;
-          display: flex; align-items: center; justify-content: center;
-          padding: 20px;
-          font-family: 'Hind Siliguri', sans-serif;
+        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes fadeup { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        .red-dot { display:inline-block; width:7px; height:7px; background:#ff3b3b; border-radius:50%; margin-left:3px; vertical-align:middle; margin-bottom:3px; animation:blink 1.2s ease-in-out infinite; }
+        .fw:focus-within { border-color:#e8a020 !important; box-shadow:0 0 0 3px rgba(232,160,32,0.12) !important; }
+        .fade1{opacity:0;animation:fadeup 0.5s ease forwards 0.1s}
+        .fade2{opacity:0;animation:fadeup 0.5s ease forwards 0.15s}
+        .fade3{opacity:0;animation:fadeup 0.5s ease forwards 0.2s}
+        .fade4{opacity:0;animation:fadeup 0.5s ease forwards 0.25s}
+        .fade5{opacity:0;animation:fadeup 0.5s ease forwards 0.3s}
+        .fade6{opacity:0;animation:fadeup 0.5s ease forwards 0.35s}
+        .fade7{opacity:0;animation:fadeup 0.5s ease forwards 0.4s}
+        .fade8{opacity:0;animation:fadeup 0.5s ease forwards 0.45s}
+        .spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto;}
+        .reg-select {
+          width:100%; background:#161616; border:1px solid rgba(255,255,255,0.08);
+          border-radius:10px; color:#fff; font-size:14px; padding:11px 14px;
+          font-family:inherit; outline:none; cursor:pointer;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          appearance: none;
         }
-
-        .reg-card {
-          background: #fff;
-          border-radius: 24px;
-          padding: 36px 32px;
-          width: 100%; max-width: 480px;
-          box-shadow: 0 20px 60px rgba(14,36,66,0.12);
+        .reg-select:focus { border-color:#e8a020; box-shadow:0 0 0 3px rgba(232,160,32,0.12); }
+        .reg-select:disabled { opacity:0.4; cursor:not-allowed; }
+        .reg-select option { background:#161616; color:#fff; }
+        .reg-textarea {
+          width:100%; background:#161616; border:1px solid rgba(255,255,255,0.08);
+          border-radius:10px; color:#fff; font-size:14px; padding:11px 14px;
+          font-family:inherit; outline:none; resize:none; height:72px; line-height:1.6;
+          transition: border-color 0.2s, box-shadow 0.2s;
         }
-
-        .reg-logo {
-          display: flex; align-items: center; gap: 10px;
-          margin-bottom: 28px;
-        }
-
-        .reg-logo-icon {
-          width: 42px; height: 42px; background: #e8a020;
-          border-radius: 12px; display: flex; align-items: center;
-          justify-content: center; font-size: 20px;
-        }
-
-        .reg-logo-text { font-size: 20px; font-weight: 700; color: #0f2442; }
-        .reg-logo-text span { color: #e8a020; }
-
-        .reg-title { font-size: 22px; font-weight: 700; color: #0f2442; margin-bottom: 4px; }
-        .reg-sub { font-size: 14px; color: #64748b; margin-bottom: 24px; }
-
-        .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-        .field-full { margin-bottom: 12px; }
-
-        label { display: block; font-size: 12px; font-weight: 600; color: #0f2442; margin-bottom: 5px; letter-spacing: 0.3px; }
-
-        input, select, textarea {
-          width: 100%; padding: 11px 14px;
-          border: 1.5px solid #e2e8f0; border-radius: 10px;
-          font-size: 14px; font-family: 'Hind Siliguri', sans-serif;
-          color: #0f2442; background: #f8fafc;
-          transition: border-color 0.2s, background 0.2s;
-          outline: none;
-        }
-
-        input:focus, select:focus, textarea:focus {
-          border-color: #e8a020; background: #fff;
-        }
-
-        input::placeholder, textarea::placeholder { color: #94a3b8; }
-
-        select { cursor: pointer; }
-        select:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        textarea { resize: none; height: 72px; }
-
-        .error-msg {
-          background: #fff1f2; color: #e11d48;
-          padding: 10px 14px; border-radius: 10px;
-          font-size: 13px; font-weight: 500;
-          margin-bottom: 14px; border-left: 3px solid #e11d48;
-        }
-
-        .divider {
-          font-size: 11px; font-weight: 700; color: #94a3b8;
-          text-transform: uppercase; letter-spacing: 0.5px;
-          margin: 16px 0 12px; display: flex; align-items: center; gap: 8px;
-        }
-        .divider::before, .divider::after {
-          content: ''; flex: 1; height: 1px; background: #e2e8f0;
-        }
-
-        .submit-btn {
-          width: 100%; padding: 13px;
-          background: #0f2442; color: #fff;
-          border: none; border-radius: 12px;
-          font-size: 15px; font-weight: 700;
-          font-family: 'Hind Siliguri', sans-serif;
-          cursor: pointer; margin-top: 8px;
-          transition: background 0.2s, transform 0.1s;
-        }
-        .submit-btn:hover { background: #1a3a5c; }
-        .submit-btn:active { transform: scale(0.99); }
-        .submit-btn:disabled { background: #94a3b8; cursor: not-allowed; }
-
-        .login-link { text-align: center; margin-top: 16px; font-size: 13px; color: #64748b; }
-        .login-link a { color: #e8a020; font-weight: 700; text-decoration: none; cursor: pointer; }
-
-        @media (max-width: 480px) {
-          .reg-card { padding: 28px 20px; }
-          .field-group { grid-template-columns: 1fr; }
-        }
+        .reg-textarea:focus { border-color:#e8a020; box-shadow:0 0 0 3px rgba(232,160,32,0.12); }
+        .reg-textarea::placeholder { color:rgba(255,255,255,0.2); }
+        .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        @media(max-width:480px) { .two-col { grid-template-columns:1fr; } }
       `}</style>
 
-      <div className="reg-page">
-        <div className="reg-card">
+      <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', fontFamily: "'Hind Siliguri', sans-serif" }}>
 
-          <div className="reg-logo">
-            <div className="reg-logo-icon">🚚</div>
-            <div className="reg-logo-text">পাইকারি<span>বাজার</span></div>
-          </div>
-
-          <div className="reg-title">নতুন অ্যাকাউন্ট</div>
-          <div className="reg-sub">আপনার তথ্য দিয়ে নিবন্ধন করুন</div>
-
-          {error && <div className="error-msg">⚠️ {error}</div>}
-
-          {/* ব্যক্তিগত তথ্য */}
-          <div className="divider">ব্যক্তিগত তথ্য</div>
-
-          <div className="field-group">
-            <div>
-              <label>আপনার নাম *</label>
-              <input placeholder="রহিম মিয়া" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+        {/* MOBILE TOP BAR */}
+        {isMobile && (
+          <div style={{ background: '#000', padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
+              <span style={{ fontSize: '22px', fontWeight: '800', ...shimmerStyle }}>Aarot</span>
+              <span className="red-dot" />
             </div>
-            <div>
-              <label>দোকানের নাম</label>
-              <input placeholder="রহিম স্টোর" value={form.shop_name} onChange={e => setForm({ ...form, shop_name: e.target.value })} />
-            </div>
+            <span onClick={() => router.push('/')} style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}>
+              ← হোমে যান
+            </span>
           </div>
+        )}
 
-          <div className="field-full">
-            <label>ফোন নম্বর *</label>
-            <input placeholder="01XXXXXXXXX" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-          </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
 
-          {/* ডেলিভারি ঠিকানা */}
-          <div className="divider">ডেলিভারি ঠিকানা</div>
-
-          {areas.length === 0 ? (
-            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#c2410c', marginBottom: '12px' }}>
-              ⚠️ এখনো কোনো ডেলিভারি এলাকা সেট করা হয়নি
-            </div>
-          ) : (
-            <div className="field-group">
-              <div>
-                <label>জেলা *</label>
-                <select
-                  value={form.district}
-                  onChange={e => setForm({ ...form, district: e.target.value, thana: '' })}
-                >
-                  <option value="">জেলা বাছুন</option>
-                  {districts.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
+          {/* LEFT — desktop only */}
+          {!isMobile && (
+            <div style={{ flex: '0 0 260px', background: '#000', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 36px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+              <div onClick={() => router.push('/')} style={{ cursor: 'pointer', marginBottom: '12px' }}>
+                <span style={{ fontSize: '28px', fontWeight: '800', ...shimmerStyle }}>Aarot</span>
+                <span className="red-dot" />
               </div>
-              <div>
-                <label>থানা / উপজেলা *</label>
-                <select
-                  value={form.thana}
-                  onChange={e => setForm({ ...form, thana: e.target.value })}
-                  disabled={!form.district}
-                >
-                  <option value="">থানা বাছুন</option>
-                  {thanas.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
+              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.7' }}>
+                সরাসরি সাপ্লায়ার থেকে<br />আপনার দোকানে।
+              </p>
             </div>
           )}
 
-          <div className="field-full">
-            <label>পূর্ণ ঠিকানা *</label>
-            <textarea
-              placeholder="বাড়ি নম্বর / রাস্তা / এলাকা"
-              value={form.address}
-              onChange={e => setForm({ ...form, address: e.target.value })}
-            />
-          </div>
+          {/* FORM */}
+          <div style={{ flex: 1, display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'center', padding: isMobile ? '32px 24px' : '48px', overflowY: 'auto' }}>
+            <div style={{ width: '100%', maxWidth: '420px' }}>
 
-          {/* পাসওয়ার্ড */}
-          <div className="divider">পাসওয়ার্ড</div>
+              {!isMobile && (
+                <div className="fade1" onClick={() => router.push('/')} style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', cursor: 'pointer', marginBottom: '32px' }}>
+                  ← হোমে যান
+                </div>
+              )}
 
-          <div className="field-group">
-            <div>
-              <label>পাসওয়ার্ড *</label>
-              <input type="password" placeholder="কমপক্ষে ৬ অক্ষর" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+              <div className="fade1" style={{ marginBottom: '24px' }}>
+                <div style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>নতুন অ্যাকাউন্ট</div>
+                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.3)' }}>আপনার তথ্য দিয়ে নিবন্ধন করুন</div>
+              </div>
+
+              {error && (
+                <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', padding: '10px 14px', color: '#f87171', fontSize: '13px', marginBottom: '16px' }}>
+                  ⚠️ {error}
+                </div>
+              )}
+
+              {/* ব্যক্তিগত তথ্য */}
+              <div style={dividerStyle}>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                ব্যক্তিগত তথ্য
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+              </div>
+
+              <div className="fade2 two-col" style={{ marginBottom: '12px' }}>
+                <div>
+                  <div style={labelStyle}>আপনার নাম *</div>
+                  <div className="fw" style={fieldWrapStyle}>
+                    <input placeholder="রহিম মিয়া" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>দোকানের নাম</div>
+                  <div className="fw" style={fieldWrapStyle}>
+                    <input placeholder="রহিম স্টোর" value={form.shop_name} onChange={e => setForm({ ...form, shop_name: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="fade3" style={{ marginBottom: '12px' }}>
+                <div style={labelStyle}>ফোন নম্বর *</div>
+                <div className="fw" style={fieldWrapStyle}>
+                  <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', marginRight: '8px' }}>📞</span>
+                  <input placeholder="01XXXXXXXXX" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={inputStyle} />
+                </div>
+              </div>
+
+              {/* ডেলিভারি ঠিকানা */}
+              <div style={dividerStyle}>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                ডেলিভারি ঠিকানা
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+              </div>
+
+              {areas.length === 0 ? (
+                <div className="fade4" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#f87171', marginBottom: '12px' }}>
+                  ⚠️ এখনো কোনো ডেলিভারি এলাকা সেট করা হয়নি
+                </div>
+              ) : (
+                <div className="fade4 two-col" style={{ marginBottom: '12px' }}>
+                  <div>
+                    <div style={labelStyle}>জেলা *</div>
+                    <select className="reg-select" value={form.district} onChange={e => setForm({ ...form, district: e.target.value, thana: '' })}>
+                      <option value="">জেলা বাছুন</option>
+                      {districts.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div style={labelStyle}>থানা / উপজেলা *</div>
+                    <select className="reg-select" value={form.thana} onChange={e => setForm({ ...form, thana: e.target.value })} disabled={!form.district}>
+                      <option value="">থানা বাছুন</option>
+                      {thanas.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div className="fade5" style={{ marginBottom: '12px' }}>
+                <div style={labelStyle}>পূর্ণ ঠিকানা *</div>
+                <textarea className="reg-textarea" placeholder="বাড়ি নম্বর / রাস্তা / এলাকা" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+              </div>
+
+              {/* পাসওয়ার্ড */}
+              <div style={dividerStyle}>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                পাসওয়ার্ড
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+              </div>
+
+              <div className="fade6 two-col" style={{ marginBottom: '20px' }}>
+                <div>
+                  <div style={labelStyle}>পাসওয়ার্ড *</div>
+                  <div className="fw" style={fieldWrapStyle}>
+                    <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', marginRight: '8px' }}>🔒</span>
+                    <input type="password" placeholder="কমপক্ষে ৬ অক্ষর" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>নিশ্চিত করুন *</div>
+                  <div className="fw" style={fieldWrapStyle}>
+                    <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', marginRight: '8px' }}>🔒</span>
+                    <input type="password" placeholder="আবার লিখুন" value={form.confirm} onChange={e => setForm({ ...form, confirm: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="fade7">
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  style={{ width: '100%', background: '#e8a020', color: '#000', border: 'none', borderRadius: '10px', padding: '14px', fontSize: '15px', fontWeight: '700', cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.7 : 1 }}
+                >
+                  {loading ? <div className="spinner" /> : '✅ নিবন্ধন সম্পন্ন করুন'}
+                </button>
+              </div>
+
+              <p className="fade8" style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: 'rgba(255,255,255,0.3)' }}>
+                আগে থেকে অ্যাকাউন্ট আছে?{' '}
+                <span onClick={() => router.push('/login')} style={{ color: '#e8a020', fontWeight: '700', cursor: 'pointer' }}>
+                  লগইন করুন
+                </span>
+              </p>
+
             </div>
-            <div>
-              <label>পাসওয়ার্ড নিশ্চিত *</label>
-              <input type="password" placeholder="আবার লিখুন" value={form.confirm} onChange={e => setForm({ ...form, confirm: e.target.value })} />
-            </div>
           </div>
-
-          <button className="submit-btn" onClick={handleSubmit} disabled={loading}>
-            {loading ? '⏳ অপেক্ষা করুন...' : '✅ নিবন্ধন সম্পন্ন করুন'}
-          </button>
-
-          <div className="login-link">
-            আগে থেকে অ্যাকাউন্ট আছে? <a onClick={() => router.push('/login')}>লগইন করুন</a>
-          </div>
-
         </div>
       </div>
     </>
