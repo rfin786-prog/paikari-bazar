@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
-// ── Toast ─────────────────────────────────────────────────
+// ── Toast System ──────────────────────────────────────────
 function ToastContainer({ toasts }) {
   return (
     <div style={{
@@ -25,9 +25,7 @@ function ToastContainer({ toasts }) {
           fontWeight: '600',
           boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
           border: '1px solid rgba(232,160,32,0.3)',
-          animation: t.leaving
-            ? 'toastOut 0.3s ease forwards'
-            : 'toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards',
+          animation: t.leaving ? 'toastOut 0.3s ease forwards' : 'toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards',
           whiteSpace: 'nowrap',
         }}>
           <span style={{
@@ -48,10 +46,6 @@ function ToastContainer({ toasts }) {
           from { opacity: 1; transform: translateY(0) scale(1); }
           to   { opacity: 0; transform: translateY(8px) scale(0.95); }
         }
-        @keyframes dotPulse {
-          0%,100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(0.6); opacity: 0.5; }
-        }
       `}</style>
     </div>
   );
@@ -59,43 +53,40 @@ function ToastContainer({ toasts }) {
 
 function useToast() {
   const [toasts, setToasts] = useState([]);
+
   const showToast = useCallback((message) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, leaving: false }]);
     setTimeout(() => {
       setToasts(prev => prev.map(t => t.id === id ? { ...t, leaving: true } : t));
-      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 300);
+      setTimeout(() => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+      }, 300);
     }, 2000);
   }, []);
+
   return { toasts, showToast };
 }
 
 // ── Skeleton ──────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div style={{
-      background: '#fff',
-      borderRadius: '14px',
-      border: '1px solid #f0ede6',
-      overflow: 'hidden',
-    }}>
-      <div style={{ background: '#f0ede6', height: '130px', animation: 'pulse 1.5s infinite' }} />
-      <div style={{ padding: '10px 12px 12px' }}>
-        <div style={{ height: '12px', background: '#f0ede6', borderRadius: '6px', width: '50%', marginBottom: '8px' }} />
-        <div style={{ height: '14px', background: '#f0ede6', borderRadius: '6px', width: '80%', marginBottom: '8px' }} />
-        <div style={{ height: '20px', background: '#f0ede6', borderRadius: '6px', width: '40%', marginBottom: '12px' }} />
-        <div style={{ height: '36px', background: '#f0ede6', borderRadius: '10px' }} />
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 animate-pulse">
+      <div className="bg-gray-200 h-48 w-full" />
+      <div className="p-4 space-y-3">
+        <div className="h-4 bg-gray-200 rounded w-3/4" />
+        <div className="h-3 bg-gray-100 rounded w-1/2" />
+        <div className="h-6 bg-gray-200 rounded w-1/3" />
+        <div className="h-10 bg-gray-100 rounded-xl" />
       </div>
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }`}</style>
     </div>
   );
 }
 
 // ── Product Card ──────────────────────────────────────────
 function ProductCard({ product, onAddToCart, cartItems }) {
-  const inCart = cartItems.find(i => i.id === product.id);
+  const inCart = cartItems.find((i) => i.id === product.id);
   const [added, setAdded] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   const handleAdd = () => {
     onAddToCart(product);
@@ -104,133 +95,57 @@ function ProductCard({ product, onAddToCart, cartItems }) {
   };
 
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: '#fff',
-        borderRadius: '14px',
-        border: '1px solid #f0ede6',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'all 0.2s ease',
-        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
-        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.1)' : '0 1px 4px rgba(0,0,0,0.04)',
-        cursor: 'pointer',
-      }}
-    >
-      {/* Image area */}
-      <div style={{
-        background: '#f8f4ed',
-        height: '130px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col">
+      <div className="relative bg-gray-50 h-48 flex items-center justify-center overflow-hidden">
         {product.image_url ? (
-          <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
         ) : (
-          <span style={{ fontSize: '38px', opacity: 0.2 }}>📦</span>
+          <div className="text-5xl opacity-30">📦</div>
         )}
-
-        {/* Category badge */}
-        {product.category && (
-          <span style={{
-            position: 'absolute', top: '8px', left: '8px',
-            background: '#e8a020', color: '#0a1a2e',
-            fontSize: '10px', fontWeight: '700',
-            padding: '2px 8px', borderRadius: '100px',
-          }}>{product.category}</span>
-        )}
-
-        {/* Low stock */}
         {product.stock <= 10 && product.stock > 0 && (
-          <span style={{
-            position: 'absolute', top: '8px', right: '8px',
-            background: '#f97316', color: '#fff',
-            fontSize: '10px', fontWeight: '700',
-            padding: '2px 7px', borderRadius: '100px',
-          }}>কম স্টক</span>
+          <span className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">কম স্টক</span>
         )}
-
-        {/* Stock out overlay */}
         {product.stock === 0 && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'rgba(0,0,0,0.45)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{
-              background: '#ef4444', color: '#fff',
-              fontSize: '11px', fontWeight: '700',
-              padding: '3px 10px', borderRadius: '100px',
-            }}>স্টক শেষ</span>
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <span className="text-white font-semibold text-sm bg-red-500 px-3 py-1 rounded-full">স্টক শেষ</span>
           </div>
         )}
-
-        {/* In cart badge */}
         {inCart && (
-          <span style={{
-            position: 'absolute', bottom: '8px', right: '8px',
-            background: '#22c55e', color: '#fff',
-            fontSize: '10px', fontWeight: '700',
-            padding: '2px 8px', borderRadius: '100px',
-          }}>🛒 {inCart.qty}</span>
+          <span className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+            🛒 {inCart.qty}
+          </span>
         )}
       </div>
-
-      {/* Info */}
-      <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <p style={{ fontSize: '13px', fontWeight: '700', color: '#1a1a1a', margin: '0 0 2px', lineHeight: '1.4' }}>
-          {product.name}
-        </p>
-        {product.unit && (
-          <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 8px' }}>প্রতি {product.unit}</p>
-        )}
-        <p style={{ fontSize: '18px', fontWeight: '900', color: '#b8820f', margin: '0 0 10px' }}>
-          ৳{Number(product.price).toLocaleString('bn-BD')}
-        </p>
-
-        <button
-          onClick={handleAdd}
-          disabled={product.stock === 0}
-          style={{
-            width: '100%',
-            padding: '10px',
-            borderRadius: '10px',
-            fontSize: '13px',
-            fontWeight: '700',
-            border: inCart && !added ? '2px solid #22c55e' : 'none',
-            cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
-            background: product.stock === 0
-              ? '#f0f0f0'
+      <div className="p-4 flex flex-col flex-1">
+        <p className="text-xs text-indigo-500 font-medium mb-1 uppercase tracking-wide">{product.category || 'সাধারণ'}</p>
+        <h3 className="font-semibold text-gray-800 text-sm leading-snug mb-1 line-clamp-2">{product.name}</h3>
+        {product.unit && <p className="text-xs text-gray-400 mb-2">প্রতি {product.unit}</p>}
+        <div className="mt-auto">
+          <div className="flex items-baseline gap-1 mb-3">
+            <span className="text-xl font-bold text-gray-900">৳{Number(product.price).toLocaleString('bn-BD')}</span>
+          </div>
+          <button
+            onClick={handleAdd}
+            disabled={product.stock === 0}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+              product.stock === 0
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : added
+                ? 'bg-green-500 text-white scale-95'
+                : inCart
+                ? 'bg-green-50 text-green-700 border-2 border-green-400 hover:bg-green-100'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95'
+            }`}
+          >
+            {product.stock === 0
+              ? 'স্টক নেই'
               : added
-              ? '#22c55e'
+              ? '✓ যোগ হয়েছে!'
               : inCart
-              ? '#f0fdf4'
-              : '#e8a020',
-            color: product.stock === 0
-              ? '#aaa'
-              : added
-              ? '#fff'
-              : inCart
-              ? '#15803d'
-              : '#0a1a2e',
-            transition: 'all 0.2s ease',
-            transform: added ? 'scale(0.97)' : 'scale(1)',
-          }}
-        >
-          {product.stock === 0
-            ? 'স্টক নেই'
-            : added
-            ? '✓ যোগ হয়েছে!'
-            : inCart
-            ? `🛒 কার্টে আছে (${inCart.qty})`
-            : '🛒 কার্টে যোগ করুন'}
-        </button>
+              ? `🛒 কার্টে আছে (${inCart.qty})`
+              : '🛒 কার্টে যোগ করুন'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -239,107 +154,55 @@ function ProductCard({ product, onAddToCart, cartItems }) {
 // ── Cart Drawer ───────────────────────────────────────────
 function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
-
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', justifyContent: 'flex-end' }}>
-      <div
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }}
-        onClick={onClose}
-      />
-      <div style={{
-        position: 'relative',
-        background: '#fff',
-        width: '100%',
-        maxWidth: '360px',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '-4px 0 32px rgba(0,0,0,0.15)',
-      }}>
-        {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 18px',
-          borderBottom: '1px solid #f0ede6',
-        }}>
-          <h2 style={{ fontWeight: '800', fontSize: '16px', color: '#1a1a1a', margin: 0 }}>
-            🛒 আপনার কার্ট ({items.length})
-          </h2>
-          <button
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: '22px', color: '#aaa', cursor: 'pointer', lineHeight: 1 }}
-          >×</button>
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-sm h-full flex flex-col shadow-2xl">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="font-bold text-lg text-gray-800">🛒 আপনার কার্ট ({items.length})</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
         </div>
-
-        {/* Items */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {items.length === 0 ? (
-            <div style={{ textAlign: 'center', paddingTop: '80px', color: '#ccc' }}>
-              <div style={{ fontSize: '48px', marginBottom: '12px' }}>🛒</div>
-              <p style={{ fontSize: '14px' }}>কার্ট খালি আছে</p>
+            <div className="text-center py-16 text-gray-400">
+              <div className="text-5xl mb-3">🛒</div>
+              <p>কার্ট খালি আছে</p>
             </div>
-          ) : items.map(item => (
-            <div key={item.id} style={{
-              display: 'flex', gap: '10px',
-              background: '#faf8f4',
-              borderRadius: '12px',
-              padding: '10px',
-              border: '1px solid #f0ede6',
-            }}>
-              <div style={{
-                width: '52px', height: '52px',
-                borderRadius: '10px',
-                background: '#f0ede6',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                overflow: 'hidden', flexShrink: 0,
-              }}>
-                {item.image_url
-                  ? <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: '22px' }}>📦</span>
-                }
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '13px', fontWeight: '700', color: '#1a1a1a', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
-                <p style={{ fontSize: '13px', color: '#b8820f', fontWeight: '800', margin: '0 0 6px' }}>৳{Number(item.price).toLocaleString('bn-BD')}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button onClick={() => onUpdateQty(item.id, item.qty - 1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#f0ede6', border: 'none', fontWeight: '700', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-                  <span style={{ fontSize: '13px', fontWeight: '700', minWidth: '20px', textAlign: 'center' }}>{item.qty}</span>
-                  <button onClick={() => onUpdateQty(item.id, item.qty + 1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#e8a020', border: 'none', fontWeight: '700', cursor: 'pointer', fontSize: '14px', color: '#0a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
-                  <button onClick={() => onRemove(item.id)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#f87171', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>সরান</button>
+          ) : (
+            items.map((item) => (
+              <div key={item.id} className="flex gap-3 bg-gray-50 rounded-xl p-3">
+                <div className="w-14 h-14 rounded-lg bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {item.image_url ? (
+                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl">📦</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{item.name}</p>
+                  <p className="text-sm text-indigo-600 font-semibold">৳{Number(item.price).toLocaleString('bn-BD')}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <button onClick={() => onUpdateQty(item.id, item.qty - 1)} className="w-6 h-6 rounded-full bg-gray-200 text-gray-700 text-sm font-bold flex items-center justify-center hover:bg-gray-300">−</button>
+                    <span className="text-sm font-semibold w-6 text-center">{item.qty}</span>
+                    <button onClick={() => onUpdateQty(item.id, item.qty + 1)} className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-sm font-bold flex items-center justify-center hover:bg-indigo-200">+</button>
+                    <button onClick={() => onRemove(item.id)} className="ml-auto text-red-400 hover:text-red-600 text-xs">সরান</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
-
-        {/* Footer */}
         {items.length > 0 && (
-          <div style={{ borderTop: '1px solid #f0ede6', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#888' }}>
+          <div className="border-t p-4 space-y-3">
+            <div className="flex justify-between text-sm text-gray-600">
               <span>মোট পণ্য</span>
               <span>{items.reduce((s, i) => s + i.qty, 0)} টি</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '17px', color: '#1a1a1a' }}>
+            <div className="flex justify-between font-bold text-lg text-gray-800">
               <span>মোট মূল্য</span>
-              <span style={{ color: '#b8820f' }}>৳{Number(total).toLocaleString('bn-BD')}</span>
+              <span>৳{Number(total).toLocaleString('bn-BD')}</span>
             </div>
-            <Link
-              href="/checkout"
-              onClick={onClose}
-              style={{
-                display: 'block',
-                width: '100%',
-                background: '#e8a020',
-                color: '#0a1a2e',
-                textAlign: 'center',
-                padding: '14px',
-                borderRadius: '12px',
-                fontWeight: '800',
-                fontSize: '15px',
-                textDecoration: 'none',
-                boxSizing: 'border-box',
-              }}
-            >
+            <Link href="/checkout" className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center py-3 rounded-xl font-semibold transition-colors" onClick={onClose}>
               অর্ডার করুন →
             </Link>
           </div>
@@ -358,6 +221,7 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('সব');
   const [cartItems, setCartItems] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [sortBy, setSortBy] = useState('default');
 
   const { toasts, showToast } = useToast();
 
@@ -377,7 +241,7 @@ export default function ProductsPage() {
         const data = await res.json();
         if (Array.isArray(data)) {
           setProducts(data);
-          const cats = ['সব', ...new Set(data.map(p => p.category).filter(Boolean))];
+          const cats = ['সব', ...new Set(data.map((p) => p.category).filter(Boolean))];
           setCategories(cats);
         }
       } catch (err) {
@@ -389,31 +253,33 @@ export default function ProductsPage() {
   }, []);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('paikari_cart');
-      if (saved) setCartItems(JSON.parse(saved));
-    } catch (_) {}
+    const saved = localStorage.getItem('paikari_cart');
+    if (saved) setCartItems(JSON.parse(saved));
   }, []);
 
   useEffect(() => {
     localStorage.setItem('paikari_cart', JSON.stringify(cartItems));
-    window.dispatchEvent(new Event('cartUpdated'));
   }, [cartItems]);
 
-  const filtered = products.filter(p => {
-    const matchCat = selectedCategory === 'সব' || p.category === selectedCategory;
-    const matchSearch = !search ||
-      p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.category?.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  const filtered = products
+    .filter((p) => {
+      const matchCat = selectedCategory === 'সব' || p.category === selectedCategory;
+      const matchSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.category?.toLowerCase().includes(search.toLowerCase());
+      return matchCat && matchSearch;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'price_asc') return a.price - b.price;
+      if (sortBy === 'price_desc') return b.price - a.price;
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      return 0;
+    });
 
   const addToCart = (product) => {
-    setCartItems(prev => {
-      const exists = prev.find(i => i.id === product.id);
+    setCartItems((prev) => {
+      const exists = prev.find((i) => i.id === product.id);
       if (exists) {
         showToast(`${product.name} — আরও ১টি যোগ হয়েছে`);
-        return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+        return prev.map((i) => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
       }
       showToast(`${product.name} কার্টে যোগ হয়েছে`);
       return [...prev, { ...product, qty: 1 }];
@@ -421,162 +287,87 @@ export default function ProductsPage() {
   };
 
   const updateQty = (id, qty) => {
-    if (qty <= 0) setCartItems(prev => prev.filter(i => i.id !== id));
-    else setCartItems(prev => prev.map(i => i.id === id ? { ...i, qty } : i));
+    if (qty <= 0) setCartItems((prev) => prev.filter((i) => i.id !== id));
+    else setCartItems((prev) => prev.map((i) => i.id === id ? { ...i, qty } : i));
   };
 
-  const removeItem = (id) => setCartItems(prev => prev.filter(i => i.id !== id));
+  const removeItem = (id) => setCartItems((prev) => prev.filter((i) => i.id !== id));
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#faf8f4', fontFamily: "'Hind Siliguri', sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');`}</style>
+    <div className="min-h-screen bg-gray-50">
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap'); body { font-family: 'Hind Siliguri', sans-serif; }`}</style>
 
       {/* Navbar */}
-      <nav style={{
-        background: '#000',
-        padding: '10px 18px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-      }}>
-        {/* Logo */}
-        <Link href="/" style={{ display: 'inline-flex', alignItems: 'flex-end', gap: '6px', textDecoration: 'none', flexShrink: 0 }}>
-          <span style={{ color: '#fff', fontSize: '17px', fontWeight: '900', letterSpacing: '-0.5px' }}>আড়ৎ</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '3px' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ff3b3b', display: 'block', animation: 'dotPulse 1.2s ease-in-out infinite' }} />
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#e8a020', display: 'block', animation: 'dotPulse 1.2s ease-in-out infinite 0.4s' }} />
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', display: 'block', animation: 'dotPulse 1.2s ease-in-out infinite 0.8s' }} />
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-xl">🚚</span>
+            <span className="font-bold text-indigo-700 text-lg">পাইকারি<span className="text-gray-800">বাজার</span></span>
+          </Link>
+          <div className="flex-1 max-w-md relative">
+            <input
+              type="text"
+              placeholder="পণ্য খুঁজুন..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-gray-50"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
           </div>
-        </Link>
-
-        {/* Search */}
-        <div style={{ flex: 1, maxWidth: '360px', position: 'relative' }}>
-          <input
-            type="text"
-            placeholder="পণ্য খুঁজুন..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px 12px 8px 34px',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.08)',
-              color: '#fff',
-              fontSize: '13px',
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
-          />
-          <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>🔍</span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link href="/dashboard" className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-xl hover:bg-indigo-50 transition-colors">
+              📦 <span className="hidden sm:inline">আমার অর্ডার</span>
+            </Link>
+            <button onClick={() => setCartOpen(true)} className="relative flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+              🛒
+              <span className="hidden sm:inline">কার্ট</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">{cartCount}</span>
+              )}
+            </button>
+          </div>
         </div>
-
-        {/* Cart */}
-        <button
-          onClick={() => setCartOpen(true)}
-          style={{
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: '#e8a020',
-            color: '#0a1a2e',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            fontWeight: '700',
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          🛒 কার্ট
-          {cartCount > 0 && (
-            <span style={{
-              position: 'absolute',
-              top: '-7px', right: '-7px',
-              background: '#ff3b3b',
-              color: '#fff',
-              fontSize: '10px',
-              width: '18px', height: '18px',
-              borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: '700',
-            }}>{cartCount}</span>
-          )}
-        </button>
       </nav>
 
-      {/* Content */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 16px' }}>
-
-        {/* Category pills */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              style={{
-                padding: '6px 16px',
-                borderRadius: '100px',
-                fontSize: '13px',
-                fontWeight: '700',
-                border: selectedCategory === cat ? 'none' : '1px solid #e8e0d0',
-                background: selectedCategory === cat ? '#e8a020' : '#fff',
-                color: selectedCategory === cat ? '#0a1a2e' : '#666',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {cat}
-            </button>
-          ))}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="flex gap-2 flex-wrap flex-1">
+            {categories.map((cat) => (
+              <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${selectedCategory === cat ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-300'}`}>
+                {cat}
+              </button>
+            ))}
+          </div>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="text-sm border border-gray-200 rounded-xl px-3 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <option value="default">ডিফল্ট</option>
+            <option value="price_asc">দাম: কম থেকে বেশি</option>
+            <option value="price_desc">দাম: বেশি থেকে কম</option>
+            <option value="name">নাম অনুযায়ী</option>
+          </select>
         </div>
 
-        {!loading && (
-          <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '14px' }}>
-            {filtered.length} টি পণ্য পাওয়া গেছে
-          </p>
-        )}
+        {!loading && <p className="text-sm text-gray-500 mb-4">{filtered.length} টি পণ্য পাওয়া গেছে</p>}
 
-        {/* Grid */}
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', paddingTop: '80px', color: '#ccc' }}>
-            <div style={{ fontSize: '52px', marginBottom: '14px' }}>🔍</div>
-            <p style={{ fontSize: '15px', fontWeight: '600' }}>কোনো পণ্য পাওয়া যায়নি</p>
+          <div className="text-center py-24 text-gray-400">
+            <div className="text-6xl mb-4">🔍</div>
+            <p className="text-lg font-medium">কোনো পণ্য পাওয়া যায়নি</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
-            {filtered.map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-                cartItems={cartItems}
-              />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {filtered.map((product) => (
+              <ProductCard key={product.id} product={product} onAddToCart={addToCart} cartItems={cartItems} />
             ))}
           </div>
         )}
       </div>
 
-      {cartOpen && (
-        <CartDrawer
-          items={cartItems}
-          onClose={() => setCartOpen(false)}
-          onUpdateQty={updateQty}
-          onRemove={removeItem}
-        />
-      )}
+      {cartOpen && <CartDrawer items={cartItems} onClose={() => setCartOpen(false)} onUpdateQty={updateQty} onRemove={removeItem} />}
 
       <ToastContainer toasts={toasts} />
     </div>
