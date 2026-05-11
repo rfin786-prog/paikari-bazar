@@ -31,33 +31,18 @@ function ToastContainer({ toasts }) {
       {toasts.map(t => (
         <div key={t.id} style={{
           display: 'flex', alignItems: 'center', gap: '10px',
-          background: 'linear-gradient(135deg, #0f2442, #1a3a6b)',
-          color: '#fff', padding: '12px 22px', borderRadius: '50px',
+          background: '#e62e2e', color: '#fff', padding: '12px 22px', borderRadius: '50px',
           fontSize: '14px', fontFamily: 'Hind Siliguri, sans-serif',
-          fontWeight: '600', boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
-          border: '1px solid rgba(232,160,32,0.35)', whiteSpace: 'nowrap',
-          animation: t.leaving
-            ? 'toastOut 0.3s ease forwards'
-            : 'toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards',
+          fontWeight: '600', boxShadow: '0 8px 24px rgba(230,46,46,0.35)', whiteSpace: 'nowrap',
+          animation: t.leaving ? 'toastOut 0.3s ease forwards' : 'toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards',
         }}>
-          <span style={{
-            width: '26px', height: '26px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #e8a020, #f5c842)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '13px', flexShrink: 0, color: '#0f2442', fontWeight: '800',
-          }}>✓</span>
+          <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0, color: '#e62e2e', fontWeight: '800' }}>✓</span>
           {t.message}
         </div>
       ))}
       <style>{`
-        @keyframes toastIn {
-          from { opacity:0; transform:translateY(16px) scale(0.9); }
-          to   { opacity:1; transform:translateY(0) scale(1); }
-        }
-        @keyframes toastOut {
-          from { opacity:1; transform:translateY(0) scale(1); }
-          to   { opacity:0; transform:translateY(8px) scale(0.95); }
-        }
+        @keyframes toastIn { from{opacity:0;transform:translateY(16px) scale(0.9)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes toastOut { from{opacity:1;transform:translateY(0) scale(1)} to{opacity:0;transform:translateY(8px) scale(0.95)} }
       `}</style>
     </div>
   );
@@ -66,15 +51,12 @@ function ToastContainer({ toasts }) {
 // ── Skeleton ──────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div style={{
-      background: 'rgba(255,255,255,0.05)', borderRadius: '16px',
-      padding: '14px', border: '1px solid rgba(255,255,255,0.08)',
-    }}>
-      <div style={{ height: 'clamp(110px, 15vw, 180px)', borderRadius: '10px', background: 'rgba(255,255,255,0.08)', marginBottom: '10px', animation: 'pulse 1.5s infinite' }} />
-      <div style={{ height: '12px', borderRadius: '6px', background: 'rgba(255,255,255,0.08)', marginBottom: '6px', width: '75%', animation: 'pulse 1.5s infinite' }} />
-      <div style={{ height: '10px', borderRadius: '6px', background: 'rgba(255,255,255,0.06)', marginBottom: '10px', width: '50%', animation: 'pulse 1.5s infinite' }} />
-      <div style={{ height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.08)', animation: 'pulse 1.5s infinite' }} />
-      <style>{`@keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }`}</style>
+    <div style={{ background: '#fff', borderRadius: '10px', padding: '12px', border: '1px solid #f0f0f0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+      <div style={{ height: 'clamp(110px,15vw,180px)', borderRadius: '8px', background: '#f5f5f5', marginBottom: '10px', animation: 'pulse 1.5s infinite' }} />
+      <div style={{ height: '12px', borderRadius: '4px', background: '#f0f0f0', marginBottom: '6px', width: '75%', animation: 'pulse 1.5s infinite' }} />
+      <div style={{ height: '10px', borderRadius: '4px', background: '#f5f5f5', marginBottom: '10px', width: '50%', animation: 'pulse 1.5s infinite' }} />
+      <div style={{ height: '34px', borderRadius: '6px', background: '#f0f0f0', animation: 'pulse 1.5s infinite' }} />
+      <style>{`@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}`}</style>
     </div>
   );
 }
@@ -92,74 +74,38 @@ function ProductCard({ product, onAddToCart, cartItems }) {
   };
 
   const discount = product.mrp && product.mrp > product.price
-    ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
-    : null;
+    ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : null;
 
   return (
-    <div style={{
-      background: 'rgba(255,255,255,0.06)', borderRadius: '16px',
-      padding: '14px', display: 'flex', flexDirection: 'column', gap: '8px',
-      border: `1px solid ${inCart ? 'rgba(29,158,117,0.5)' : 'rgba(255,255,255,0.08)'}`,
-      transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s',
-      position: 'relative',
-    }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+    <div
+      style={{ background: '#fff', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', border: `1.5px solid ${inCart ? '#e62e2e' : '#f0f0f0'}`, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', transition: 'transform 0.18s, box-shadow 0.18s', position: 'relative' }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.12)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)'; }}
     >
-      {inCart && (
-        <div style={{
-          position: 'absolute', top: '10px', left: '10px',
-          background: '#1D9E75', color: '#fff',
-          fontSize: '11px', fontWeight: '700',
-          padding: '2px 8px', borderRadius: '20px', zIndex: 2,
-        }}>🛒 {inCart.qty}</div>
-      )}
-
-      {discount && (
-        <div style={{
-          position: 'absolute', top: '10px', right: '10px',
-          background: '#e8a020', color: '#412402',
-          fontSize: '10px', fontWeight: '800',
-          padding: '2px 7px', borderRadius: '20px', zIndex: 2,
-        }}>{discount}% ছাড়</div>
-      )}
-
+      {inCart && <div style={{ position: 'absolute', top: '8px', left: '8px', background: '#e62e2e', color: '#fff', fontSize: '10px', fontWeight: '700', padding: '2px 7px', borderRadius: '20px', zIndex: 2 }}>🛒 {inCart.qty}</div>}
+      {discount && <div style={{ position: 'absolute', top: '8px', right: '8px', background: '#ff6000', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 7px', borderRadius: '4px', zIndex: 2 }}>{discount}% ছাড়</div>}
       {product.stock === 0 && (
-        <div style={{
-          position: 'absolute', inset: 0, borderRadius: '16px',
-          background: 'rgba(0,0,0,0.55)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 3,
-        }}>
-          <span style={{ background: '#ef4444', color: '#fff', fontSize: '12px', fontWeight: '700', padding: '4px 12px', borderRadius: '20px' }}>স্টক শেষ</span>
+        <div style={{ position: 'absolute', inset: 0, borderRadius: '10px', background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3 }}>
+          <span style={{ background: '#e62e2e', color: '#fff', fontSize: '12px', fontWeight: '700', padding: '4px 14px', borderRadius: '4px' }}>স্টক শেষ</span>
         </div>
       )}
-      {product.stock > 0 && product.stock <= 10 && (
-        <div style={{
-          position: 'absolute', top: '10px', right: '10px',
-          background: '#f97316', color: '#fff',
-          fontSize: '10px', fontWeight: '700',
-          padding: '2px 7px', borderRadius: '20px', zIndex: 2,
-        }}>কম স্টক</div>
+      {product.stock > 0 && product.stock <= 10 && !discount && (
+        <div style={{ position: 'absolute', top: '8px', right: '8px', background: '#ff6000', color: '#fff', fontSize: '10px', fontWeight: '700', padding: '2px 7px', borderRadius: '4px', zIndex: 2 }}>কম স্টক</div>
       )}
 
-      <div style={{
-        width: '100%', height: 'clamp(110px, 15vw, 180px)', borderRadius: '10px',
-        overflow: 'hidden', background: 'rgba(255,255,255,0.06)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
+      <div style={{ width: '100%', height: 'clamp(110px,15vw,180px)', borderRadius: '8px', overflow: 'hidden', background: '#f7f7f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {product.image_url
           ? <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <span style={{ fontSize: '40px' }}>📦</span>
-        }
+          : <span style={{ fontSize: '40px', opacity: 0.25 }}>📦</span>}
       </div>
 
-      <p style={{ color: '#fff', fontSize: '13px', fontWeight: '600', margin: 0, lineHeight: '1.4' }}>{product.name}</p>
-      {product.unit && <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '11px', margin: 0 }}>প্রতি {product.unit}</p>}
+      <p style={{ color: '#222', fontSize: '13px', fontWeight: '500', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.name}</p>
+      {product.unit && <p style={{ color: '#999', fontSize: '11px', margin: 0 }}>প্রতি {product.unit}</p>}
 
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-        <span style={{ color: '#e8a020', fontSize: '16px', fontWeight: '800' }}>৳{Number(product.price).toLocaleString()}</span>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '2px' }}>
+        <span style={{ color: '#e62e2e', fontSize: '17px', fontWeight: '800' }}>৳{Number(product.price).toLocaleString()}</span>
         {product.mrp && product.mrp > product.price && (
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px', textDecoration: 'line-through' }}>৳{product.mrp}</span>
+          <span style={{ color: '#bbb', fontSize: '11px', textDecoration: 'line-through' }}>৳{product.mrp}</span>
         )}
       </div>
 
@@ -167,68 +113,33 @@ function ProductCard({ product, onAddToCart, cartItems }) {
         onClick={handleAdd}
         disabled={product.stock === 0}
         style={{
-          padding: '10px', border: 'none', borderRadius: '10px',
+          marginTop: '4px', padding: '9px', border: 'none', borderRadius: '6px',
           fontSize: '13px', fontWeight: '700', cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
-          fontFamily: 'Hind Siliguri, sans-serif',
-          transition: 'all 0.2s',
+          fontFamily: 'Hind Siliguri, sans-serif', transition: 'all 0.15s',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-          background: product.stock === 0
-            ? 'rgba(255,255,255,0.08)'
-            : added
-            ? 'linear-gradient(135deg, #16a34a, #22c55e)'
-            : inCart
-            ? 'rgba(29,158,117,0.2)'
-            : 'linear-gradient(135deg, #e8a020, #f5c842)',
-          color: product.stock === 0
-            ? 'rgba(255,255,255,0.3)'
-            : added || inCart
-            ? '#fff'
-            : '#0f2442',
-          border: inCart && !added ? '1.5px solid #1D9E75' : '1.5px solid transparent',
+          background: product.stock === 0 ? '#f5f5f5' : added ? '#16a34a' : inCart ? '#fff' : '#e62e2e',
+          color: product.stock === 0 ? '#bbb' : added ? '#fff' : inCart ? '#e62e2e' : '#fff',
+          border: inCart && !added ? '1.5px solid #e62e2e' : '1.5px solid transparent',
         }}
       >
-        {product.stock === 0
-          ? 'স্টক নেই'
-          : added
-          ? '✓ যোগ হয়েছে!'
-          : inCart
-          ? `🛒 আছে (${inCart.qty})`
-          : <><span style={{ fontSize: '14px' }}>+</span> কার্টে যোগ করুন</>
-        }
+        {product.stock === 0 ? 'স্টক নেই' : added ? '✓ যোগ হয়েছে!' : inCart ? `🛒 আছে (${inCart.qty})` : <><span style={{ fontSize: '14px' }}>+</span> কার্টে যোগ করুন</>}
       </button>
     </div>
   );
 }
 
-// ── Floating Cart Bar ─────────────────────────────────────
+// ── Floating Cart ─────────────────────────────────────────
 function FloatingCart({ cartItems, onOrder }) {
   const totalQty = cartItems.reduce((s, i) => s + i.qty, 0);
   const totalPrice = cartItems.reduce((s, i) => s + i.qty * Number(i.price), 0);
   if (totalQty === 0) return null;
   return (
-    <div style={{
-      position: 'fixed', bottom: '20px', left: '50%',
-      transform: 'translateX(-50%)',
-      background: 'linear-gradient(135deg, #e8a020, #f5c842)',
-      borderRadius: '16px', padding: '14px 20px',
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      width: 'min(480px, calc(100vw - 32px))',
-      zIndex: 999, boxShadow: '0 8px 32px rgba(232,160,32,0.4)',
-    }}>
+    <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: '#e62e2e', borderRadius: '12px', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: 'min(480px, calc(100vw - 32px))', zIndex: 999, boxShadow: '0 8px 28px rgba(230,46,46,0.4)' }}>
       <div>
-        <p style={{ color: '#412402', fontSize: '12px', fontWeight: '600', margin: 0 }}>কার্টে {totalQty}টি</p>
-        <p style={{ color: '#412402', fontSize: '18px', fontWeight: '800', margin: 0 }}>মোট ৳{totalPrice.toLocaleString()}</p>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', fontWeight: '500', margin: 0 }}>কার্টে {totalQty}টি পণ্য</p>
+        <p style={{ color: '#fff', fontSize: '18px', fontWeight: '800', margin: 0 }}>মোট ৳{totalPrice.toLocaleString()}</p>
       </div>
-      <button
-        onClick={onOrder}
-        style={{
-          background: '#0f2442', color: '#fff', border: 'none',
-          padding: '11px 20px', borderRadius: '12px',
-          fontSize: '14px', fontWeight: '700', cursor: 'pointer',
-          fontFamily: 'Hind Siliguri, sans-serif',
-          display: 'flex', alignItems: 'center', gap: '6px',
-        }}
-      >
+      <button onClick={onOrder} style={{ background: '#fff', color: '#e62e2e', border: 'none', padding: '11px 22px', borderRadius: '8px', fontSize: '14px', fontWeight: '800', cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif' }}>
         অর্ডার করুন →
       </button>
     </div>
@@ -241,49 +152,28 @@ function CatBtn({ cat, isActive, onClick, count, size = 'lg' }) {
   return (
     <button
       onClick={onClick}
-      style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isLg ? '8px' : '5px',
-        padding: isLg ? 'clamp(10px,1.5vw,18px) clamp(14px,2vw,22px)' : '8px 14px',
-        borderRadius: '16px', cursor: 'pointer', flexShrink: 0,
-        border: `2px solid ${isActive ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
-        background: isActive ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
-        transition: 'all 0.2s',
-        minWidth: isLg ? 'clamp(80px,8vw,110px)' : 'unset',
-      }}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isLg ? '6px' : '4px', padding: isLg ? '10px 14px' : '7px 12px', borderRadius: '10px', cursor: 'pointer', flexShrink: 0, border: `2px solid ${isActive ? '#e62e2e' : '#eee'}`, background: isActive ? '#fff1f1' : '#fff', transition: 'all 0.15s', minWidth: isLg ? '76px' : 'unset' }}
     >
-      <div style={{
-        width: isLg ? 'clamp(44px,5vw,64px)' : '32px',
-        height: isLg ? 'clamp(44px,5vw,64px)' : '32px',
-        borderRadius: isLg ? '14px' : '10px',
-        overflow: 'hidden',
-        background: isActive ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-      }}>
+      <div style={{ width: isLg ? '52px' : '36px', height: isLg ? '52px' : '36px', borderRadius: '8px', overflow: 'hidden', background: isActive ? '#ffe0e0' : '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {cat.image_url
           ? <img src={cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <span style={{ fontSize: isLg ? 'clamp(20px,2.5vw,28px)' : '16px', color: 'rgba(255,255,255,0.4)' }}>▪</span>
-        }
+          : <span style={{ fontSize: isLg ? '22px' : '16px', opacity: 0.25 }}>▪</span>}
       </div>
-      <span style={{
-        color: isActive ? '#e8a020' : 'rgba(255,255,255,0.7)',
-        fontSize: isLg ? 'clamp(11px,1.2vw,14px)' : '12px',
-        fontWeight: '700', whiteSpace: 'nowrap',
-      }}>{cat.name}</span>
-      <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{count} টি</span>
+      <span style={{ color: isActive ? '#e62e2e' : '#444', fontSize: isLg ? '12px' : '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>{cat.name}</span>
+      <span style={{ color: '#aaa', fontSize: '10px' }}>{count} টি</span>
     </button>
   );
 }
 
-// ── Main Component ────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────
 export default function ProductsSection() {
   const router = useRouter();
   const [products, setProducts] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedParent, setSelectedParent] = useState(null); // parent category id
-  const [selectedSub, setSelectedSub] = useState(null);       // sub-category id
+  const [selectedParent, setSelectedParent] = useState(null);
+  const [selectedSub, setSelectedSub] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const { toasts, showToast } = useToast();
 
@@ -304,51 +194,30 @@ export default function ProductsSection() {
     if (saved) setCartItems(JSON.parse(saved));
   }, []);
 
-  // Split categories
   const parents = allCategories.filter(c => !c.parent_id);
   const subs = allCategories.filter(c => !!c.parent_id);
   const activeSubs = selectedParent ? subs.filter(s => s.parent_id === selectedParent) : [];
 
-  const handleParentClick = (parentId) => {
-    if (selectedParent === parentId) {
-      // toggle off
-      setSelectedParent(null);
-      setSelectedSub(null);
-    } else {
-      setSelectedParent(parentId);
-      setSelectedSub(null);
-    }
+  const handleParentClick = (id) => {
+    if (selectedParent === id) { setSelectedParent(null); setSelectedSub(null); }
+    else { setSelectedParent(id); setSelectedSub(null); }
   };
+  const handleSubClick = (id) => setSelectedSub(selectedSub === id ? null : id);
+  const handleAllClick = () => { setSelectedParent(null); setSelectedSub(null); };
 
-  const handleSubClick = (subId) => {
-    setSelectedSub(selectedSub === subId ? null : subId);
-  };
-
-  const handleAllClick = () => {
-    setSelectedParent(null);
-    setSelectedSub(null);
-  };
-
-  // Filter products
   const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    if (selectedSub) {
-      return matchSearch && p.sub_category_id === selectedSub;
-    }
+    if (selectedSub) return matchSearch && p.sub_category_id === selectedSub;
     if (selectedParent) {
-      // show products in this parent or any of its subs
       const subIds = subs.filter(s => s.parent_id === selectedParent).map(s => s.id);
       return matchSearch && (p.category_id === selectedParent || subIds.includes(p.sub_category_id));
     }
     return matchSearch;
   });
 
-  // Label for count display
   const selectedLabel = selectedSub
     ? allCategories.find(c => c.id === selectedSub)?.name
-    : selectedParent
-    ? allCategories.find(c => c.id === selectedParent)?.name
-    : 'সব পণ্য';
+    : selectedParent ? allCategories.find(c => c.id === selectedParent)?.name : 'সব পণ্য';
 
   const addToCart = (product) => {
     const user = localStorage.getItem('user');
@@ -356,198 +225,86 @@ export default function ProductsSection() {
     setCartItems(prev => {
       const exists = prev.find(i => i.id === product.id);
       let updated;
-      if (exists) {
-        updated = prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
-        showToast(`${product.name} — আরও ১টি যোগ হয়েছে`);
-      } else {
-        updated = [...prev, { ...product, qty: 1 }];
-        showToast(`${product.name} কার্টে যোগ হয়েছে`);
-      }
+      if (exists) { updated = prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i); showToast(`${product.name} — আরও ১টি যোগ হয়েছে`); }
+      else { updated = [...prev, { ...product, qty: 1 }]; showToast(`${product.name} কার্টে যোগ হয়েছে`); }
       localStorage.setItem('paikari_cart', JSON.stringify(updated));
       return updated;
     });
   };
 
   return (
-    <div style={{
-      background: '#0a1628',
-      padding: '48px clamp(16px, 5vw, 80px) 100px',
-      fontFamily: 'Hind Siliguri, sans-serif',
-    }}>
+    <div style={{ background: '#f5f5f5', padding: '20px clamp(12px,4vw,60px) 100px', fontFamily: 'Hind Siliguri, sans-serif', minHeight: '100vh' }}>
       <style>{`
-        .product-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 14px;
-        }
-        @media (min-width: 640px) {
-          .product-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-        @media (min-width: 1024px) {
-          .product-grid { grid-template-columns: repeat(5, 1fr); }
-        }
-        .cat-scroll::-webkit-scrollbar { display: none; }
-        .sub-row {
-          animation: subFadeIn 0.25s ease forwards;
-        }
-        @keyframes subFadeIn {
-          from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
+        .product-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+        @media(min-width:640px){ .product-grid{grid-template-columns:repeat(3,1fr);} }
+        @media(min-width:1024px){ .product-grid{grid-template-columns:repeat(5,1fr);} }
+        .cat-scroll::-webkit-scrollbar{display:none;}
+        .sub-row{animation:subFadeIn 0.22s ease forwards;}
+        @keyframes subFadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
       `}</style>
+
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
-        {/* Search + Count */}
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: 'rgba(255,255,255,0.4)' }}>🔍</span>
-            <input
-              placeholder="পণ্য খুঁজুন..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{
-                width: '100%', padding: '11px 16px 11px 40px',
-                borderRadius: '12px', border: '1.5px solid rgba(255,255,255,0.12)',
-                fontSize: '14px', boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.07)', color: '#fff',
-                outline: 'none', fontFamily: 'Hind Siliguri, sans-serif',
-              }}
-            />
-          </div>
-          {!loading && (
-            <div style={{
-              background: 'rgba(232,160,32,0.12)', border: '1px solid rgba(232,160,32,0.25)',
-              borderRadius: '10px', padding: '8px 14px',
-              color: '#e8a020', fontSize: '13px', fontWeight: '600', whiteSpace: 'nowrap',
-            }}>
-              {selectedLabel} — {filtered.length} টি
-            </div>
-          )}
+        {/* Search */}
+        <div style={{ background: '#fff', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #eee' }}>
+          <span style={{ fontSize: '16px', color: '#bbb' }}>🔍</span>
+          <input
+            placeholder="পণ্য খুঁজুন..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ flex: 1, border: 'none', outline: 'none', fontSize: '14px', color: '#333', fontFamily: 'Hind Siliguri, sans-serif', background: 'transparent' }}
+          />
+          {!loading && <span style={{ color: '#e62e2e', fontSize: '13px', fontWeight: '700', whiteSpace: 'nowrap', flexShrink: 0 }}>{selectedLabel} — {filtered.length} টি</span>}
         </div>
 
-        {/* ── Row 1: Parent categories ── */}
+        {/* Parent row */}
         {!loading && parents.length > 0 && (
-          <div
-            className="cat-scroll"
-            style={{
-              display: 'flex', gap: '10px',
-              overflowX: 'auto', paddingBottom: '8px',
-              marginBottom: activeSubs.length > 0 ? '10px' : '28px',
-              scrollbarWidth: 'none',
-            }}
-          >
-            {/* সব button */}
-            <button
-              onClick={handleAllClick}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                padding: 'clamp(10px,1.5vw,18px) clamp(14px,2vw,22px)',
-                borderRadius: '16px', cursor: 'pointer', flexShrink: 0,
-                border: `2px solid ${!selectedParent && !selectedSub ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
-                background: !selectedParent && !selectedSub ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
-                transition: 'all 0.2s', minWidth: 'clamp(80px,8vw,110px)',
-              }}
-            >
-              <div style={{
-                width: 'clamp(44px,5vw,64px)', height: 'clamp(44px,5vw,64px)',
-                borderRadius: '14px',
-                background: !selectedParent ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 'clamp(20px,2.5vw,28px)',
-              }}>🏪</div>
-              <span style={{ color: !selectedParent ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px,1.2vw,14px)', fontWeight: '700' }}>সব</span>
-              <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{products.length} টি</span>
-            </button>
-
-            {parents.map(cat => {
-              const catSubs = subs.filter(s => s.parent_id === cat.id);
-              const subIds = catSubs.map(s => s.id);
-              const count = products.filter(p =>
-                p.category_id === cat.id || subIds.includes(p.sub_category_id)
-              ).length;
-              const isActive = selectedParent === cat.id;
-              return (
-                <CatBtn
-                  key={cat.id}
-                  cat={cat}
-                  isActive={isActive}
-                  onClick={() => handleParentClick(cat.id)}
-                  count={count}
-                  size="lg"
-                />
-              );
-            })}
+          <div style={{ background: '#fff', borderRadius: '10px', padding: '12px', marginBottom: activeSubs.length > 0 ? '8px' : '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #eee' }}>
+            <div className="cat-scroll" style={{ display: 'flex', gap: '8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+              <button
+                onClick={handleAllClick}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', flexShrink: 0, border: `2px solid ${!selectedParent ? '#e62e2e' : '#eee'}`, background: !selectedParent ? '#fff1f1' : '#fff', transition: 'all 0.15s', minWidth: '72px' }}
+              >
+                <div style={{ width: '52px', height: '52px', borderRadius: '8px', background: !selectedParent ? '#ffe0e0' : '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>🏪</div>
+                <span style={{ color: !selectedParent ? '#e62e2e' : '#444', fontSize: '12px', fontWeight: '700' }}>সব</span>
+                <span style={{ color: '#aaa', fontSize: '10px' }}>{products.length} টি</span>
+              </button>
+              {parents.map(cat => {
+                const subIds = subs.filter(s => s.parent_id === cat.id).map(s => s.id);
+                const count = products.filter(p => p.category_id === cat.id || subIds.includes(p.sub_category_id)).length;
+                return <CatBtn key={cat.id} cat={cat} isActive={selectedParent === cat.id} onClick={() => handleParentClick(cat.id)} count={count} size="lg" />;
+              })}
+            </div>
           </div>
         )}
 
-        {/* ── Row 2: Sub-categories (animate in) ── */}
+        {/* Sub row */}
         {!loading && activeSubs.length > 0 && (
-          <div
-            className="cat-scroll sub-row"
-            style={{
-              display: 'flex', gap: '8px',
-              overflowX: 'auto', paddingBottom: '8px',
-              marginBottom: '28px', scrollbarWidth: 'none',
-              paddingLeft: '12px',
-              borderLeft: '3px solid rgba(232,160,32,0.3)',
-            }}
-          >
-            {activeSubs.map(sub => {
-              const count = products.filter(p => p.sub_category_id === sub.id).length;
-              const isActive = selectedSub === sub.id;
-              return (
-                <CatBtn
-                  key={sub.id}
-                  cat={sub}
-                  isActive={isActive}
-                  onClick={() => handleSubClick(sub.id)}
-                  count={count}
-                  size="sm"
-                />
-              );
-            })}
+          <div style={{ background: '#fff', borderRadius: '10px', padding: '10px 12px', marginBottom: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1.5px solid #ffe0e0' }}>
+            <div className="cat-scroll sub-row" style={{ display: 'flex', gap: '8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+              {activeSubs.map(sub => {
+                const count = products.filter(p => p.sub_category_id === sub.id).length;
+                return <CatBtn key={sub.id} cat={sub} isActive={selectedSub === sub.id} onClick={() => handleSubClick(sub.id)} count={count} size="sm" />;
+              })}
+            </div>
           </div>
         )}
 
         {/* Products */}
         {loading ? (
-          <div className="product-grid">
-            {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
-          </div>
+          <div className="product-grid">{Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-            <div style={{
-              width: '80px', height: '80px', borderRadius: '50%',
-              background: 'rgba(255,255,255,0.05)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '36px', margin: '0 auto 16px',
-            }}>🔍</div>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>কোনো পণ্য পাওয়া যায়নি</p>
-            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '13px' }}>অন্য কিছু দিয়ে খোঁজার চেষ্টা করুন</p>
+          <div style={{ textAlign: 'center', padding: '80px 20px', background: '#fff', borderRadius: '10px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔍</div>
+            <p style={{ color: '#666', fontSize: '16px', fontWeight: '600', marginBottom: '6px' }}>কোনো পণ্য পাওয়া যায়নি</p>
+            <p style={{ color: '#aaa', fontSize: '13px', marginBottom: '16px' }}>অন্য কিছু দিয়ে খোঁজার চেষ্টা করুন</p>
             {(selectedParent || selectedSub) && (
-              <button
-                onClick={handleAllClick}
-                style={{
-                  marginTop: '16px', background: 'rgba(232,160,32,0.12)',
-                  border: '1px solid rgba(232,160,32,0.3)', color: '#e8a020',
-                  padding: '8px 20px', borderRadius: '10px', fontSize: '13px',
-                  fontWeight: '600', cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif',
-                }}
-              >
-                সব পণ্য দেখুন
-              </button>
+              <button onClick={handleAllClick} style={{ background: '#e62e2e', color: '#fff', border: 'none', padding: '9px 22px', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif' }}>সব পণ্য দেখুন</button>
             )}
           </div>
         ) : (
           <div className="product-grid">
-            {filtered.map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-                cartItems={cartItems}
-              />
-            ))}
+            {filtered.map(product => <ProductCard key={product.id} product={product} onAddToCart={addToCart} cartItems={cartItems} />)}
           </div>
         )}
       </div>
