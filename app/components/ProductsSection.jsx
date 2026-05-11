@@ -149,7 +149,7 @@ function ProductCard({ product, onAddToCart, cartItems }) {
       }}>
         {product.image_url
           ? <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <span style={{ fontSize: '40px' }}>{product.emoji || '📦'}</span>
+          : <span style={{ fontSize: '40px' }}>📦</span>
         }
       </div>
 
@@ -204,9 +204,7 @@ function ProductCard({ product, onAddToCart, cartItems }) {
 function FloatingCart({ cartItems, onOrder }) {
   const totalQty = cartItems.reduce((s, i) => s + i.qty, 0);
   const totalPrice = cartItems.reduce((s, i) => s + i.qty * Number(i.price), 0);
-
   if (totalQty === 0) return null;
-
   return (
     <div style={{
       position: 'fixed', bottom: '20px', left: '50%',
@@ -237,16 +235,56 @@ function FloatingCart({ cartItems, onOrder }) {
   );
 }
 
+// ── Category Button ───────────────────────────────────────
+function CatBtn({ cat, isActive, onClick, count, size = 'lg' }) {
+  const isLg = size === 'lg';
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isLg ? '8px' : '5px',
+        padding: isLg ? 'clamp(10px,1.5vw,18px) clamp(14px,2vw,22px)' : '8px 14px',
+        borderRadius: '16px', cursor: 'pointer', flexShrink: 0,
+        border: `2px solid ${isActive ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
+        background: isActive ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
+        transition: 'all 0.2s',
+        minWidth: isLg ? 'clamp(80px,8vw,110px)' : 'unset',
+      }}
+    >
+      <div style={{
+        width: isLg ? 'clamp(44px,5vw,64px)' : '32px',
+        height: isLg ? 'clamp(44px,5vw,64px)' : '32px',
+        borderRadius: isLg ? '14px' : '10px',
+        overflow: 'hidden',
+        background: isActive ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        {cat.image_url
+          ? <img src={cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <span style={{ fontSize: isLg ? 'clamp(20px,2.5vw,28px)' : '16px', color: 'rgba(255,255,255,0.4)' }}>▪</span>
+        }
+      </div>
+      <span style={{
+        color: isActive ? '#e8a020' : 'rgba(255,255,255,0.7)',
+        fontSize: isLg ? 'clamp(11px,1.2vw,14px)' : '12px',
+        fontWeight: '700', whiteSpace: 'nowrap',
+      }}>{cat.name}</span>
+      <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{count} টি</span>
+    </button>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────
 export default function ProductsSection() {
   const router = useRouter();
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedParent, setSelectedParent] = useState(null); // parent category id
+  const [selectedSub, setSelectedSub] = useState(null);       // sub-category id
   const [cartItems, setCartItems] = useState([]);
-
   const { toasts, showToast } = useToast();
 
   useEffect(() => {
@@ -257,7 +295,7 @@ export default function ProductsSection() {
         fetch(`${SUPABASE_URL}/rest/v1/products?active=eq.true&order=created_at.desc`, { headers }),
       ]);
       const [catData, prodData] = await Promise.all([catRes.json(), prodRes.json()]);
-      setCategories(Array.isArray(catData) ? catData : []);
+      setAllCategories(Array.isArray(catData) ? catData : []);
       setProducts(Array.isArray(prodData) ? prodData : []);
       setLoading(false);
     }
@@ -265,6 +303,52 @@ export default function ProductsSection() {
     const saved = localStorage.getItem('paikari_cart');
     if (saved) setCartItems(JSON.parse(saved));
   }, []);
+
+  // Split categories
+  const parents = allCategories.filter(c => !c.parent_id);
+  const subs = allCategories.filter(c => !!c.parent_id);
+  const activeSubs = selectedParent ? subs.filter(s => s.parent_id === selectedParent) : [];
+
+  const handleParentClick = (parentId) => {
+    if (selectedParent === parentId) {
+      // toggle off
+      setSelectedParent(null);
+      setSelectedSub(null);
+    } else {
+      setSelectedParent(parentId);
+      setSelectedSub(null);
+    }
+  };
+
+  const handleSubClick = (subId) => {
+    setSelectedSub(selectedSub === subId ? null : subId);
+  };
+
+  const handleAllClick = () => {
+    setSelectedParent(null);
+    setSelectedSub(null);
+  };
+
+  // Filter products
+  const filtered = products.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    if (selectedSub) {
+      return matchSearch && p.sub_category_id === selectedSub;
+    }
+    if (selectedParent) {
+      // show products in this parent or any of its subs
+      const subIds = subs.filter(s => s.parent_id === selectedParent).map(s => s.id);
+      return matchSearch && (p.category_id === selectedParent || subIds.includes(p.sub_category_id));
+    }
+    return matchSearch;
+  });
+
+  // Label for count display
+  const selectedLabel = selectedSub
+    ? allCategories.find(c => c.id === selectedSub)?.name
+    : selectedParent
+    ? allCategories.find(c => c.id === selectedParent)?.name
+    : 'সব পণ্য';
 
   const addToCart = (product) => {
     const user = localStorage.getItem('user');
@@ -283,18 +367,6 @@ export default function ProductsSection() {
       return updated;
     });
   };
-
-  const filtered = products.filter(p => {
-    const matchCat = !selectedCategory || p.category_id === selectedCategory;
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
-  });
-
-  const selectedCatName = selectedCategory
-    ? categories.find(c => c.id === selectedCategory)?.name
-    : 'সব পণ্য';
-
-  const CATEGORY_EMOJIS = ['🌾', '🫙', '🛒', '🫘', '🥛', '🧂', '🌶️', '🍬'];
 
   return (
     <div style={{
@@ -315,10 +387,17 @@ export default function ProductsSection() {
           .product-grid { grid-template-columns: repeat(5, 1fr); }
         }
         .cat-scroll::-webkit-scrollbar { display: none; }
+        .sub-row {
+          animation: subFadeIn 0.25s ease forwards;
+        }
+        @keyframes subFadeIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
       `}</style>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
-        {/* Search + Count একসাথে */}
+        {/* Search + Count */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
             <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: 'rgba(255,255,255,0.4)' }}>🔍</span>
@@ -341,73 +420,90 @@ export default function ProductsSection() {
               borderRadius: '10px', padding: '8px 14px',
               color: '#e8a020', fontSize: '13px', fontWeight: '600', whiteSpace: 'nowrap',
             }}>
-              {selectedCatName} — {filtered.length} টি
+              {selectedLabel} — {filtered.length} টি
             </div>
           )}
         </div>
 
-        {/* Category horizontal scroll */}
-        {!loading && categories.length > 0 && (
+        {/* ── Row 1: Parent categories ── */}
+        {!loading && parents.length > 0 && (
           <div
             className="cat-scroll"
             style={{
               display: 'flex', gap: '10px',
               overflowX: 'auto', paddingBottom: '8px',
-              marginBottom: '28px', scrollbarWidth: 'none',
+              marginBottom: activeSubs.length > 0 ? '10px' : '28px',
+              scrollbarWidth: 'none',
             }}
           >
+            {/* সব button */}
             <button
-              onClick={() => setSelectedCategory(null)}
+              onClick={handleAllClick}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                padding: 'clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 22px)',
-                borderRadius: '16px', cursor: 'pointer',
-                border: `2px solid ${!selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
-                background: !selectedCategory ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
-                transition: 'all 0.2s', minWidth: 'clamp(80px, 8vw, 110px)', flexShrink: 0,
+                padding: 'clamp(10px,1.5vw,18px) clamp(14px,2vw,22px)',
+                borderRadius: '16px', cursor: 'pointer', flexShrink: 0,
+                border: `2px solid ${!selectedParent && !selectedSub ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
+                background: !selectedParent && !selectedSub ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
+                transition: 'all 0.2s', minWidth: 'clamp(80px,8vw,110px)',
               }}
             >
               <div style={{
-                width: 'clamp(44px, 5vw, 64px)', height: 'clamp(44px, 5vw, 64px)',
+                width: 'clamp(44px,5vw,64px)', height: 'clamp(44px,5vw,64px)',
                 borderRadius: '14px',
-                background: !selectedCategory ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
+                background: !selectedParent ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 'clamp(20px, 2.5vw, 28px)',
+                fontSize: 'clamp(20px,2.5vw,28px)',
               }}>🏪</div>
-              <span style={{ color: !selectedCategory ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px, 1.2vw, 14px)', fontWeight: '700' }}>সব</span>
+              <span style={{ color: !selectedParent ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px,1.2vw,14px)', fontWeight: '700' }}>সব</span>
               <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{products.length} টি</span>
             </button>
 
-            {categories.map((cat, idx) => {
-              const count = products.filter(p => p.category_id === cat.id).length;
-              const isActive = selectedCategory === cat.id;
+            {parents.map(cat => {
+              const catSubs = subs.filter(s => s.parent_id === cat.id);
+              const subIds = catSubs.map(s => s.id);
+              const count = products.filter(p =>
+                p.category_id === cat.id || subIds.includes(p.sub_category_id)
+              ).length;
+              const isActive = selectedParent === cat.id;
               return (
-                <button
+                <CatBtn
                   key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                    padding: 'clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 22px)',
-                    borderRadius: '16px', cursor: 'pointer',
-                    border: `2px solid ${isActive ? '#e8a020' : 'rgba(255,255,255,0.1)'}`,
-                    background: isActive ? 'rgba(232,160,32,0.12)' : 'rgba(255,255,255,0.04)',
-                    transition: 'all 0.2s', minWidth: 'clamp(80px, 8vw, 110px)', flexShrink: 0,
-                  }}
-                >
-                  <div style={{
-                    width: 'clamp(44px, 5vw, 64px)', height: 'clamp(44px, 5vw, 64px)',
-                    borderRadius: '14px', overflow: 'hidden',
-                    background: isActive ? 'rgba(232,160,32,0.2)' : 'rgba(255,255,255,0.08)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {cat.image_url
-                      ? <img src={cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <span style={{ fontSize: 'clamp(20px, 2.5vw, 28px)' }}>{CATEGORY_EMOJIS[idx % CATEGORY_EMOJIS.length]}</span>
-                    }
-                  </div>
-                  <span style={{ color: isActive ? '#e8a020' : 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px, 1.2vw, 14px)', fontWeight: '700', whiteSpace: 'nowrap' }}>{cat.name}</span>
-                  <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>{count} টি</span>
-                </button>
+                  cat={cat}
+                  isActive={isActive}
+                  onClick={() => handleParentClick(cat.id)}
+                  count={count}
+                  size="lg"
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Row 2: Sub-categories (animate in) ── */}
+        {!loading && activeSubs.length > 0 && (
+          <div
+            className="cat-scroll sub-row"
+            style={{
+              display: 'flex', gap: '8px',
+              overflowX: 'auto', paddingBottom: '8px',
+              marginBottom: '28px', scrollbarWidth: 'none',
+              paddingLeft: '12px',
+              borderLeft: '3px solid rgba(232,160,32,0.3)',
+            }}
+          >
+            {activeSubs.map(sub => {
+              const count = products.filter(p => p.sub_category_id === sub.id).length;
+              const isActive = selectedSub === sub.id;
+              return (
+                <CatBtn
+                  key={sub.id}
+                  cat={sub}
+                  isActive={isActive}
+                  onClick={() => handleSubClick(sub.id)}
+                  count={count}
+                  size="sm"
+                />
               );
             })}
           </div>
@@ -428,9 +524,9 @@ export default function ProductsSection() {
             }}>🔍</div>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>কোনো পণ্য পাওয়া যায়নি</p>
             <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '13px' }}>অন্য কিছু দিয়ে খোঁজার চেষ্টা করুন</p>
-            {selectedCategory && (
+            {(selectedParent || selectedSub) && (
               <button
-                onClick={() => setSelectedCategory(null)}
+                onClick={handleAllClick}
                 style={{
                   marginTop: '16px', background: 'rgba(232,160,32,0.12)',
                   border: '1px solid rgba(232,160,32,0.3)', color: '#e8a020',
