@@ -8,6 +8,7 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export default function ProductsSection() {
   const router = useRouter();
   const [products, setProducts] = useState([]);
+  const [addedIds, setAddedIds] = useState({});
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -26,9 +27,15 @@ export default function ProductsSection() {
     e.stopPropagation();
     const cart = JSON.parse(localStorage.getItem('paikari_cart') || '[]');
     const exists = cart.find(i => i.id === product.id);
-    if (!exists) cart.push({ ...product, quantity: 1 });
-    localStorage.setItem('paikari_cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('cartUpdated'));
+    if (!exists) {
+      cart.push({ ...product, quantity: 1 });
+      localStorage.setItem('paikari_cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
+    }
+    setAddedIds(prev => ({ ...prev, [product.id]: true }));
+    setTimeout(() => {
+      setAddedIds(prev => ({ ...prev, [product.id]: false }));
+    }, 1500);
   };
 
   if (products.length === 0) return null;
@@ -51,13 +58,18 @@ export default function ProductsSection() {
             <div
               key={i}
               className="prod-card"
-              onClick={() => router.push(`/products`)}
+              onClick={() => router.push('/products')}
               style={{ background: '#fff', borderRadius: '10px', border: '1px solid #eee', overflow: 'hidden' }}
             >
               <div style={{ height: '130px', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 {p.image_url
                   ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: '40px' }}>📦</span>
+                  : <div style={{ width: '100%', height: '100%', background: '#f0f0f0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+                      </svg>
+                      <span style={{ fontSize: '10px', color: '#ccc' }}>ছবি নেই</span>
+                    </div>
                 }
               </div>
               <div style={{ padding: '10px' }}>
@@ -73,9 +85,20 @@ export default function ProductsSection() {
                 <button
                   className="add-btn"
                   onClick={(e) => addToCart(e, p)}
-                  style={{ width: '100%', background: '#ff6a00', color: '#fff', border: 'none', borderRadius: '6px', padding: '7px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                  style={{
+                    width: '100%',
+                    background: addedIds[p.id] ? '#22c55e' : '#ff6a00',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '7px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'background 0.3s',
+                  }}
                 >
-                  কার্টে যোগ করুন
+                  {addedIds[p.id] ? '✓ যোগ হয়েছে' : 'কার্টে যোগ করুন'}
                 </button>
               </div>
             </div>
