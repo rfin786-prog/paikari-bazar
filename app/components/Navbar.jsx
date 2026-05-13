@@ -7,16 +7,24 @@ export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [query, setQuery] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('user');
     if (saved) setUser(JSON.parse(saved));
+
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (query.trim()) router.push(`/products?q=${encodeURIComponent(query)}`);
   };
+
+  const categories = ['পোশাক ও গার্মেন্টস', 'মুদি ও খাদ্যপণ্য', 'ইলেকট্রনিক্স', 'গৃহস্থালি', 'কৃষি পণ্য', 'প্লাস্টিক ও প্যাকেজিং', 'সৌন্দর্য পণ্য', 'শিশু পণ্য'];
 
   return (
     <>
@@ -45,75 +53,151 @@ export default function Navbar() {
         }
         .search-input::placeholder { color: #aaa; }
         .search-input:focus { outline: none; }
-        .cat-link { font-size: 12px; color: #444; padding: 8px 14px; white-space: nowrap; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s; }
+        .cat-link {
+          font-size: 12px; color: #444; padding: 8px 14px;
+          white-space: nowrap; cursor: pointer;
+          border-bottom: 2px solid transparent;
+          transition: color 0.2s, border-color 0.2s;
+        }
         .cat-link:hover { color: #ff6a00; border-bottom-color: #ff6a00; }
+        .cat-bar::-webkit-scrollbar { display: none; }
+        .cat-bar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      {/* Top bar */}
-      <div style={{ background: '#222', color: '#ccc', fontSize: '11px', padding: '4px 20px', display: 'flex', justifyContent: 'space-between' }}>
-        <span>বাংলাদেশের B2B পাইকারি প্ল্যাটফর্ম</span>
-        <span style={{ display: 'flex', gap: '12px' }}>
-          <span style={{ cursor: 'pointer' }} onClick={() => router.push('/about')}>সাহায্য</span>
-          <span style={{ cursor: 'pointer' }} onClick={() => router.push('/contact')}>যোগাযোগ</span>
-        </span>
-      </div>
+      {/* Top bar — শুধু desktop */}
+      {!isMobile && (
+        <div style={{ background: '#222', color: '#ccc', fontSize: '11px', padding: '4px 20px', display: 'flex', justifyContent: 'space-between' }}>
+          <span>বাংলাদেশের B2B পাইকারি প্ল্যাটফর্ম</span>
+          <span style={{ display: 'flex', gap: '12px' }}>
+            <span style={{ cursor: 'pointer' }} onClick={() => router.push('/about')}>সাহায্য</span>
+            <span style={{ cursor: 'pointer' }} onClick={() => router.push('/contact')}>যোগাযোগ</span>
+          </span>
+        </div>
+      )}
 
       {/* Main nav */}
-      <nav style={{ background: '#fff', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '2px solid #ff6a00' }}>
-        {/* Logo */}
-        <div style={{ display: 'inline-flex', alignItems: 'flex-end', cursor: 'pointer', flexShrink: 0 }} onClick={() => router.push('/')}>
-          <Image
-            src="/logo.png"
-            alt="আড়ৎ"
-            width={80}
-            height={32}
-            style={{ objectFit: 'contain', mixBlendMode: 'multiply', display: 'block' }}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginLeft: '3px', marginBottom: '3px' }}>
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#ff3b3b', flexShrink: 0, animation: 'blink 1.2s ease-in-out infinite' }} />
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#e8a020', flexShrink: 0, animation: 'blink 1.2s ease-in-out infinite 0.4s' }} />
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e', flexShrink: 0, animation: 'blink 1.2s ease-in-out infinite 0.8s' }} />
-          </div>
-        </div>
+      <nav style={{
+        background: '#fff',
+        padding: isMobile ? '8px 14px' : '10px 20px',
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'stretch' : 'center',
+        gap: isMobile ? '8px' : '12px',
+        borderBottom: isMobile ? 'none' : '2px solid #ff6a00',
+        boxShadow: isMobile ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+        position: 'sticky', top: 0, zIndex: 100
+      }}>
 
-        {/* Search */}
-        <form onSubmit={handleSearch} style={{ flex: 1, display: 'flex', border: '2px solid #ff6a00', borderRadius: '4px', overflow: 'hidden' }}>
-          <select style={{ border: 'none', borderRight: '1px solid #eee', padding: '0 10px', fontSize: '12px', color: '#555', background: '#f9f9f9', outline: 'none' }}>
-            <option>সব পণ্য</option>
-            <option>পোশাক</option>
-            <option>মুদি পণ্য</option>
-            <option>ইলেকট্রনিক্স</option>
-            <option>গৃহস্থালি</option>
-          </select>
+        {/* Mobile: Logo row */}
+        {isMobile ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* Logo */}
+            <div style={{ display: 'inline-flex', alignItems: 'flex-end', cursor: 'pointer' }} onClick={() => router.push('/')}>
+              <Image src="/logo.png" alt="আড়ৎ" width={70} height={28} style={{ objectFit: 'contain', mixBlendMode: 'multiply' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginLeft: '3px', marginBottom: '3px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ff3b3b', animation: 'blink 1.2s ease-in-out infinite' }} />
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#e8a020', animation: 'blink 1.2s ease-in-out infinite 0.4s' }} />
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', animation: 'blink 1.2s ease-in-out infinite 0.8s' }} />
+              </div>
+            </div>
+
+            {/* Mobile icons */}
+            <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
+              <button className="nav-icon-btn" onClick={() => router.push('/checkout')}>
+                <CartIcon />
+                <CartCount />
+              </button>
+              <button className="nav-icon-btn" onClick={() => router.push(user ? '/dashboard' : '/login')}>
+                <UserIcon />
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Desktop: Logo */
+          <div style={{ display: 'inline-flex', alignItems: 'flex-end', cursor: 'pointer', flexShrink: 0 }} onClick={() => router.push('/')}>
+            <Image src="/logo.png" alt="আড়ৎ" width={80} height={32} style={{ objectFit: 'contain', mixBlendMode: 'multiply' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginLeft: '3px', marginBottom: '3px' }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#ff3b3b', animation: 'blink 1.2s ease-in-out infinite' }} />
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#e8a020', animation: 'blink 1.2s ease-in-out infinite 0.4s' }} />
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e', animation: 'blink 1.2s ease-in-out infinite 0.8s' }} />
+            </div>
+          </div>
+        )}
+
+        {/* Search bar — mobile এ full width second row, desktop এ inline */}
+        <form onSubmit={handleSearch} style={{
+          flex: 1,
+          display: 'flex',
+          border: '2px solid #ff6a00',
+          borderRadius: isMobile ? '8px' : '4px',
+          overflow: 'hidden'
+        }}>
+          {/* Category select — mobile এ লুকানো */}
+          {!isMobile && (
+            <select style={{ border: 'none', borderRight: '1px solid #eee', padding: '0 10px', fontSize: '12px', color: '#555', background: '#f9f9f9', outline: 'none' }}>
+              <option>সব পণ্য</option>
+              <option>পোশাক</option>
+              <option>মুদি পণ্য</option>
+              <option>ইলেকট্রনিক্স</option>
+              <option>গৃহস্থালি</option>
+            </select>
+          )}
           <input
             className="search-input"
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="পণ্য, সাপ্লায়ার বা ক্যাটাগরি খুঁজুন..."
-            style={{ flex: 1, border: 'none', padding: '8px 12px', fontSize: '13px', background: '#fff', color: '#333' }}
+            placeholder="পণ্য বা ক্যাটাগরি খুঁজুন..."
+            style={{
+              flex: 1, border: 'none',
+              padding: isMobile ? '10px 12px' : '8px 12px',
+              fontSize: '13px', background: '#fff', color: '#333'
+            }}
           />
-          <button type="submit" style={{ background: '#ff6a00', color: '#fff', border: 'none', padding: '0 18px', fontSize: '13px', cursor: 'pointer' }}>
+          <button type="submit" style={{ background: '#ff6a00', color: '#fff', border: 'none', padding: '0 16px', cursor: 'pointer' }}>
             <SearchIcon />
           </button>
         </form>
 
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexShrink: 0 }}>
-          <button className="nav-icon-btn" onClick={() => router.push('/checkout')}>
-            <CartIcon />
-            <CartCount />
-          </button>
-          <button className="nav-icon-btn" onClick={() => router.push(user ? '/dashboard' : '/login')}>
-            <UserIcon />
-          </button>
-        </div>
+        {/* Desktop icons */}
+        {!isMobile && (
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexShrink: 0 }}>
+            <button className="nav-icon-btn" onClick={() => router.push('/checkout')}>
+              <CartIcon />
+              <CartCount />
+            </button>
+            <button className="nav-icon-btn" onClick={() => router.push(user ? '/dashboard' : '/login')}>
+              <UserIcon />
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* Category bar */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #eee', padding: '0 20px', display: 'flex', gap: '0', overflowX: 'auto' }}>
-        {['পোশাক ও গার্মেন্টস', 'মুদি ও খাদ্যপণ্য', 'ইলেকট্রনিক্স', 'গৃহস্থালি', 'কৃষি পণ্য', 'প্লাস্টিক ও প্যাকেজিং', 'সৌন্দর্য পণ্য', 'শিশু পণ্য'].map((cat, i) => (
-          <span key={i} className="cat-link" onClick={() => router.push(`/products?cat=${encodeURIComponent(cat)}`)}>{cat}</span>
+      <div
+        className="cat-bar"
+        style={{
+          background: '#fff',
+          borderBottom: '1px solid #eee',
+          borderTop: isMobile ? '1px solid #f3f4f6' : 'none',
+          padding: isMobile ? '0 8px' : '0 20px',
+          display: 'flex',
+          gap: 0,
+          overflowX: 'auto',
+          position: 'sticky',
+          top: isMobile ? '113px' : '54px',
+          zIndex: 99
+        }}
+      >
+        {categories.map((cat, i) => (
+          <span
+            key={i}
+            className="cat-link"
+            style={{ fontSize: isMobile ? '11px' : '12px', padding: isMobile ? '7px 10px' : '8px 14px' }}
+            onClick={() => router.push(`/products?cat=${encodeURIComponent(cat)}`)}
+          >
+            {cat}
+          </span>
         ))}
       </div>
     </>
