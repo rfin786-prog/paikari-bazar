@@ -1,16 +1,15 @@
 import { Geist, Geist_Mono, Hind_Siliguri } from "next/font/google";
 import "./globals.css";
+import Navbar from "./components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
 const hindSiliguri = Hind_Siliguri({
   variable: "--font-hind-siliguri",
   subsets: ["bengali"],
@@ -18,7 +17,7 @@ const hindSiliguri = Hind_Siliguri({
 });
 
 export const metadata = {
-  title: "পাইকারি বাজার",
+  title: "আড়ৎ",
   description: "B2B wholesale platform",
 };
 
@@ -30,8 +29,9 @@ export default function RootLayout({ children }) {
     >
       <body
         className="min-h-full flex flex-col"
-        style={{ fontFamily: 'var(--font-hind-siliguri), sans-serif' }}
+        style={{ fontFamily: 'var(--font-hind-siliguri), sans-serif', background: '#f5f5f5' }}
       >
+        <Navbar />
         {children}
       </body>
     </html>
