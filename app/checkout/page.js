@@ -88,6 +88,7 @@ export default function CheckoutPage() {
       if (!res.ok) throw new Error(data.message || 'Error');
 
       localStorage.removeItem('paikari_cart');
+      window.dispatchEvent(new Event('cartUpdated'));
       setOrderSuccess(Array.isArray(data) ? data[0] : data);
     } catch (err) {
       console.error(err);
@@ -98,45 +99,44 @@ export default function CheckoutPage() {
   }
 
   const s = {
-    page: { background: '#0a1628', minHeight: '100vh', padding: '24px 16px 60px', fontFamily: 'Hind Siliguri, sans-serif' },
-    wrap: { maxWidth: '520px', margin: '0 auto' },
-    card: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '16px', marginBottom: '12px' },
-    label: { color: 'rgba(232,160,32,0.8)', fontSize: '10px', fontWeight: '700', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '12px', display: 'block' },
-    input: { width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', fontSize: '14px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'Hind Siliguri, sans-serif' },
+    page: { background: '#f5f5f5', minHeight: '100vh', padding: '24px 16px 60px', fontFamily: 'Hind Siliguri, sans-serif' },
+    wrap: { maxWidth: '560px', margin: '0 auto' },
+    card: { background: '#fff', border: '1px solid #eee', borderRadius: '12px', padding: '16px', marginBottom: '12px' },
+    label: { color: '#ff6a00', fontSize: '10px', fontWeight: '700', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '12px', display: 'block' },
+    input: { width: '100%', padding: '10px 12px', background: '#f9f9f9', border: '1px solid #eee', borderRadius: '10px', fontSize: '14px', color: '#333', outline: 'none', boxSizing: 'border-box', fontFamily: 'Hind Siliguri, sans-serif' },
   };
 
-  // ── Success Screen ────────────────────────────────────
   if (orderSuccess) {
     return (
       <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '24px', padding: '2.5rem 2rem', maxWidth: '380px', width: '100%', textAlign: 'center' }}>
-          <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, #1D9E75, #22c55e)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', fontSize: '36px' }}>✓</div>
-          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#fff', margin: '0 0 8px' }}>অর্ডার সফল হয়েছে!</h2>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', margin: '0 0 1.5rem', lineHeight: '1.6' }}>
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: '20px', padding: '2.5rem 2rem', maxWidth: '380px', width: '100%', textAlign: 'center' }}>
+          <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: '#e8f5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', fontSize: '32px', color: '#22c55e' }}>✓</div>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1a1a1a', margin: '0 0 8px' }}>অর্ডার সফল হয়েছে!</h2>
+          <p style={{ color: '#888', fontSize: '13px', margin: '0 0 1.5rem', lineHeight: '1.6' }}>
             আপনার অর্ডার গ্রহণ করা হয়েছে। শীঘ্রই আমরা যোগাযোগ করব।
           </p>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'left' }}>
+          <div style={{ background: '#f9f9f9', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'left' }}>
             {orderSuccess.id && (
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>অর্ডার ID</span>
-                <span style={{ fontSize: '13px', fontWeight: '700', color: '#e8a020', fontFamily: 'monospace' }}>#{String(orderSuccess.id).slice(0, 8).toUpperCase()}</span>
+                <span style={{ fontSize: '13px', color: '#888' }}>অর্ডার ID</span>
+                <span style={{ fontSize: '13px', fontWeight: '700', color: '#ff6a00', fontFamily: 'monospace' }}>#{String(orderSuccess.id).slice(0, 8).toUpperCase()}</span>
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>মোট পরিমাণ</span>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: '#1D9E75' }}>৳{Number(orderSuccess.total || grandTotal).toLocaleString()}</span>
+              <span style={{ fontSize: '13px', color: '#888' }}>মোট পরিমাণ</span>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: '#22c55e' }}>৳{Number(orderSuccess.total || grandTotal).toLocaleString()}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>স্ট্যাটাস</span>
-              <span style={{ fontSize: '12px', fontWeight: '600', color: '#e8a020', background: 'rgba(232,160,32,0.15)', padding: '2px 10px', borderRadius: '20px' }}>অপেক্ষমান</span>
+              <span style={{ fontSize: '13px', color: '#888' }}>স্ট্যাটাস</span>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: '#ff6a00', background: '#fff3eb', padding: '2px 10px', borderRadius: '20px' }}>অপেক্ষমান</span>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <Link href="/orders" style={{ display: 'block', background: 'linear-gradient(135deg, #e8a020, #f5c842)', color: '#0a1628', padding: '13px', borderRadius: '12px', fontWeight: '800', fontSize: '15px', textDecoration: 'none' }}>
-              📦 আমার অর্ডার দেখুন
+            <Link href="/orders" style={{ display: 'block', background: '#ff6a00', color: '#fff', padding: '13px', borderRadius: '10px', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }}>
+              অর্ডার দেখুন →
             </Link>
-            <Link href="/products" style={{ display: 'block', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', padding: '13px', borderRadius: '12px', fontWeight: '600', fontSize: '14px', textDecoration: 'none' }}>
-              🛒 আরও কেনাকাটা করুন
+            <Link href="/products" style={{ display: 'block', background: '#f5f5f5', color: '#555', padding: '13px', borderRadius: '10px', fontWeight: '600', fontSize: '13px', textDecoration: 'none' }}>
+              আরও কেনাকাটা করুন
             </Link>
           </div>
         </div>
@@ -146,7 +146,7 @@ export default function CheckoutPage() {
 
   if (loading) return (
     <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>লোড হচ্ছে...</p>
+      <p style={{ color: '#888', fontSize: '14px' }}>লোড হচ্ছে...</p>
     </div>
   );
 
@@ -154,21 +154,18 @@ export default function CheckoutPage() {
     <div style={s.page}>
       <div style={s.wrap}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg,#e8a020,#f5c842)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '800', color: '#0a1628' }}>প</div>
-          <div>
-            <div style={{ color: '#fff', fontSize: '16px', fontWeight: '700' }}>পাইকারি বাজার</div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>অর্ডার চেকআউট</div>
-          </div>
+        {/* Page title */}
+        <div style={{ marginBottom: '16px' }}>
+          <h1 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a', margin: 0 }}>অর্ডার চেকআউট</h1>
+          <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0' }}>{cartItems.length}টি পণ্য কার্টে আছে</p>
         </div>
 
         {/* Delivery Address */}
         <div style={s.card}>
           <span style={s.label}>ডেলিভারি ঠিকানা</span>
-          <div style={{ color: '#fff', fontSize: '15px', fontWeight: '700', marginBottom: '4px' }}>{user?.shop_name || 'দোকানের নাম নেই'}</div>
-          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', marginBottom: '2px' }}>{user?.phone}</div>
-          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', lineHeight: '1.5' }}>
+          <div style={{ color: '#1a1a1a', fontSize: '15px', fontWeight: '700', marginBottom: '4px' }}>{user?.shop_name || 'দোকানের নাম নেই'}</div>
+          <div style={{ color: '#666', fontSize: '13px', marginBottom: '2px' }}>{user?.phone}</div>
+          <div style={{ color: '#888', fontSize: '13px', lineHeight: '1.5' }}>
             {user?.address}{user?.thana ? `, ${user.thana}` : ''}{user?.district ? `, ${user.district}` : ''}
           </div>
         </div>
@@ -180,10 +177,10 @@ export default function CheckoutPage() {
             {deliveryOptions.map(opt => {
               const active = deliveryMethod === opt.id;
               return (
-                <div key={opt.id} onClick={() => setDeliveryMethod(opt.id)} style={{ border: `${active ? '2px solid #e8a020' : '1px solid rgba(255,255,255,0.1)'}`, borderRadius: '10px', padding: '10px', cursor: 'pointer', background: active ? 'rgba(232,160,32,0.08)' : 'transparent', transition: 'all 0.15s' }}>
-                  <div style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '2px' }}>{opt.name}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', marginBottom: '4px' }}>{opt.info}</div>
-                  <div style={{ color: opt.price === 0 ? '#1D9E75' : '#e8a020', fontSize: '12px', fontWeight: '700' }}>{opt.price === 0 ? 'বিনামূল্যে' : `৳${opt.price}`}</div>
+                <div key={opt.id} onClick={() => setDeliveryMethod(opt.id)} style={{ border: `${active ? '2px solid #ff6a00' : '1px solid #eee'}`, borderRadius: '10px', padding: '10px', cursor: 'pointer', background: active ? '#fff3eb' : '#fff', transition: 'all 0.15s' }}>
+                  <div style={{ color: '#1a1a1a', fontSize: '13px', fontWeight: '700', marginBottom: '2px' }}>{opt.name}</div>
+                  <div style={{ color: '#999', fontSize: '11px', marginBottom: '4px' }}>{opt.info}</div>
+                  <div style={{ color: opt.price === 0 ? '#22c55e' : '#ff6a00', fontSize: '12px', fontWeight: '700' }}>{opt.price === 0 ? 'বিনামূল্যে' : `৳${opt.price}`}</div>
                 </div>
               );
             })}
@@ -199,28 +196,28 @@ export default function CheckoutPage() {
         {/* Order Summary */}
         <div style={s.card}>
           <span style={s.label}>অর্ডার সারসংক্ষেপ</span>
-          <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', marginBottom: '12px' }}>
+          <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: '12px', marginBottom: '12px' }}>
             {cartItems.length === 0 ? (
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '13px', textAlign: 'center', padding: '1rem 0' }}>কার্টে কোনো পণ্য নেই</p>
+              <p style={{ color: '#ccc', fontSize: '13px', textAlign: 'center', padding: '1rem 0' }}>কার্টে কোনো পণ্য নেই</p>
             ) : cartItems.map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
                 <div>
-                  <div style={{ color: '#fff', fontSize: '13px', marginBottom: '1px' }}>{item.name}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>{item.qty || item.quantity} x ৳{item.price.toLocaleString()}</div>
+                  <div style={{ color: '#1a1a1a', fontSize: '13px', marginBottom: '1px' }}>{item.name}</div>
+                  <div style={{ color: '#999', fontSize: '11px' }}>{item.qty || item.quantity} x ৳{item.price.toLocaleString()}</div>
                 </div>
-                <div style={{ color: '#e8a020', fontSize: '13px', fontWeight: '700' }}>৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</div>
+                <div style={{ color: '#ff6a00', fontSize: '13px', fontWeight: '700' }}>৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</div>
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '3px 0', color: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '3px 0', color: '#888' }}>
             <span>সাবটোটাল</span><span>৳{subtotal.toLocaleString()}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '3px 0', color: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '3px 0', color: '#888' }}>
             <span>ডেলিভারি চার্জ</span><span>{deliveryCost === 0 ? 'বিনামূল্যে' : `৳${deliveryCost}`}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '800', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '8px' }}>
-            <span style={{ color: '#fff' }}>সর্বমোট</span>
-            <span style={{ color: '#e8a020' }}>৳{grandTotal.toLocaleString()}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '700', paddingTop: '10px', borderTop: '1px solid #f0f0f0', marginTop: '8px' }}>
+            <span style={{ color: '#1a1a1a' }}>সর্বমোট</span>
+            <span style={{ color: '#ff6a00' }}>৳{grandTotal.toLocaleString()}</span>
           </div>
         </div>
 
@@ -231,9 +228,9 @@ export default function CheckoutPage() {
             {paymentOptions.map(opt => {
               const active = paymentMethod === opt.id;
               return (
-                <div key={opt.id} onClick={() => setPaymentMethod(opt.id)} style={{ border: `${active ? '2px solid #e8a020' : '1px solid rgba(255,255,255,0.1)'}`, borderRadius: '10px', padding: '12px', textAlign: 'center', cursor: 'pointer', background: active ? 'rgba(232,160,32,0.08)' : 'transparent', transition: 'all 0.15s' }}>
+                <div key={opt.id} onClick={() => setPaymentMethod(opt.id)} style={{ border: `${active ? '2px solid #ff6a00' : '1px solid #eee'}`, borderRadius: '10px', padding: '12px', textAlign: 'center', cursor: 'pointer', background: active ? '#fff3eb' : '#fff', transition: 'all 0.15s' }}>
                   <div style={{ fontSize: '22px', marginBottom: '6px' }}>{opt.icon}</div>
-                  <div style={{ color: active ? '#e8a020' : 'rgba(255,255,255,0.6)', fontSize: '12px', fontWeight: '700' }}>{opt.name}</div>
+                  <div style={{ color: active ? '#ff6a00' : '#666', fontSize: '12px', fontWeight: '700' }}>{opt.name}</div>
                 </div>
               );
             })}
@@ -250,7 +247,7 @@ export default function CheckoutPage() {
           <button
             onClick={placeOrder}
             disabled={placing}
-            style={{ width: '100%', padding: '14px', background: placing ? 'rgba(232,160,32,0.4)' : 'linear-gradient(135deg,#e8a020,#f5c842)', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '800', color: '#0a1628', cursor: placing ? 'not-allowed' : 'pointer', fontFamily: 'Hind Siliguri, sans-serif', transition: 'all 0.2s' }}
+            style={{ width: '100%', padding: '14px', background: placing ? '#ffb380' : '#ff6a00', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700', color: '#fff', cursor: placing ? 'not-allowed' : 'pointer', fontFamily: 'Hind Siliguri, sans-serif', transition: 'all 0.2s' }}
           >
             {placing ? 'অর্ডার হচ্ছে...' : 'অর্ডার নিশ্চিত করুন →'}
           </button>
