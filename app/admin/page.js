@@ -7,14 +7,16 @@ import CategoriesTab from './_components/CategoriesTab';
 import OrdersTab from './_components/OrdersTab';
 import UsersTab from './_components/UsersTab';
 import DeliveryAreasTab from './_components/DeliveryAreasTab';
+import DeliveryChargesTab from './_components/DeliveryChargesTab';
 
 const TABS = [
-  { key: 'dashboard',      label: 'Dashboard',  icon: '🏠' },
-  { key: 'products',       label: 'Products',   icon: '📦' },
-  { key: 'categories',     label: 'Categories', icon: '🏷️' },
-  { key: 'orders',         label: 'Orders',     icon: '🛒' },
-  { key: 'users',          label: 'Users',      icon: '👥' },
-  { key: 'delivery_areas', label: 'Delivery',   icon: '🗺️' },
+  { key: 'dashboard',        label: 'Dashboard',  icon: '🏠' },
+  { key: 'products',         label: 'Products',   icon: '📦' },
+  { key: 'categories',       label: 'Categories', icon: '🏷️' },
+  { key: 'orders',           label: 'Orders',     icon: '🛒' },
+  { key: 'users',            label: 'Users',      icon: '👥' },
+  { key: 'delivery_areas',   label: 'Delivery',   icon: '🗺️' },
+  { key: 'delivery_charges', label: 'Charges',    icon: '💰' },
 ];
 
 export default function AdminPage() {
@@ -60,7 +62,7 @@ export default function AdminPage() {
             </div>
           )}
           <button onClick={() => setCollapsed(!collapsed)} style={{ background: 'rgba(255,255,255,.07)', border: 'none', color: 'rgba(255,255,255,.5)', width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {collapsed ? '›' : '‹'}
+            {collapsed ? '>' : '<'}
           </button>
         </div>
 
@@ -128,12 +130,13 @@ export default function AdminPage() {
 
       {/* Main Content */}
       <main style={{ flex: 1, padding: '28px', overflowY: 'auto', minHeight: '100vh' }}>
-        {tab === 'dashboard'      && <DashboardTab setTab={setTab} />}
-        {tab === 'products'       && <ProductsTab />}
-        {tab === 'categories'     && <CategoriesTab />}
-        {tab === 'orders'         && <OrdersTab />}
-        {tab === 'users'          && <UsersTab />}
-        {tab === 'delivery_areas' && <DeliveryAreasTab />}
+        {tab === 'dashboard'        && <DashboardTab setTab={setTab} />}
+        {tab === 'products'         && <ProductsTab />}
+        {tab === 'categories'       && <CategoriesTab />}
+        {tab === 'orders'           && <OrdersTab />}
+        {tab === 'users'            && <UsersTab />}
+        {tab === 'delivery_areas'   && <DeliveryAreasTab />}
+        {tab === 'delivery_charges' && <DeliveryChargesTab />}
       </main>
     </div>
   );
