@@ -53,7 +53,6 @@ function ToastContainer({ toasts }) {
 
 function useToast() {
   const [toasts, setToasts] = useState([]);
-
   const showToast = useCallback((message) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, leaving: false }]);
@@ -64,27 +63,30 @@ function useToast() {
       }, 300);
     }, 2000);
   }, []);
-
   return { toasts, showToast };
 }
 
 // ── Skeleton ──────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 animate-pulse">
-      <div className="bg-gray-200 h-48 w-full" />
-      <div className="p-4 space-y-3">
-        <div className="h-4 bg-gray-200 rounded w-3/4" />
-        <div className="h-3 bg-gray-100 rounded w-1/2" />
-        <div className="h-6 bg-gray-200 rounded w-1/3" />
-        <div className="h-10 bg-gray-100 rounded-xl" />
+    <div style={{
+      background: '#fff', borderRadius: '16px', overflow: 'hidden',
+      border: '1px solid #f3f4f6', animation: 'pulse 1.5s infinite'
+    }}>
+      <div style={{ height: '160px', background: '#f3f4f6' }} />
+      <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ height: '12px', background: '#f3f4f6', borderRadius: '6px', width: '75%' }} />
+        <div style={{ height: '10px', background: '#f3f4f6', borderRadius: '6px', width: '50%' }} />
+        <div style={{ height: '16px', background: '#f3f4f6', borderRadius: '6px', width: '40%' }} />
+        <div style={{ height: '36px', background: '#f3f4f6', borderRadius: '10px' }} />
       </div>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }`}</style>
     </div>
   );
 }
 
 // ── Product Card ──────────────────────────────────────────
-function ProductCard({ product, onAddToCart, cartItems }) {
+function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
   const inCart = cartItems.find((i) => i.id === product.id);
   const [added, setAdded] = useState(false);
 
@@ -94,55 +96,80 @@ function ProductCard({ product, onAddToCart, cartItems }) {
     setTimeout(() => setAdded(false), 1500);
   };
 
+  const btnBg = product.stock === 0 ? '#f3f4f6'
+    : added ? '#22c55e'
+    : inCart ? '#fff'
+    : '#ff6a00';
+
+  const btnColor = product.stock === 0 ? '#9ca3af'
+    : inCart && !added ? '#16a34a'
+    : '#fff';
+
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col">
-      <div className="relative bg-gray-50 h-48 flex items-center justify-center overflow-hidden">
+    <div style={{
+      background: '#fff', borderRadius: '14px',
+      border: '1px solid #f0f0f0',
+      overflow: 'hidden', display: 'flex', flexDirection: 'column',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+      transition: 'transform 0.2s, box-shadow 0.2s',
+      cursor: 'pointer',
+    }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(255,106,0,0.1)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; }}
+    >
+      {/* Image */}
+      <div style={{ position: 'relative', height: isMobile ? '140px' : '160px', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {product.image_url ? (
-          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+          <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <div className="text-5xl opacity-30">📦</div>
+          <span style={{ fontSize: '40px', opacity: 0.2 }}>📦</span>
         )}
         {product.stock <= 10 && product.stock > 0 && (
-          <span className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">কম স্টক</span>
+          <span style={{ position: 'absolute', top: 8, right: 8, background: '#ff6a00', color: '#fff', fontSize: '9px', padding: '2px 8px', borderRadius: '20px', fontWeight: '700' }}>কম স্টক</span>
         )}
         {product.stock === 0 && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-white font-semibold text-sm bg-red-500 px-3 py-1 rounded-full">স্টক শেষ</span>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ background: '#ef4444', color: '#fff', fontSize: '12px', padding: '4px 12px', borderRadius: '20px', fontWeight: '700' }}>স্টক শেষ</span>
           </div>
         )}
         {inCart && (
-          <span className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          <span style={{ position: 'absolute', top: 8, left: 8, background: '#22c55e', color: '#fff', fontSize: '9px', padding: '2px 8px', borderRadius: '20px', fontWeight: '700' }}>
             🛒 {inCart.qty}
           </span>
         )}
       </div>
-      <div className="p-4 flex flex-col flex-1">
-        <p className="text-xs text-indigo-500 font-medium mb-1 uppercase tracking-wide">{product.category || 'সাধারণ'}</p>
-        <h3 className="font-semibold text-gray-800 text-sm leading-snug mb-1 line-clamp-2">{product.name}</h3>
-        {product.unit && <p className="text-xs text-gray-400 mb-2">প্রতি {product.unit}</p>}
-        <div className="mt-auto">
-          <div className="flex items-baseline gap-1 mb-3">
-            <span className="text-xl font-bold text-gray-900">৳{Number(product.price).toLocaleString('bn-BD')}</span>
-          </div>
+
+      {/* Info */}
+      <div style={{ padding: isMobile ? '8px 10px' : '12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <p style={{ fontSize: '10px', color: '#6366f1', fontWeight: '600', marginBottom: '3px', textTransform: 'uppercase' }}>
+          {product.category || 'সাধারণ'}
+        </p>
+        <h3 style={{ fontSize: isMobile ? '12px' : '13px', fontWeight: '600', color: '#1a1a1a', lineHeight: '1.3', marginBottom: '3px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {product.name}
+        </h3>
+        {product.unit && (
+          <p style={{ fontSize: '10px', color: '#aaa', marginBottom: '6px' }}>প্রতি {product.unit}</p>
+        )}
+        <div style={{ marginTop: 'auto' }}>
+          <p style={{ fontSize: isMobile ? '15px' : '17px', fontWeight: '800', color: '#111827', marginBottom: '8px' }}>
+            ৳{Number(product.price).toLocaleString('bn-BD')}
+          </p>
           <button
             onClick={handleAdd}
             disabled={product.stock === 0}
-            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-              product.stock === 0
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : added
-                ? 'bg-green-500 text-white scale-95'
-                : inCart
-                ? 'bg-green-50 text-green-700 border-2 border-green-400 hover:bg-green-100'
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95'
-            }`}
+            style={{
+              width: '100%', padding: isMobile ? '7px' : '9px',
+              borderRadius: '9px', border: inCart && !added ? '2px solid #22c55e' : 'none',
+              background: btnBg, color: btnColor,
+              fontSize: isMobile ? '11px' : '12px', fontWeight: '700',
+              cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              fontFamily: "'Hind Siliguri', sans-serif",
+            }}
           >
-            {product.stock === 0
-              ? 'স্টক নেই'
-              : added
-              ? '✓ যোগ হয়েছে!'
-              : inCart
-              ? `🛒 কার্টে আছে (${inCart.qty})`
+            {product.stock === 0 ? 'স্টক নেই'
+              : added ? '✓ যোগ হয়েছে!'
+              : inCart ? `🛒 কার্টে আছে (${inCart.qty})`
               : '🛒 কার্টে যোগ করুন'}
           </button>
         </div>
@@ -155,54 +182,48 @@ function ProductCard({ product, onAddToCart, cartItems }) {
 function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-sm h-full flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="font-bold text-lg text-gray-800">🛒 আপনার কার্ট ({items.length})</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} onClick={onClose} />
+      <div style={{ position: 'relative', background: '#fff', width: '100%', maxWidth: '380px', height: '100%', display: 'flex', flexDirection: 'column', boxShadow: '-4px 0 24px rgba(0,0,0,0.12)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #f3f4f6' }}>
+          <h2 style={{ fontWeight: '700', fontSize: '16px', color: '#1a1a1a' }}>🛒 কার্ট ({items.length})</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#9ca3af' }}>×</button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {items.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
-              <div className="text-5xl mb-3">🛒</div>
+            <div style={{ textAlign: 'center', padding: '60px 0', color: '#9ca3af' }}>
+              <div style={{ fontSize: '48px', marginBottom: '12px' }}>🛒</div>
               <p>কার্ট খালি আছে</p>
             </div>
-          ) : (
-            items.map((item) => (
-              <div key={item.id} className="flex gap-3 bg-gray-50 rounded-xl p-3">
-                <div className="w-14 h-14 rounded-lg bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl">📦</span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{item.name}</p>
-                  <p className="text-sm text-indigo-600 font-semibold">৳{Number(item.price).toLocaleString('bn-BD')}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <button onClick={() => onUpdateQty(item.id, item.qty - 1)} className="w-6 h-6 rounded-full bg-gray-200 text-gray-700 text-sm font-bold flex items-center justify-center hover:bg-gray-300">−</button>
-                    <span className="text-sm font-semibold w-6 text-center">{item.qty}</span>
-                    <button onClick={() => onUpdateQty(item.id, item.qty + 1)} className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-sm font-bold flex items-center justify-center hover:bg-indigo-200">+</button>
-                    <button onClick={() => onRemove(item.id)} className="ml-auto text-red-400 hover:text-red-600 text-xs">সরান</button>
-                  </div>
+          ) : items.map((item) => (
+            <div key={item.id} style={{ display: 'flex', gap: '10px', background: '#f9fafb', borderRadius: '12px', padding: '10px' }}>
+              <div style={{ width: '52px', height: '52px', borderRadius: '8px', background: '#f3f4f6', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {item.image_url ? <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '20px' }}>📦</span>}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
+                <p style={{ fontSize: '13px', color: '#ff6a00', fontWeight: '700' }}>৳{Number(item.price).toLocaleString('bn-BD')}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                  <button onClick={() => onUpdateQty(item.id, item.qty - 1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#f3f4f6', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '14px' }}>−</button>
+                  <span style={{ fontSize: '13px', fontWeight: '700', width: '20px', textAlign: 'center' }}>{item.qty}</span>
+                  <button onClick={() => onUpdateQty(item.id, item.qty + 1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#ede9fe', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '14px', color: '#6d28d9' }}>+</button>
+                  <button onClick={() => onRemove(item.id)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#f87171', fontSize: '12px', cursor: 'pointer' }}>সরান</button>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
         {items.length > 0 && (
-          <div className="border-t p-4 space-y-3">
-            <div className="flex justify-between text-sm text-gray-600">
+          <div style={{ borderTop: '1px solid #f3f4f6', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6b7280' }}>
               <span>মোট পণ্য</span>
               <span>{items.reduce((s, i) => s + i.qty, 0)} টি</span>
             </div>
-            <div className="flex justify-between font-bold text-lg text-gray-800">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '16px' }}>
               <span>মোট মূল্য</span>
-              <span>৳{Number(total).toLocaleString('bn-BD')}</span>
+              <span style={{ color: '#ff6a00' }}>৳{Number(total).toLocaleString('bn-BD')}</span>
             </div>
-            <Link href="/checkout" className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center py-3 rounded-xl font-semibold transition-colors" onClick={onClose}>
+            <Link href="/checkout" style={{ display: 'block', width: '100%', background: '#ff6a00', color: '#fff', textAlign: 'center', padding: '12px', borderRadius: '12px', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }} onClick={onClose}>
               অর্ডার করুন →
             </Link>
           </div>
@@ -222,8 +243,15 @@ export default function ProductsPage() {
   const [cartItems, setCartItems] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [sortBy, setSortBy] = useState('default');
-
+  const [isMobile, setIsMobile] = useState(false);
   const { toasts, showToast } = useToast();
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -231,12 +259,7 @@ export default function ProductsPage() {
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`,
-          {
-            headers: {
-              apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-            },
-          }
+          { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` } }
         );
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -244,9 +267,7 @@ export default function ProductsPage() {
           const cats = ['সব', ...new Set(data.map((p) => p.category).filter(Boolean))];
           setCategories(cats);
         }
-      } catch (err) {
-        console.error('Products fetch error:', err);
-      }
+      } catch (err) { console.error(err); }
       setLoading(false);
     }
     fetchData();
@@ -259,7 +280,15 @@ export default function ProductsPage() {
 
   useEffect(() => {
     localStorage.setItem('paikari_cart', JSON.stringify(cartItems));
+    window.dispatchEvent(new Event('cartUpdated'));
   }, [cartItems]);
+
+  // URL থেকে category নাও
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get('cat');
+    if (cat) setSelectedCategory(cat);
+  }, []);
 
   const filtered = products
     .filter((p) => {
@@ -295,80 +324,68 @@ export default function ProductsPage() {
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap'); body { font-family: 'Hind Siliguri', sans-serif; }`}</style>
+    <div style={{ minHeight: '100vh', background: '#f9fafb', fontFamily: "'Hind Siliguri', sans-serif" }}>
 
-      {/* Navbar */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-xl">🚚</span>
-            <span className="font-bold text-indigo-700 text-lg">পাইকারি<span className="text-gray-800">বাজার</span></span>
-          </Link>
-          <div className="flex-1 max-w-md relative">
-            <input
-              type="text"
-              placeholder="পণ্য খুঁজুন..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-gray-50"
-            />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Link href="/dashboard" className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-xl hover:bg-indigo-50 transition-colors">
-              📦 <span className="hidden sm:inline">আমার অর্ডার</span>
-            </Link>
-            <button onClick={() => setCartOpen(true)} className="relative flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-              🛒
-              <span className="hidden sm:inline">কার্ট</span>
-              {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">{cartCount}</span>
-              )}
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          <div className="flex gap-2 flex-wrap flex-1">
+      {/* Filter bar */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #f3f4f6', padding: isMobile ? '10px 12px' : '12px 20px', position: 'sticky', top: isMobile ? '113px' : '105px', zIndex: 30 }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: isMobile ? 'nowrap' : 'wrap', overflowX: isMobile ? 'auto' : 'visible', paddingBottom: isMobile ? '2px' : 0 }}>
+          <div style={{ display: 'flex', gap: '6px', flex: 1, overflowX: 'auto', paddingBottom: '2px' }}>
             {categories.map((cat) => (
-              <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${selectedCategory === cat ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-300'}`}>
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                style={{
+                  padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
+                  border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                  background: selectedCategory === cat ? '#ff6a00' : '#f3f4f6',
+                  color: selectedCategory === cat ? '#fff' : '#555',
+                  fontFamily: "'Hind Siliguri', sans-serif",
+                }}
+              >
                 {cat}
               </button>
             ))}
           </div>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="text-sm border border-gray-200 rounded-xl px-3 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{ fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '6px 10px', background: '#fff', color: '#555', flexShrink: 0, fontFamily: "'Hind Siliguri', sans-serif" }}
+          >
             <option value="default">ডিফল্ট</option>
-            <option value="price_asc">দাম: কম থেকে বেশি</option>
-            <option value="price_desc">দাম: বেশি থেকে কম</option>
+            <option value="price_asc">দাম: কম → বেশি</option>
+            <option value="price_desc">দাম: বেশি → কম</option>
             <option value="name">নাম অনুযায়ী</option>
           </select>
         </div>
+      </div>
 
-        {!loading && <p className="text-sm text-gray-500 mb-4">{filtered.length} টি পণ্য পাওয়া গেছে</p>}
+      {/* Content */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: isMobile ? '12px' : '20px' }}>
+        {!loading && (
+          <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '12px' }}>
+            {filtered.length} টি পণ্য পাওয়া গেছে
+          </p>
+        )}
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))', gap: isMobile ? '10px' : '14px' }}>
             {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-24 text-gray-400">
-            <div className="text-6xl mb-4">🔍</div>
-            <p className="text-lg font-medium">কোনো পণ্য পাওয়া যায়নি</p>
+          <div style={{ textAlign: 'center', padding: '80px 0', color: '#9ca3af' }}>
+            <div style={{ fontSize: '56px', marginBottom: '12px' }}>🔍</div>
+            <p style={{ fontSize: '16px', fontWeight: '600' }}>কোনো পণ্য পাওয়া যায়নি</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))', gap: isMobile ? '10px' : '14px' }}>
             {filtered.map((product) => (
-              <ProductCard key={product.id} product={product} onAddToCart={addToCart} cartItems={cartItems} />
+              <ProductCard key={product.id} product={product} onAddToCart={addToCart} cartItems={cartItems} isMobile={isMobile} />
             ))}
           </div>
         )}
       </div>
 
       {cartOpen && <CartDrawer items={cartItems} onClose={() => setCartOpen(false)} onUpdateQty={updateQty} onRemove={removeItem} />}
-
       <ToastContainer toasts={toasts} />
     </div>
   );
