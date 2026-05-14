@@ -220,16 +220,21 @@ export default function Dashboard() {
 
   const saveAddress = async () => {
     setAddressLoading(true); setAddressMsg('');
+    const { phone, ...addressData } = address;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
       method: 'PATCH',
-      headers: { ...headers, Prefer: 'return=representation' },
-      body: JSON.stringify(address),
+      headers: { ...headers, Prefer: 'return=minimal' },
+      body: JSON.stringify(addressData),
     });
     if (res.ok) {
       const updated = { ...user, ...address };
       localStorage.setItem('user', JSON.stringify(updated));
       setUser(updated); setAddressMsg('success');
-    } else { setAddressMsg('error'); }
+    } else {
+      const err = await res.text();
+      console.error('Address save error:', err);
+      setAddressMsg('error');
+    }
     setAddressLoading(false);
     setTimeout(() => setAddressMsg(''), 3000);
   };
