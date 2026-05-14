@@ -24,8 +24,6 @@ export default function Navbar() {
     if (query.trim()) router.push(`/products?q=${encodeURIComponent(query)}`);
   };
 
-  const categories = ['পোশাক ও গার্মেন্টস', 'মুদি ও খাদ্যপণ্য', 'ইলেকট্রনিক্স', 'গৃহস্থালি', 'কৃষি পণ্য', 'প্লাস্টিক ও প্যাকেজিং', 'সৌন্দর্য পণ্য', 'শিশু পণ্য'];
-
   return (
     <>
       <style>{`
@@ -53,15 +51,6 @@ export default function Navbar() {
         }
         .search-input::placeholder { color: #aaa; }
         .search-input:focus { outline: none; }
-        .cat-link {
-          font-size: 12px; color: #444; padding: 8px 14px;
-          white-space: nowrap; cursor: pointer;
-          border-bottom: 2px solid transparent;
-          transition: color 0.2s, border-color 0.2s;
-        }
-        .cat-link:hover { color: #ff6a00; border-bottom-color: #ff6a00; }
-        .cat-bar::-webkit-scrollbar { display: none; }
-        .cat-bar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       {/* Top bar — শুধু desktop */}
@@ -83,7 +72,7 @@ export default function Navbar() {
         flexDirection: isMobile ? 'column' : 'row',
         alignItems: isMobile ? 'stretch' : 'center',
         gap: isMobile ? '8px' : '12px',
-        borderBottom: isMobile ? 'none' : '2px solid #ff6a00',
+        borderBottom: '2px solid #ff6a00',
         boxShadow: isMobile ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
         position: 'sticky', top: 0, zIndex: 100
       }}>
@@ -124,7 +113,7 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Search bar — mobile এ full width second row, desktop এ inline */}
+        {/* Search bar */}
         <form onSubmit={handleSearch} style={{
           flex: 1,
           display: 'flex',
@@ -132,7 +121,6 @@ export default function Navbar() {
           borderRadius: isMobile ? '8px' : '4px',
           overflow: 'hidden'
         }}>
-          {/* Category select — mobile এ লুকানো */}
           {!isMobile && (
             <select style={{ border: 'none', borderRight: '1px solid #eee', padding: '0 10px', fontSize: '12px', color: '#555', background: '#f9f9f9', outline: 'none' }}>
               <option>সব পণ্য</option>
@@ -172,34 +160,6 @@ export default function Navbar() {
           </div>
         )}
       </nav>
-
-      {/* Category bar */}
-      <div
-        className="cat-bar"
-        style={{
-          background: '#fff',
-          borderBottom: '1px solid #eee',
-          borderTop: isMobile ? '1px solid #f3f4f6' : 'none',
-          padding: isMobile ? '0 8px' : '0 20px',
-          display: 'flex',
-          gap: 0,
-          overflowX: 'auto',
-          position: 'sticky',
-          top: isMobile ? '113px' : '54px',
-          zIndex: 99
-        }}
-      >
-        {categories.map((cat, i) => (
-          <span
-            key={i}
-            className="cat-link"
-            style={{ fontSize: isMobile ? '11px' : '12px', padding: isMobile ? '7px 10px' : '8px 14px' }}
-            onClick={() => router.push(`/products?cat=${encodeURIComponent(cat)}`)}
-          >
-            {cat}
-          </span>
-        ))}
-      </div>
     </>
   );
 }
