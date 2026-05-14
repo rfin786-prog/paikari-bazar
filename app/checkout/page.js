@@ -20,17 +20,17 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [note, setNote] = useState('');
 
-  const deliveryOptions = [
-    { id: 'standard', name: 'স্ট্যান্ডার্ড', info: '৩-৫ কার্যদিবস', price: 60 },
-    { id: 'express', name: 'এক্সপ্রেস', info: '১-২ কার্যদিবস', price: 120 },
-    { id: 'scheduled', name: 'নির্ধারিত তারিখ', info: 'তারিখ বেছে নিন', price: 80 },
-    { id: 'pickup', name: 'সেলফ পিকআপ', info: 'গুদাম থেকে নিন', price: 0 },
-  ];
+  const [deliveryOptions, setDeliveryOptions] = useState([
+    { id: 'standard',  name: 'স্ট্যান্ডার্ড',    info: '৩-৫ কার্যদিবস', price: 60 },
+    { id: 'express',   name: 'এক্সপ্রেস',         info: '১-২ কার্যদিবস', price: 120 },
+    { id: 'scheduled', name: 'নির্ধারিত তারিখ',   info: 'তারিখ বেছে নিন', price: 80 },
+    { id: 'pickup',    name: 'সেলফ পিকআপ',        info: 'গুদাম থেকে নিন', price: 0 },
+  ]);
 
   const paymentOptions = [
-    { id: 'cod', icon: '💵', name: 'ক্যাশ অন ডেলিভারি' },
+    { id: 'cod',    icon: '💵', name: 'ক্যাশ অন ডেলিভারি' },
     { id: 'mobile', icon: '📱', name: 'বিকাশ / নগদ' },
-    { id: 'bank', icon: '🏦', name: 'ব্যাংক ট্রান্সফার' },
+    { id: 'bank',   icon: '🏦', name: 'ব্যাংক ট্রান্সফার' },
     { id: 'credit', icon: '📒', name: 'বাকি' },
   ];
 
@@ -41,7 +41,20 @@ export default function CheckoutPage() {
     setUser(u);
     const cart = localStorage.getItem('paikari_cart');
     if (cart) setCartItems(JSON.parse(cart));
-    setLoading(false);
+
+    // Fetch delivery charges from Supabase
+    fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.delivery_charges&select=value`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data[0]?.value) {
+          const c = data[0].value;
+          setDeliveryOptions(prev => prev.map(opt => ({ ...opt, price: c[opt.id] ?? opt.price })));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const deliveryCost = deliveryOptions.find(d => d.id === deliveryMethod)?.price || 0;
