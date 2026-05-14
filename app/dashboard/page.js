@@ -28,9 +28,43 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
-// ─── Tracking Timeline (customer read-only) ───────────────────────────────────
+// ─── Password Strength ────────────────────────────────────────────────────────
+function PasswordStrength({ password }) {
+  if (!password) return null;
+  let strength = 0;
+  if (password.length >= 6) strength++;
+  if (password.length >= 10) strength++;
+  if (/[A-Z]/.test(password)) strength++;
+  if (/[0-9]/.test(password)) strength++;
+  if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+  const levels = [
+    { label: 'খুব দুর্বল', color: '#ef4444' },
+    { label: 'দুর্বল',     color: '#f97316' },
+    { label: 'মধ্যম',      color: '#eab308' },
+    { label: 'ভালো',       color: '#22c55e' },
+    { label: 'শক্তিশালী', color: '#10b981' },
+  ];
+  const lvl = levels[Math.min(strength, 4)];
+
+  return (
+    <div style={{ marginTop: '8px' }}>
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+        {levels.map((l, i) => (
+          <div key={i} style={{
+            flex: 1, height: '4px', borderRadius: '4px',
+            background: i <= strength - 1 ? lvl.color : '#e5e7eb',
+            transition: 'background 0.3s',
+          }} />
+        ))}
+      </div>
+      <div style={{ fontSize: '11px', fontWeight: '600', color: lvl.color }}>{lvl.label}</div>
+    </div>
+  );
+}
+
+// ─── Tracking Timeline ────────────────────────────────────────────────────────
 function TrackingTimeline({ order }) {
-  // cancelled হলে timeline দেখাবে না
   if (order.status === 'cancelled') {
     return (
       <div style={{ marginTop: '16px', padding: '14px 16px', background: '#fee2e2', borderRadius: '12px', border: '1px solid #fca5a5' }}>
@@ -39,11 +73,8 @@ function TrackingTimeline({ order }) {
     );
   }
 
-  // processing → confirmed হিসেবে দেখাও
   const status = order.status === 'processing' ? 'confirmed' : order.status;
   const currentStepIdx = STEP_ORDER.indexOf(status);
-
-  // DB থেকে tracking_history নাও
   const trackingHistory = Array.isArray(order.tracking_history) ? order.tracking_history : [];
 
   const getHistoryEntry = (stepValue) =>
@@ -67,21 +98,14 @@ function TrackingTimeline({ order }) {
         const isCurrent = idx === currentStepIdx;
         const isPending = idx > currentStepIdx;
         const isLast = idx === TIMELINE_STEPS.length - 1;
-
-        // DB tracking_history থেকে এই step-এর data নাও
         const histEntry = getHistoryEntry(step.value);
         const noteText = histEntry?.note || '';
-
-        // সঠিক time: history থেকে → না পেলে created_at (pending-এর জন্য)
         const displayTime = histEntry?.time
           ? histEntry.time
-          : idx === 0
-            ? order.created_at
-            : null;
+          : idx === 0 ? order.created_at : null;
 
         return (
           <div key={step.value} style={{ display: 'flex', gap: '14px' }}>
-            {/* Icon + line */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '38px', flexShrink: 0 }}>
               <div style={{
                 width: '38px', height: '38px', borderRadius: '50%',
@@ -103,31 +127,21 @@ function TrackingTimeline({ order }) {
                 }} />
               )}
             </div>
-
-            {/* Content */}
             <div style={{ flex: 1, paddingBottom: isLast ? 0 : '14px' }}>
               <div style={{ fontWeight: '700', fontSize: '14px', color: isPending ? '#9ca3af' : '#111827' }}>
                 {step.label}
               </div>
-
               {isDone && displayTime && (
                 <div style={{ fontSize: '11px', color: isCurrent ? '#f59e0b' : '#10b981', marginTop: '2px', fontWeight: '600' }}>
                   📅 {formatDateTime(displayTime)}
                 </div>
               )}
-              {isPending && (
-                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>অপেক্ষমান</div>
-              )}
-              {isDone && (
-                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>{step.sub}</div>
-              )}
-
-              {/* Admin note — DB থেকে, read only */}
+              {isPending && <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>অপেক্ষমান</div>}
+              {isDone && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>{step.sub}</div>}
               {noteText && (
                 <div style={{
                   marginTop: '8px', background: '#fff', border: '1px solid #e5e7eb',
-                  borderLeft: '3px solid #f59e0b',
-                  borderRadius: '8px', padding: '8px 10px',
+                  borderLeft: '3px solid #f59e0b', borderRadius: '8px', padding: '8px 10px',
                   fontSize: '12px', color: '#374151',
                 }}>
                   <span style={{ fontSize: '10px', fontWeight: '700', color: '#9ca3af', display: 'block', marginBottom: '2px' }}>নোট</span>
@@ -148,6 +162,8 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState('orders');
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [orderFilter, setOrderFilter] = useState('all');
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [ordersLoading, setOrdersLoading] = useState(true);
 
@@ -158,6 +174,8 @@ export default function Dashboard() {
   const [passwords, setPasswords] = useState({ current: '', newPass: '', confirm: '' });
   const [passMsg, setPassMsg] = useState('');
   const [passLoading, setPassLoading] = useState(false);
+
+  const [reorderToast, setReorderToast] = useState('');
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
@@ -174,6 +192,20 @@ export default function Dashboard() {
     });
     loadOrders(u.id);
   }, []);
+
+  // Filter orders whenever filter or orders change
+  useEffect(() => {
+    if (orderFilter === 'all') {
+      setFilteredOrders(orders);
+    } else {
+      setFilteredOrders(orders.filter(o => {
+        if (orderFilter === 'active') return ['pending', 'processing', 'confirmed', 'shipped'].includes(o.status);
+        if (orderFilter === 'delivered') return o.status === 'delivered';
+        if (orderFilter === 'cancelled') return o.status === 'cancelled';
+        return true;
+      }));
+    }
+  }, [orderFilter, orders]);
 
   const loadOrders = async (userId) => {
     setOrdersLoading(true);
@@ -225,6 +257,23 @@ export default function Dashboard() {
     setTimeout(() => setPassMsg(''), 3000);
   };
 
+  const handleReorder = (order) => {
+    const items = Array.isArray(order.items) ? order.items : [];
+    const cartItems = items.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      emoji: item.emoji || '',
+      qty: item.qty || item.quantity || 1,
+    }));
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+    setReorderToast('✅ কার্টে যোগ হয়েছে! চেকআউটে যাচ্ছে...');
+    setTimeout(() => {
+      setReorderToast('');
+      router.push('/checkout');
+    }, 1500);
+  };
+
   const logout = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('cart');
@@ -232,15 +281,25 @@ export default function Dashboard() {
   };
 
   const passMessages = {
-    empty: '❌ সব ঘর পূরণ করুন',
-    wrong: '❌ বর্তমান পাসওয়ার্ড ভুল',
+    empty:    '❌ সব ঘর পূরণ করুন',
+    wrong:    '❌ বর্তমান পাসওয়ার্ড ভুল',
     mismatch: '❌ নতুন পাসওয়ার্ড মিলছে না',
-    short: '❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে',
-    success: '✅ পাসওয়ার্ড পরিবর্তন হয়েছে',
-    error: '❌ সমস্যা হয়েছে',
+    short:    '❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে',
+    success:  '✅ পাসওয়ার্ড পরিবর্তন হয়েছে',
+    error:    '❌ সমস্যা হয়েছে',
   };
 
   const avatarLetter = user?.name?.[0] || user?.phone?.[0] || '?';
+
+  // Address incomplete warning
+  const addressIncomplete = user && (!user.district || !user.thana || !user.address);
+
+  const filterOptions = [
+    { value: 'all',       label: 'সব' },
+    { value: 'active',    label: '🔄 চলমান' },
+    { value: 'delivered', label: '✅ ডেলিভারি' },
+    { value: 'cancelled', label: '❌ বাতিল' },
+  ];
 
   return (
     <>
@@ -261,27 +320,6 @@ export default function Dashboard() {
           background: radial-gradient(circle, rgba(232,160,32,0.08) 0%, transparent 70%);
           pointer-events: none; z-index: 0;
         }
-        .navbar {
-          position: sticky; top: 0; z-index: 100;
-          height: 64px;
-          background: rgba(10,22,40,0.85);
-          backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(232,160,32,0.15);
-          display: flex; align-items: center;
-          justify-content: space-between;
-          padding: 0 24px;
-        }
-        .nav-logo { font-size: 22px; font-weight: 800; color: #fff; cursor: pointer; font-family: 'Tiro Bangla', serif; }
-        .nav-logo span { color: #e8a020; }
-        .btn-ghost {
-          background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
-          border: 1px solid rgba(255,255,255,0.12);
-          padding: 9px 16px; border-radius: 10px;
-          font-size: 13px; cursor: pointer;
-          font-family: 'Hind Siliguri', sans-serif;
-          transition: background 0.15s;
-        }
-        .btn-ghost:hover { background: rgba(255,255,255,0.14); }
         .content { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 28px 16px 48px; }
         .user-hero {
           background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
@@ -301,6 +339,16 @@ export default function Dashboard() {
         .user-info-name { font-size: 19px; font-weight: 700; color: #fff; margin-bottom: 4px; font-family: 'Tiro Bangla', serif; }
         .user-info-sub { font-size: 13px; color: rgba(255,255,255,0.5); }
         .user-info-sub span { display: inline-block; background: rgba(232,160,32,0.15); color: #e8a020; padding: 2px 10px; border-radius: 20px; font-size: 12px; margin-left: 6px; }
+        .btn-logout {
+          background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
+          border: 1px solid rgba(255,255,255,0.12);
+          padding: 9px 16px; border-radius: 10px;
+          font-size: 13px; cursor: pointer;
+          font-family: 'Hind Siliguri', sans-serif;
+          transition: background 0.15s; flex-shrink: 0;
+          margin-left: auto;
+        }
+        .btn-logout:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
         .tabs {
           display: flex; gap: 6px;
           background: rgba(0,0,0,0.2);
@@ -312,19 +360,59 @@ export default function Dashboard() {
         .tab-btn.active { background: linear-gradient(135deg, #e8a020, #f5c842); color: #0f2442; box-shadow: 0 4px 12px rgba(232,160,32,0.35); }
         .tab-btn.inactive { background: transparent; color: rgba(255,255,255,0.5); }
         .tab-btn.inactive:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.06); }
+
+        /* Order Filter Pills */
+        .filter-pills { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .pill {
+          padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+          border: 1.5px solid rgba(255,255,255,0.15); cursor: pointer;
+          font-family: 'Hind Siliguri', sans-serif; transition: all 0.2s;
+          color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05);
+        }
+        .pill.active { background: rgba(232,160,32,0.2); border-color: #e8a020; color: #f5c842; }
+        .pill:hover:not(.active) { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+
+        /* Address warning banner */
+        .address-warning {
+          background: rgba(234,179,8,0.12); border: 1px solid rgba(234,179,8,0.3);
+          border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;
+          display: flex; align-items: center; gap: 10px;
+          font-size: 13px; color: #fcd34d; font-weight: 600; cursor: pointer;
+        }
+        .address-warning:hover { background: rgba(234,179,8,0.18); }
+
+        /* Reorder toast */
+        .reorder-toast {
+          position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+          background: #0f2442; border: 1px solid #e8a020; color: #f5c842;
+          padding: 12px 24px; border-radius: 40px; font-size: 14px; font-weight: 700;
+          z-index: 9999; font-family: 'Hind Siliguri', sans-serif;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+          animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
         .card { background: rgba(255,255,255,0.97); border-radius: 18px; padding: 22px; margin-bottom: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); transition: transform 0.15s; }
         .card:hover { transform: translateY(-1px); }
         .order-id { font-size: 11px; font-family: monospace; color: #9ca3af; background: #f3f4f6; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
         .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin-left: 6px; }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; }
         .order-date { font-size: 12px; color: #9ca3af; margin-bottom: 10px; }
-        .item-tag { font-size: 12px; background: #f3f4f6; color: #374151; padding: 4px 11px; border-radius: 20px; display: inline-block; margin: 3px 3px 0 0; }
         .order-amount { font-size: 22px; font-weight: 800; color: #0f2442; line-height: 1; }
-        .order-count { font-size: 12px; color: #9ca3af; text-align: right; margin-top: 4px; }
         .expand-btn { background: none; border: none; color: #6366f1; font-size: 13px; cursor: pointer; padding: 10px 0 0; font-family: 'Hind Siliguri', sans-serif; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+        .reorder-btn {
+          background: linear-gradient(135deg, #e8a020, #f5c842);
+          color: #0f2442; border: none; padding: 7px 16px;
+          border-radius: 20px; font-size: 12px; font-weight: 700;
+          cursor: pointer; font-family: 'Hind Siliguri', sans-serif;
+          margin-left: auto; transition: transform 0.15s, box-shadow 0.15s;
+          box-shadow: 0 2px 10px rgba(232,160,32,0.3);
+        }
+        .reorder-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(232,160,32,0.45); }
         .order-detail { margin-top: 14px; background: #f9fafb; border-radius: 12px; padding: 14px; border: 1px solid #f0f0f0; }
-        .detail-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px dashed #f0f0f0; color: #374151; }
-        .detail-row:last-child { border-bottom: none; }
         .detail-total { display: flex; justify-content: space-between; font-weight: 800; font-size: 15px; padding-top: 12px; margin-top: 4px; border-top: 2px solid #e5e7eb; color: #0f2442; }
         .form-card { background: rgba(255,255,255,0.97); border-radius: 18px; padding: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
         .form-title { font-size: 17px; font-weight: 700; color: #0f2442; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; padding-bottom: 14px; border-bottom: 2px solid #f3f4f6; font-family: 'Tiro Bangla', serif; }
@@ -342,26 +430,23 @@ export default function Dashboard() {
         .empty-icon { font-size: 48px; margin-bottom: 12px; }
         .empty-text { font-size: 15px; margin-bottom: 16px; }
         .loading-state { text-align: center; padding: 48px; color: rgba(255,255,255,0.5); font-size: 15px; }
-        @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } .order-amount { font-size: 18px; } .navbar { padding: 0 14px; } }
+        @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } .order-amount { font-size: 18px; } }
       `}</style>
 
       <div className="dash-wrap">
-        <nav className="navbar">
-          <div className="nav-logo" onClick={() => router.push('/products')}>পাইকারি<span>বাজার</span></div>
-          <button className="btn-ghost" onClick={logout}>লগআউট</button>
-        </nav>
-
         <div className="content">
+          {/* User Hero Card — logout button এখানে */}
           {user && (
             <div className="user-hero">
               <div className="avatar">{avatarLetter}</div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <div className="user-info-name">{user.name || 'ব্যবহারকারী'}</div>
                 <div className="user-info-sub">
                   {user.phone}
                   {user.shop_name && <span>{user.shop_name}</span>}
                 </div>
               </div>
+              <button className="btn-logout" onClick={logout}>লগআউট</button>
             </div>
           )}
 
@@ -374,17 +459,48 @@ export default function Dashboard() {
           {/* Orders Tab */}
           {tab === 'orders' && (
             <div>
+              {/* Address incomplete warning */}
+              {addressIncomplete && (
+                <div className="address-warning" onClick={() => setTab('address')}>
+                  <span style={{ fontSize: '18px' }}>⚠️</span>
+                  <span>ডেলিভারি ঠিকানা অসম্পূর্ণ! অর্ডার দেওয়ার আগে ঠিকানা পূরণ করুন →</span>
+                </div>
+              )}
+
+              {/* Filter pills */}
+              {!ordersLoading && orders.length > 0 && (
+                <div className="filter-pills">
+                  {filterOptions.map(opt => (
+                    <button
+                      key={opt.value}
+                      className={`pill ${orderFilter === opt.value ? 'active' : ''}`}
+                      onClick={() => setOrderFilter(opt.value)}
+                    >
+                      {opt.label}
+                      {opt.value === 'all' && ` (${orders.length})`}
+                      {opt.value === 'active' && ` (${orders.filter(o => ['pending','processing','confirmed','shipped'].includes(o.status)).length})`}
+                      {opt.value === 'delivered' && ` (${orders.filter(o => o.status === 'delivered').length})`}
+                      {opt.value === 'cancelled' && ` (${orders.filter(o => o.status === 'cancelled').length})`}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {ordersLoading ? (
                 <div className="loading-state">⏳ লোড হচ্ছে...</div>
-              ) : orders.length === 0 ? (
+              ) : filteredOrders.length === 0 ? (
                 <div className="card">
                   <div className="empty-state">
                     <div className="empty-icon">📦</div>
-                    <p className="empty-text">এখনো কোনো অর্ডার নেই</p>
-                    <button className="btn-primary" style={{ width: 'auto', padding: '11px 28px', marginTop: 0 }} onClick={() => router.push('/products')}>পণ্য দেখুন</button>
+                    <p className="empty-text">
+                      {orders.length === 0 ? 'এখনো কোনো অর্ডার নেই' : 'এই ক্যাটাগরিতে কোনো অর্ডার নেই'}
+                    </p>
+                    {orders.length === 0 && (
+                      <button className="btn-primary" style={{ width: 'auto', padding: '11px 28px', marginTop: 0 }} onClick={() => router.push('/products')}>পণ্য দেখুন</button>
+                    )}
                   </div>
                 </div>
-              ) : orders.map(order => {
+              ) : filteredOrders.map(order => {
                 const items = Array.isArray(order.items) ? order.items : [];
                 const st = STATUS[order.status] || STATUS.pending;
                 const date = new Date(order.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -417,20 +533,27 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    <button className="expand-btn" onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
-                      {isExpanded ? '▲ কম দেখুন' : '▼ বিস্তারিত ও ট্র্যাকিং'}
-                    </button>
+                    {/* Actions row */}
+                    <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '8px' }}>
+                      <button className="expand-btn" style={{ marginTop: 0 }} onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
+                        {isExpanded ? '▲ কম দেখুন' : '▼ বিস্তারিত ও ট্র্যাকিং'}
+                      </button>
+                      {/* Reorder button */}
+                      {items.length > 0 && (
+                        <button className="reorder-btn" onClick={() => handleReorder(order)}>
+                          🔄 আবার অর্ডার করুন
+                        </button>
+                      )}
+                    </div>
 
                     {isExpanded && (
                       <div className="order-detail">
-                        {/* Table header */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px', padding: '6px 0 8px', borderBottom: '2px solid #e5e7eb', marginBottom: '4px' }}>
                           <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Item</span>
                           <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>Unit Price</span>
                           <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center' }}>Qty</span>
                           <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>Amount</span>
                         </div>
-                        {/* Table rows */}
                         {items.map((item, i) => {
                           const qty = item.qty || item.quantity || 1;
                           const total = item.price * qty;
@@ -450,7 +573,6 @@ export default function Dashboard() {
                       </div>
                     )}
 
-                    {/* Tracking Timeline — DB থেকে data */}
                     {isExpanded && <TrackingTimeline order={order} />}
                   </div>
                 );
@@ -517,10 +639,16 @@ export default function Dashboard() {
                 <div>
                   <label className="label">নতুন পাসওয়ার্ড</label>
                   <input type="password" className="inp" value={passwords.newPass} onChange={e => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="কমপক্ষে ৬ অক্ষর" />
+                  <PasswordStrength password={passwords.newPass} />
                 </div>
                 <div>
                   <label className="label">পাসওয়ার্ড নিশ্চিত করুন</label>
                   <input type="password" className="inp" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="আবার পাসওয়ার্ড দিন" />
+                  {passwords.confirm && passwords.newPass && (
+                    <div style={{ marginTop: '6px', fontSize: '12px', fontWeight: '600', color: passwords.confirm === passwords.newPass ? '#16a34a' : '#dc2626' }}>
+                      {passwords.confirm === passwords.newPass ? '✅ পাসওয়ার্ড মিলছে' : '❌ পাসওয়ার্ড মিলছে না'}
+                    </div>
+                  )}
                 </div>
                 <button className="btn-primary" onClick={changePassword} disabled={passLoading}>
                   {passLoading ? '⏳ পরিবর্তন হচ্ছে...' : '🔒 পাসওয়ার্ড পরিবর্তন করুন'}
@@ -531,6 +659,9 @@ export default function Dashboard() {
 
         </div>
       </div>
+
+      {/* Reorder Toast */}
+      {reorderToast && <div className="reorder-toast">{reorderToast}</div>}
     </>
   );
 }
