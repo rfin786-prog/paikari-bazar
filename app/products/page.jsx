@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
-// ── Toast System ──────────────────────────────────────────
 function ToastContainer({ toasts }) {
   return (
     <div style={{
@@ -17,37 +16,22 @@ function ToastContainer({ toasts }) {
         <div key={t.id} style={{
           display: 'flex', alignItems: 'center', gap: '10px',
           background: 'linear-gradient(135deg, #0f2442, #1a3a6b)',
-          color: '#fff',
-          padding: '12px 20px',
-          borderRadius: '50px',
-          fontSize: '14px',
-          fontFamily: "'Hind Siliguri', sans-serif",
-          fontWeight: '600',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+          color: '#fff', padding: '12px 20px', borderRadius: '50px',
+          fontSize: '14px', fontFamily: "'Hind Siliguri', sans-serif",
+          fontWeight: '600', boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
           border: '1px solid rgba(232,160,32,0.3)',
           animation: t.leaving ? 'toastOut 0.3s ease forwards' : 'toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards',
           whiteSpace: 'nowrap',
         }}>
-          <span style={{
-            width: '28px', height: '28px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #e8a020, #f5c842)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '14px', flexShrink: 0,
-          }}>✓</span>
+          <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #e8a020, #f5c842)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>✓</span>
           <span>{t.message}</span>
         </div>
       ))}
       <style>{`
-        @keyframes toastIn {
-          from { opacity: 0; transform: translateY(16px) scale(0.92); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes toastOut {
-          from { opacity: 1; transform: translateY(0) scale(1); }
-          to   { opacity: 0; transform: translateY(8px) scale(0.95); }
-        }
-        .cat-scroll::-webkit-scrollbar { display: none; }
-        .cat-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes toastIn { from{opacity:0;transform:translateY(16px) scale(0.92)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes toastOut { from{opacity:1;transform:translateY(0) scale(1)} to{opacity:0;transform:translateY(8px) scale(0.95)} }
+        .cat-scroll::-webkit-scrollbar{display:none}
+        .cat-scroll{-ms-overflow-style:none;scrollbar-width:none}
       `}</style>
     </div>
   );
@@ -66,10 +50,9 @@ function useToast() {
   return { toasts, showToast };
 }
 
-// ── Skeleton ──────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div style={{ background: '#fff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #f3f4f6' }}>
+    <div style={{ background: '#fff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #f3f4f6', animation: 'pulse 1.5s infinite' }}>
       <div style={{ height: '150px', background: '#f3f4f6' }} />
       <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div style={{ height: '10px', background: '#f3f4f6', borderRadius: '6px', width: '70%' }} />
@@ -82,7 +65,6 @@ function SkeletonCard() {
   );
 }
 
-// ── Product Card ──────────────────────────────────────────
 function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
   const inCart = cartItems.find((i) => i.id === product.id);
   const [added, setAdded] = useState(false);
@@ -93,25 +75,15 @@ function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
     setTimeout(() => setAdded(false), 1500);
   };
 
-  const btnBg = product.stock === 0 ? '#f3f4f6'
-    : added ? '#22c55e'
-    : inCart ? '#fff'
-    : '#ff6a00';
+  const btnBg = product.stock === 0 ? '#f3f4f6' : added ? '#22c55e' : inCart ? '#fff' : '#ff6a00';
   const btnColor = product.stock === 0 ? '#9ca3af' : inCart && !added ? '#16a34a' : '#fff';
 
   return (
     <div
-      style={{
-        background: '#fff', borderRadius: '14px',
-        border: '1px solid #f0f0f0', overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-      }}
+      style={{ background: '#fff', borderRadius: '14px', border: '1px solid #f0f0f0', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'transform 0.2s, box-shadow 0.2s' }}
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(255,106,0,0.1)'; }}
       onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; }}
     >
-      {/* Image */}
       <div style={{ position: 'relative', height: isMobile ? '130px' : '160px', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {product.image_url
           ? <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -132,7 +104,6 @@ function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
         )}
       </div>
 
-      {/* Info */}
       <div style={{ padding: isMobile ? '8px 10px' : '12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
         <p style={{ fontSize: '10px', color: '#6366f1', fontWeight: '600', marginBottom: '3px', textTransform: 'uppercase' }}>
           {product.category || 'সাধারণ'}
@@ -156,14 +127,10 @@ function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
               background: btnBg, color: btnColor,
               fontSize: isMobile ? '11px' : '12px', fontWeight: '700',
               cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s',
-              fontFamily: "'Hind Siliguri', sans-serif",
+              transition: 'all 0.2s', fontFamily: "'Hind Siliguri', sans-serif",
             }}
           >
-            {product.stock === 0 ? 'স্টক নেই'
-              : added ? '✓ যোগ হয়েছে!'
-              : inCart ? `🛒 কার্টে আছে (${inCart.qty})`
-              : '🛒 কার্টে যোগ করুন'}
+            {product.stock === 0 ? 'স্টক নেই' : added ? '✓ যোগ হয়েছে!' : inCart ? `🛒 কার্টে আছে (${inCart.qty})` : '🛒 কার্টে যোগ করুন'}
           </button>
         </div>
       </div>
@@ -171,7 +138,6 @@ function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
   );
 }
 
-// ── Cart Drawer ───────────────────────────────────────────
 function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   return (
@@ -226,7 +192,6 @@ function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -235,7 +200,6 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('সব');
   const [cartItems, setCartItems] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [sortBy, setSortBy] = useState('default');
   const [isMobile, setIsMobile] = useState(false);
   const { toasts, showToast } = useToast();
 
@@ -282,18 +246,11 @@ export default function ProductsPage() {
     if (cat) setSelectedCategory(cat);
   }, []);
 
-  const filtered = products
-    .filter((p) => {
-      const matchCat = selectedCategory === 'সব' || p.category === selectedCategory;
-      const matchSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.category?.toLowerCase().includes(search.toLowerCase());
-      return matchCat && matchSearch;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'price_asc') return a.price - b.price;
-      if (sortBy === 'price_desc') return b.price - a.price;
-      if (sortBy === 'name') return a.name.localeCompare(b.name);
-      return 0;
-    });
+  const filtered = products.filter((p) => {
+    const matchCat = selectedCategory === 'সব' || p.category === selectedCategory;
+    const matchSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.category?.toLowerCase().includes(search.toLowerCase());
+    return matchCat && matchSearch;
+  });
 
   const addToCart = (product) => {
     setCartItems((prev) => {
@@ -324,11 +281,7 @@ export default function ProductsPage() {
         padding: isMobile ? '8px 12px' : '10px 20px',
         position: 'sticky', top: isMobile ? '113px' : '105px', zIndex: 30
       }}>
-        {/* Categories row — full width scrollable */}
-        <div
-          className="cat-scroll"
-          style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}
-        >
+        <div className="cat-scroll" style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
           {categories.map((cat) => (
             <button
               key={cat}
@@ -344,24 +297,6 @@ export default function ProductsPage() {
               {cat}
             </button>
           ))}
-        </div>
-
-        {/* Sort — mobile এ আলাদা row এ ডানে */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            style={{
-              fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '8px',
-              padding: '5px 10px', background: '#fff', color: '#555',
-              fontFamily: "'Hind Siliguri', sans-serif"
-            }}
-          >
-            <option value="default">ডিফল্ট</option>
-            <option value="price_asc">দাম: কম → বেশি</option>
-            <option value="price_desc">দাম: বেশি → কম</option>
-            <option value="name">নাম অনুযায়ী</option>
-          </select>
         </div>
       </div>
 
