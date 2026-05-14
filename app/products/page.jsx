@@ -32,6 +32,7 @@ function ToastContainer({ toasts }) {
         @keyframes toastOut { from{opacity:1;transform:translateY(0) scale(1)} to{opacity:0;transform:translateY(8px) scale(0.95)} }
         .cat-scroll::-webkit-scrollbar{display:none}
         .cat-scroll{-ms-overflow-style:none;scrollbar-width:none}
+        .sub-chip:hover{background:#ff6a00!important;color:#fff!important;border-color:#ff6a00!important}
       `}</style>
     </div>
   );
@@ -194,10 +195,11 @@ function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [parents, setParents] = useState([]);
+  const [subMap, setSubMap] = useState({});
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('সব');
+  const [selectedParent, setSelectedParent] = useState(null); // null = সব
+  const [selectedSub, setSelectedSub] = useState(null); // null = parent এর সব
   const [cartItems, setCartItems] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -210,6 +212,30 @@ export default function ProductsPage() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  // Categories fetch
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/categories?select=*&order=name.asc`,
+          { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` } }
+        );
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        const p = data.filter(c => !c.parent_id);
+        const map = {};
+        data.filter(c => c.parent_id).forEach(c => {
+          if (!map[c.parent_id]) map[c.parent_id] = [];
+          map[c.parent_id].push(c);
+        });
+        setParents(p);
+        setSubMap(map);
+      } catch (e) { console.error(e); }
+    };
+    fetchCategories();
+  }, []);
+
+  // Products fetch
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -219,11 +245,7 @@ export default function ProductsPage() {
           { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` } }
         );
         const data = await res.json();
-        if (Array.isArray(data)) {
-          setProducts(data);
-          const cats = ['সব', ...new Set(data.map((p) => p.category).filter(Boolean))];
-          setCategories(cats);
-        }
+        if (Array.isArray(data)) setProducts(data);
       } catch (err) { console.error(err); }
       setLoading(false);
     }
@@ -240,16 +262,41 @@ export default function ProductsPage() {
     window.dispatchEvent(new Event('cartUpdated'));
   }, [cartItems]);
 
+  // URL থেকে category
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const cat = params.get('cat');
-    if (cat) setSelectedCategory(cat);
-  }, []);
+    if (cat && parents.length > 0) {
+      const parent = parents.find(p => p.name === cat);
+      if (parent) { setSelectedParent(parent); setSelectedSub(null); }
+      else {
+        // sub category হতে পারে
+        Object.entries(subMap).forEach(([pid, subs]) => {
+          const sub = subs.find(s => s.name === cat);
+          if (sub) {
+            const parent = parents.find(p => p.id === pid);
+            setSelectedParent(parent || null);
+            setSelectedSub(sub);
+          }
+        });
+      }
+    }
+  }, [parents, subMap]);
 
+  // Filter logic
   const filtered = products.filter((p) => {
-    const matchCat = selectedCategory === 'সব' || p.category === selectedCategory;
-    const matchSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.category?.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
+    if (!selectedParent) return true; // সব
+    if (selectedSub) {
+      // sub category name দিয়ে match
+      return p.category === selectedSub.name;
+    }
+    // parent select — parent এর সব sub category match
+    const subs = subMap[selectedParent.id] || [];
+    if (subs.length > 0) {
+      return subs.some(s => p.category === s.name);
+    }
+    // sub নেই — parent name দিয়ে match
+    return p.category === selectedParent.name;
   });
 
   const addToCart = (product) => {
@@ -278,26 +325,89 @@ export default function ProductsPage() {
       {/* Filter bar */}
       <div style={{
         background: '#fff', borderBottom: '1px solid #f3f4f6',
-        padding: isMobile ? '8px 12px' : '10px 20px',
         position: 'sticky', top: isMobile ? '113px' : '105px', zIndex: 30
       }}>
-        <div className="cat-scroll" style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
-          {categories.map((cat) => (
+
+        {/* Parent categories */}
+        <div style={{ padding: isMobile ? '8px 12px 4px' : '10px 20px 4px' }}>
+          <div className="cat-scroll" style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
+            {/* সব button */}
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              onClick={() => { setSelectedParent(null); setSelectedSub(null); }}
               style={{
                 padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
                 border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                background: selectedCategory === cat ? '#ff6a00' : '#f3f4f6',
-                color: selectedCategory === cat ? '#fff' : '#555',
+                background: !selectedParent ? '#ff6a00' : '#f3f4f6',
+                color: !selectedParent ? '#fff' : '#555',
                 fontFamily: "'Hind Siliguri', sans-serif",
               }}
             >
-              {cat}
+              সব
             </button>
-          ))}
+
+            {parents.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => { setSelectedParent(cat); setSelectedSub(null); }}
+                style={{
+                  padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
+                  border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                  background: selectedParent?.id === cat.id ? '#ff6a00' : '#f3f4f6',
+                  color: selectedParent?.id === cat.id ? '#fff' : '#555',
+                  fontFamily: "'Hind Siliguri', sans-serif",
+                  display: 'flex', alignItems: 'center', gap: '4px'
+                }}
+              >
+                {cat.image_url && <img src={cat.image_url} alt="" style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />}
+                {cat.name}
+                {subMap[cat.id]?.length > 0 && (
+                  <span style={{ fontSize: '8px', opacity: 0.7 }}>▼</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Sub categories — selected parent এর */}
+        {selectedParent && subMap[selectedParent.id]?.length > 0 && (
+          <div style={{ padding: isMobile ? '4px 12px 8px' : '4px 20px 8px', borderTop: '1px solid #f9fafb' }}>
+            <div className="cat-scroll" style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
+              {/* সব দেখুন */}
+              <span
+                className="sub-chip"
+                onClick={() => setSelectedSub(null)}
+                style={{
+                  cursor: 'pointer', fontSize: '11px', padding: '4px 12px',
+                  borderRadius: '20px', border: '1px solid #e5e7eb', whiteSpace: 'nowrap', flexShrink: 0,
+                  background: !selectedSub ? '#ff6a00' : '#fff',
+                  color: !selectedSub ? '#fff' : '#555',
+                  fontWeight: '600', transition: 'all 0.15s',
+                  fontFamily: "'Hind Siliguri', sans-serif",
+                }}
+              >
+                সব দেখুন
+              </span>
+
+              {subMap[selectedParent.id].map(sub => (
+                <span
+                  key={sub.id}
+                  className="sub-chip"
+                  onClick={() => setSelectedSub(sub)}
+                  style={{
+                    cursor: 'pointer', fontSize: '11px', padding: '4px 12px',
+                    borderRadius: '20px', border: '1px solid #e5e7eb', whiteSpace: 'nowrap', flexShrink: 0,
+                    background: selectedSub?.id === sub.id ? '#ff6a00' : '#fff',
+                    color: selectedSub?.id === sub.id ? '#fff' : '#555',
+                    fontWeight: '500', transition: 'all 0.15s',
+                    fontFamily: "'Hind Siliguri', sans-serif",
+                  }}
+                >
+                  {sub.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Content */}
