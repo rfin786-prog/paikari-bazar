@@ -76,6 +76,7 @@ function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
     setTimeout(() => setAdded(false), 1500);
   };
 
+  const qty = inCart?.qty || 0;
   const btnBg = product.stock === 0 ? '#f3f4f6' : added ? '#22c55e' : inCart ? '#fff' : '#ff6a00';
   const btnColor = product.stock === 0 ? '#9ca3af' : inCart && !added ? '#16a34a' : '#fff';
 
@@ -91,33 +92,33 @@ function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
           : <span style={{ fontSize: '40px', opacity: 0.2 }}>📦</span>
         }
         {product.stock <= 10 && product.stock > 0 && (
-          <span style={{ position: 'absolute', top: 8, right: 8, background: '#ff6a00', color: '#fff', fontSize: '9px', padding: '2px 8px', borderRadius: '20px', fontWeight: '700' }}>কম স্টক</span>
+          <span style={{ position: 'absolute', top: 8, right: 8, background: '#ff6a00', color: '#fff', fontSize: '9px', padding: '2px 8px', borderRadius: '20px', fontWeight: '700' }}>Low Stock</span>
         )}
         {product.stock === 0 && (
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ background: '#ef4444', color: '#fff', fontSize: '12px', padding: '4px 12px', borderRadius: '20px', fontWeight: '700' }}>স্টক শেষ</span>
+            <span style={{ background: '#ef4444', color: '#fff', fontSize: '12px', padding: '4px 12px', borderRadius: '20px', fontWeight: '700' }}>Out of Stock</span>
           </div>
         )}
         {inCart && (
           <span style={{ position: 'absolute', top: 8, left: 8, background: '#22c55e', color: '#fff', fontSize: '9px', padding: '2px 8px', borderRadius: '20px', fontWeight: '700' }}>
-            🛒 {inCart.qty}
+            🛒 {qty}
           </span>
         )}
       </div>
 
       <div style={{ padding: isMobile ? '8px 10px' : '12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
         <p style={{ fontSize: '10px', color: '#6366f1', fontWeight: '600', marginBottom: '3px', textTransform: 'uppercase' }}>
-          {product.category || 'সাধারণ'}
+          {product.category || 'General'}
         </p>
         <h3 style={{ fontSize: isMobile ? '12px' : '13px', fontWeight: '600', color: '#1a1a1a', lineHeight: '1.3', marginBottom: '3px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {product.name}
         </h3>
         {product.unit && (
-          <p style={{ fontSize: '10px', color: '#aaa', marginBottom: '6px' }}>প্রতি {product.unit}</p>
+          <p style={{ fontSize: '10px', color: '#aaa', marginBottom: '6px' }}>Per {product.unit}</p>
         )}
         <div style={{ marginTop: 'auto' }}>
           <p style={{ fontSize: isMobile ? '15px' : '17px', fontWeight: '800', color: '#111827', marginBottom: '8px' }}>
-            ৳{Number(product.price).toLocaleString('bn-BD')}
+            ৳{Number(product.price).toLocaleString('en-BD')}
           </p>
           <button
             onClick={handleAdd}
@@ -131,7 +132,7 @@ function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
               transition: 'all 0.2s', fontFamily: "'Hind Siliguri', sans-serif",
             }}
           >
-            {product.stock === 0 ? 'স্টক নেই' : added ? '✓ যোগ হয়েছে!' : inCart ? `🛒 কার্টে আছে (${inCart.qty})` : '🛒 কার্টে যোগ করুন'}
+            {product.stock === 0 ? 'Out of Stock' : added ? '✓ Added!' : inCart ? `🛒 In Cart (${qty})` : '🛒 Add to Cart'}
           </button>
         </div>
       </div>
@@ -140,20 +141,20 @@ function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
 }
 
 function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
-  const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const total = items.reduce((sum, i) => sum + i.price * (i.qty || 1), 0);
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', justifyContent: 'flex-end' }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} onClick={onClose} />
       <div style={{ position: 'relative', background: '#fff', width: '100%', maxWidth: '380px', height: '100%', display: 'flex', flexDirection: 'column', boxShadow: '-4px 0 24px rgba(0,0,0,0.12)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #f3f4f6' }}>
-          <h2 style={{ fontWeight: '700', fontSize: '16px', color: '#1a1a1a' }}>🛒 কার্ট ({items.length})</h2>
+          <h2 style={{ fontWeight: '700', fontSize: '16px', color: '#1a1a1a' }}>🛒 Cart ({items.length})</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#9ca3af' }}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {items.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#9ca3af' }}>
               <div style={{ fontSize: '48px', marginBottom: '12px' }}>🛒</div>
-              <p>কার্ট খালি আছে</p>
+              <p>Cart is empty</p>
             </div>
           ) : items.map((item) => (
             <div key={item.id} style={{ display: 'flex', gap: '10px', background: '#f9fafb', borderRadius: '12px', padding: '10px' }}>
@@ -162,12 +163,12 @@ function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
-                <p style={{ fontSize: '13px', color: '#ff6a00', fontWeight: '700' }}>৳{Number(item.price).toLocaleString('bn-BD')}</p>
+                <p style={{ fontSize: '13px', color: '#ff6a00', fontWeight: '700' }}>৳{Number(item.price).toLocaleString('en-BD')}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                  <button onClick={() => onUpdateQty(item.id, item.qty - 1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#f3f4f6', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '14px' }}>−</button>
-                  <span style={{ fontSize: '13px', fontWeight: '700', width: '20px', textAlign: 'center' }}>{item.qty}</span>
-                  <button onClick={() => onUpdateQty(item.id, item.qty + 1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#fff3eb', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '14px', color: '#ff6a00' }}>+</button>
-                  <button onClick={() => onRemove(item.id)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#f87171', fontSize: '12px', cursor: 'pointer' }}>সরান</button>
+                  <button onClick={() => onUpdateQty(item.id, (item.qty || 1) - 1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#f3f4f6', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '14px' }}>−</button>
+                  <span style={{ fontSize: '13px', fontWeight: '700', width: '20px', textAlign: 'center' }}>{item.qty || 1}</span>
+                  <button onClick={() => onUpdateQty(item.id, (item.qty || 1) + 1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#fff3eb', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '14px', color: '#ff6a00' }}>+</button>
+                  <button onClick={() => onRemove(item.id)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#f87171', fontSize: '12px', cursor: 'pointer' }}>Remove</button>
                 </div>
               </div>
             </div>
@@ -176,15 +177,15 @@ function CartDrawer({ items, onClose, onUpdateQty, onRemove }) {
         {items.length > 0 && (
           <div style={{ borderTop: '1px solid #f3f4f6', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6b7280' }}>
-              <span>মোট পণ্য</span>
-              <span>{items.reduce((s, i) => s + i.qty, 0)} টি</span>
+              <span>Total Items</span>
+              <span>{items.reduce((s, i) => s + (i.qty || 1), 0)} pcs</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '16px' }}>
-              <span>মোট মূল্য</span>
-              <span style={{ color: '#ff6a00' }}>৳{Number(total).toLocaleString('bn-BD')}</span>
+              <span>Total Amount</span>
+              <span style={{ color: '#ff6a00' }}>৳{Number(total).toLocaleString('en-BD')}</span>
             </div>
             <Link href="/checkout" style={{ display: 'block', width: '100%', background: '#ff6a00', color: '#fff', textAlign: 'center', padding: '12px', borderRadius: '12px', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }} onClick={onClose}>
-              অর্ডার করুন →
+              Place Order →
             </Link>
           </div>
         )}
@@ -198,8 +199,8 @@ export default function ProductsPage() {
   const [parents, setParents] = useState([]);
   const [subMap, setSubMap] = useState({});
   const [loading, setLoading] = useState(true);
-  const [selectedParent, setSelectedParent] = useState(null); // null = সব
-  const [selectedSub, setSelectedSub] = useState(null); // null = parent এর সব
+  const [selectedParent, setSelectedParent] = useState(null);
+  const [selectedSub, setSelectedSub] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -212,7 +213,6 @@ export default function ProductsPage() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // Categories fetch
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -235,7 +235,6 @@ export default function ProductsPage() {
     fetchCategories();
   }, []);
 
-  // Products fetch
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -252,9 +251,18 @@ export default function ProductsPage() {
     fetchData();
   }, []);
 
+  // ✅ FIX: cart load করার সময় qty না থাকলে 1 set করো
   useEffect(() => {
     const saved = localStorage.getItem('paikari_cart');
-    if (saved) setCartItems(JSON.parse(saved));
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const fixed = parsed.map(i => ({ ...i, qty: i.qty || 1 }));
+        setCartItems(fixed);
+      } catch (e) {
+        setCartItems([]);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -262,7 +270,6 @@ export default function ProductsPage() {
     window.dispatchEvent(new Event('cartUpdated'));
   }, [cartItems]);
 
-  // URL থেকে category
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const cat = params.get('cat');
@@ -270,7 +277,6 @@ export default function ProductsPage() {
       const parent = parents.find(p => p.name === cat);
       if (parent) { setSelectedParent(parent); setSelectedSub(null); }
       else {
-        // sub category হতে পারে
         Object.entries(subMap).forEach(([pid, subs]) => {
           const sub = subs.find(s => s.name === cat);
           if (sub) {
@@ -283,19 +289,15 @@ export default function ProductsPage() {
     }
   }, [parents, subMap]);
 
-  // Filter logic
   const filtered = products.filter((p) => {
-    if (!selectedParent) return true; // সব
+    if (!selectedParent) return true;
     if (selectedSub) {
-      // sub category name দিয়ে match
       return p.category === selectedSub.name;
     }
-    // parent select — parent এর সব sub category match
     const subs = subMap[selectedParent.id] || [];
     if (subs.length > 0) {
       return subs.some(s => p.category === s.name);
     }
-    // sub নেই — parent name দিয়ে match
     return p.category === selectedParent.name;
   });
 
@@ -303,10 +305,10 @@ export default function ProductsPage() {
     setCartItems((prev) => {
       const exists = prev.find((i) => i.id === product.id);
       if (exists) {
-        showToast(`${product.name} — আরও ১টি যোগ হয়েছে`);
-        return prev.map((i) => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+        showToast(`${product.name} — 1 more added`);
+        return prev.map((i) => i.id === product.id ? { ...i, qty: (i.qty || 1) + 1 } : i);
       }
-      showToast(`${product.name} কার্টে যোগ হয়েছে`);
+      showToast(`${product.name} added to cart`);
       return [...prev, { ...product, qty: 1 }];
     });
   };
@@ -317,7 +319,7 @@ export default function ProductsPage() {
   };
 
   const removeItem = (id) => setCartItems((prev) => prev.filter((i) => i.id !== id));
-  const cartCount = cartItems.reduce((s, i) => s + i.qty, 0);
+  const cartCount = cartItems.reduce((s, i) => s + (i.qty || 1), 0);
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb', fontFamily: "'Hind Siliguri', sans-serif" }}>
@@ -327,11 +329,9 @@ export default function ProductsPage() {
         background: '#fff', borderBottom: '1px solid #f3f4f6',
         position: 'sticky', top: isMobile ? '113px' : '105px', zIndex: 30
       }}>
-
         {/* Parent categories */}
         <div style={{ padding: isMobile ? '8px 12px 4px' : '10px 20px 4px' }}>
           <div className="cat-scroll" style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
-            {/* সব button */}
             <button
               onClick={() => { setSelectedParent(null); setSelectedSub(null); }}
               style={{
@@ -342,7 +342,7 @@ export default function ProductsPage() {
                 fontFamily: "'Hind Siliguri', sans-serif",
               }}
             >
-              সব
+              All
             </button>
 
             {parents.map((cat) => (
@@ -368,11 +368,10 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Sub categories — selected parent এর */}
+        {/* Sub categories */}
         {selectedParent && subMap[selectedParent.id]?.length > 0 && (
           <div style={{ padding: isMobile ? '4px 12px 8px' : '4px 20px 8px', borderTop: '1px solid #f9fafb' }}>
             <div className="cat-scroll" style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
-              {/* সব দেখুন */}
               <span
                 className="sub-chip"
                 onClick={() => setSelectedSub(null)}
@@ -385,7 +384,7 @@ export default function ProductsPage() {
                   fontFamily: "'Hind Siliguri', sans-serif",
                 }}
               >
-                সব দেখুন
+                View All
               </span>
 
               {subMap[selectedParent.id].map(sub => (
@@ -414,7 +413,7 @@ export default function ProductsPage() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: isMobile ? '12px' : '20px' }}>
         {!loading && (
           <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '12px' }}>
-            {filtered.length} টি পণ্য পাওয়া গেছে
+            {filtered.length} products found
           </p>
         )}
 
@@ -425,7 +424,7 @@ export default function ProductsPage() {
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 0', color: '#9ca3af' }}>
             <div style={{ fontSize: '56px', marginBottom: '12px' }}>🔍</div>
-            <p style={{ fontSize: '16px', fontWeight: '600' }}>কোনো পণ্য পাওয়া যায়নি</p>
+            <p style={{ fontSize: '16px', fontWeight: '600' }}>No products found</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))', gap: isMobile ? '10px' : '14px' }}>
