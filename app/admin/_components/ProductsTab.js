@@ -44,14 +44,12 @@ export default function ProductsTab() {
     loadCategories();
   }, []);
 
-  // Load only parent categories
   const loadCategories = async () => {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/categories?parent_id=is.null&order=created_at.asc`, { headers });
     const data = await res.json();
     setCategories(Array.isArray(data) ? data : []);
   };
 
-  // Load sub-categories when category changes
   const loadSubCategories = async (categoryId) => {
     if (!categoryId) { setSubCategories([]); return; }
     const res = await fetch(`${SUPABASE_URL}/rest/v1/categories?parent_id=eq.${categoryId}&order=created_at.asc`, { headers });
@@ -107,7 +105,6 @@ export default function ProductsTab() {
     return `${SUPABASE_URL}/storage/v1/object/public/products/${fileName}`;
   };
 
-  // Profit calculation
   const calcProfit = () => {
     const cost = Number(form.cost_price);
     const sell = Number(form.trade_price);
@@ -126,10 +123,16 @@ export default function ProductsTab() {
       uploadImage(imageFiles[2]),
     ]);
 
+    // ✅ FIX: category name বের করো — sub থাকলে sub এর name, না হলে parent এর name
+    const selectedSubName = subCategories.find(s => s.id === form.sub_category_id)?.name || null;
+    const selectedParentName = categories.find(c => c.id === form.category_id)?.name || null;
+    const categoryName = selectedSubName || selectedParentName || null;
+
     const body = {
       name: form.name,
       category_id: form.category_id || null,
       sub_category_id: form.sub_category_id || null,
+      category: categoryName, // ✅ products page filter এর জন্য name save করা হচ্ছে
       cost_price: Number(form.cost_price) || 0,
       price: Number(form.trade_price),
       trade_price: Number(form.trade_price),
@@ -257,37 +260,30 @@ export default function ProductsTab() {
           <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e1b4b', marginBottom: '12px' }}>💰 মূল্য নির্ধারণ</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
 
-            {/* Cost Price */}
             <div>
               <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>ক্রয় মূল্য (Cost Price) — admin only</label>
               <input style={{ ...inp, borderColor: '#fbbf24' }} type="number" placeholder="1000" value={form.cost_price} onChange={e => setForm({ ...form, cost_price: e.target.value })} />
             </div>
 
-            {/* Trade Price */}
             <div>
               <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>ট্রেড মূল্য (Trade Price) * — customer দেখবে</label>
               <input style={{ ...inp, borderColor: '#6366f1' }} type="number" placeholder="1200" value={form.trade_price} onChange={e => setForm({ ...form, trade_price: e.target.value })} />
             </div>
 
-            {/* MRP */}
             <div>
               <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>MRP</label>
               <input style={inp} type="number" placeholder="1500" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} />
             </div>
 
-            {/* Discount Price */}
             <div>
               <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: '#374151' }}>ডিসকাউন্ট মূল্য (optional)</label>
               <input style={{ ...inp, borderColor: '#10b981' }} type="number" placeholder="1150" value={form.discount_price} onChange={e => setForm({ ...form, discount_price: e.target.value })} />
             </div>
           </div>
 
-          {/* Profit Display */}
           {profit !== null && (
             <div style={{
-              marginTop: '12px',
-              padding: '10px 14px',
-              borderRadius: '8px',
+              marginTop: '12px', padding: '10px 14px', borderRadius: '8px',
               background: profit >= 0 ? '#f0fdf4' : '#fef2f2',
               border: `1px solid ${profit >= 0 ? '#bbf7d0' : '#fecaca'}`,
               display: 'flex', alignItems: 'center', gap: '8px',
@@ -305,7 +301,7 @@ export default function ProductsTab() {
           )}
         </div>
 
-        {/* Image Upload — 3 slots */}
+        {/* Image Upload */}
         <div style={{ marginBottom: '16px' }}>
           <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '8px', color: '#374151' }}>পণ্যের ছবি (সর্বোচ্চ ৩টি)</label>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -350,7 +346,7 @@ export default function ProductsTab() {
                 <div>
                   <div style={{ fontWeight: '600', fontSize: '14px', color: '#111827' }}>{p.name}</div>
                   <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                    {cat ? cat.name : 'ক্যাটাগরি নেই'} | {p.unit} | স্টক: {p.stock}
+                    {p.category || cat?.name || 'ক্যাটাগরি নেই'} | {p.unit} | স্টক: {p.stock}
                   </div>
                   <div style={{ fontSize: '12px', color: '#6b7280' }}>
                     Trade: ৳{p.trade_price || p.price}
