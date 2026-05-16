@@ -5,6 +5,11 @@ import Link from 'next/link';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SB_HEADERS = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -14,6 +19,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(null);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   const [deliveryMethod, setDeliveryMethod] = useState('standard');
   const [deliveryDate, setDeliveryDate] = useState('');
@@ -29,6 +35,7 @@ export default function CheckoutPage() {
 
   const paymentOptions = [
     { id: 'cod',    icon: '💵', name: 'ক্যাশ অন ডেলিভারি' },
+    { id: 'wallet', icon: '💳', name: 'ওয়ালেট', balance: walletBalance },
     { id: 'mobile', icon: '📱', name: 'বিকাশ / নগদ' },
     { id: 'bank',   icon: '🏦', name: 'ব্যাংক ট্রান্সফার' },
     { id: 'credit', icon: '📒', name: 'বাকি' },
@@ -42,30 +49,39 @@ export default function CheckoutPage() {
     const cart = localStorage.getItem('paikari_cart');
     if (cart) setCartItems(JSON.parse(cart));
 
-    // Fetch delivery charges from Supabase
-    fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.delivery_charges&select=value`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (data[0]?.value) {
-          const c = data[0].value;
-          setDeliveryOptions(prev => prev.map(opt => ({ ...opt, price: c[opt.id] ?? opt.price })));
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      // Fetch delivery charges
+      fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.delivery_charges&select=value`, { headers: SB_HEADERS })
+        .then(r => r.json()),
+      // Fetch wallet balance
+      fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${u.id}&select=wallet`, { headers: SB_HEADERS })
+        .then(r => r.json()),
+    ]).then(([chargesData, userData]) => {
+      if (chargesData[0]?.value) {
+        const c = chargesData[0].value;
+        setDeliveryOptions(prev => prev.map(opt => ({ ...opt, price: c[opt.id] ?? opt.price })));
+      }
+      if (userData[0]) {
+        setWalletBalance(userData[0].wallet || 0);
+      }
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const deliveryCost = deliveryOptions.find(d => d.id === deliveryMethod)?.price || 0;
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * (item.qty || item.quantity || 1), 0);
   const grandTotal = Math.max(0, subtotal + deliveryCost);
+  const walletInsufficient = paymentMethod === 'wallet' && walletBalance < grandTotal;
 
   async function placeOrder() {
     if (cartItems.length === 0) { alert('কার্টে কোনো পণ্য নেই।'); return; }
     if (deliveryMethod === 'scheduled' && !deliveryDate) {
       alert('অনুগ্রহ করে ডেলিভারি তারিখ বেছে নিন।'); return;
     }
+    if (walletInsufficient) {
+      alert(`ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই।\nপ্রয়োজন: ৳${grandTotal.toLocaleString()}\nআপনার ব্যালেন্স: ৳${walletBalance.toLocaleString()}`);
+      return;
+    }
+
     setPlacing(true);
     try {
       const normalizedItems = cartItems.map(item => ({
@@ -74,14 +90,10 @@ export default function CheckoutPage() {
         quantity: item.qty || item.quantity || 1,
       }));
 
+      // Place order
       const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
         method: 'POST',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation',
-        },
+        headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
         body: JSON.stringify({
           user_id: user.id,
           shop_name: user.shop_name,
@@ -99,6 +111,28 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error');
+
+      // If wallet payment — deduct balance & insert transaction
+      if (paymentMethod === 'wallet') {
+        const newBalance = walletBalance - grandTotal;
+
+        await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
+          method: 'PATCH',
+          headers: SB_HEADERS,
+          body: JSON.stringify({ wallet: newBalance }),
+        });
+
+        await fetch(`${SUPABASE_URL}/rest/v1/wallet_transactions`, {
+          method: 'POST',
+          headers: SB_HEADERS,
+          body: JSON.stringify({
+            user_id: user.id,
+            amount: grandTotal,
+            type: 'debit',
+            note: `অর্ডার #${String((Array.isArray(data) ? data[0] : data).id).slice(0, 8).toUpperCase()} পেমেন্ট`,
+          }),
+        });
+      }
 
       localStorage.removeItem('paikari_cart');
       window.dispatchEvent(new Event('cartUpdated'));
@@ -138,6 +172,12 @@ export default function CheckoutPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontSize: '13px', color: '#888' }}>মোট পরিমাণ</span>
               <span style={{ fontSize: '13px', fontWeight: '700', color: '#22c55e' }}>৳{Number(orderSuccess.total || grandTotal).toLocaleString()}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '13px', color: '#888' }}>পেমেন্ট</span>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: paymentMethod === 'wallet' ? '#6366f1' : '#ff6a00', background: paymentMethod === 'wallet' ? '#ede9fe' : '#fff3eb', padding: '2px 10px', borderRadius: '20px' }}>
+                {paymentMethod === 'wallet' ? '💳 ওয়ালেট' : paymentMethod === 'cod' ? '💵 ক্যাশ' : paymentMethod === 'mobile' ? '📱 মোবাইল' : paymentMethod === 'bank' ? '🏦 ব্যাংক' : '📒 বাকি'}
+              </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '13px', color: '#888' }}>স্ট্যাটাস</span>
@@ -240,14 +280,46 @@ export default function CheckoutPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
             {paymentOptions.map(opt => {
               const active = paymentMethod === opt.id;
+              const isWallet = opt.id === 'wallet';
+              const insufficient = isWallet && walletBalance < grandTotal;
               return (
-                <div key={opt.id} onClick={() => setPaymentMethod(opt.id)} style={{ border: `${active ? '2px solid #ff6a00' : '1px solid #eee'}`, borderRadius: '10px', padding: '12px', textAlign: 'center', cursor: 'pointer', background: active ? '#fff3eb' : '#fff', transition: 'all 0.15s' }}>
+                <div
+                  key={opt.id}
+                  onClick={() => setPaymentMethod(opt.id)}
+                  style={{
+                    border: `${active ? '2px solid #ff6a00' : '1px solid #eee'}`,
+                    borderRadius: '10px', padding: '12px', textAlign: 'center',
+                    cursor: 'pointer',
+                    background: active ? '#fff3eb' : isWallet ? '#faf5ff' : '#fff',
+                    transition: 'all 0.15s',
+                    opacity: insufficient ? 0.6 : 1,
+                  }}
+                >
                   <div style={{ fontSize: '22px', marginBottom: '6px' }}>{opt.icon}</div>
                   <div style={{ color: active ? '#ff6a00' : '#666', fontSize: '12px', fontWeight: '700' }}>{opt.name}</div>
+                  {isWallet && (
+                    <div style={{ marginTop: '4px', fontSize: '11px', fontWeight: '700', color: insufficient ? '#ef4444' : '#059669' }}>
+                      ব্যালেন্স: ৳{walletBalance.toLocaleString()}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
+
+          {/* Wallet insufficient warning */}
+          {walletInsufficient && (
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: '#dc2626', fontWeight: '600' }}>
+              ⚠️ ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই। আরও ৳{(grandTotal - walletBalance).toLocaleString()} প্রয়োজন।
+            </div>
+          )}
+
+          {/* Wallet sufficient info */}
+          {paymentMethod === 'wallet' && !walletInsufficient && (
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: '#059669', fontWeight: '600' }}>
+              ✅ পেমেন্টের পর ওয়ালেট ব্যালেন্স: ৳{(walletBalance - grandTotal).toLocaleString()}
+            </div>
+          )}
 
           <label style={{ ...s.label, marginBottom: '6px' }}>বিশেষ নোট (ঐচ্ছিক)</label>
           <textarea
@@ -259,8 +331,14 @@ export default function CheckoutPage() {
 
           <button
             onClick={placeOrder}
-            disabled={placing}
-            style={{ width: '100%', padding: '14px', background: placing ? '#ffb380' : '#ff6a00', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700', color: '#fff', cursor: placing ? 'not-allowed' : 'pointer', fontFamily: 'Hind Siliguri, sans-serif', transition: 'all 0.2s' }}
+            disabled={placing || walletInsufficient}
+            style={{
+              width: '100%', padding: '14px',
+              background: placing || walletInsufficient ? '#ffb380' : '#ff6a00',
+              border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700',
+              color: '#fff', cursor: placing || walletInsufficient ? 'not-allowed' : 'pointer',
+              fontFamily: 'Hind Siliguri, sans-serif', transition: 'all 0.2s',
+            }}
           >
             {placing ? 'অর্ডার হচ্ছে...' : 'অর্ডার নিশ্চিত করুন →'}
           </button>
