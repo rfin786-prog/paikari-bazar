@@ -9,6 +9,7 @@ import UsersTab from './_components/UsersTab';
 import DeliveryAreasTab from './_components/DeliveryAreasTab';
 import DeliveryChargesTab from './_components/DeliveryChargesTab';
 import SalesReportTab from './_components/SalesReportTab';
+import WalletTab from './_components/WalletTab';
 
 const TABS = [
   { key: 'dashboard',        label: 'Dashboard',  icon: '🏠' },
@@ -16,6 +17,7 @@ const TABS = [
   { key: 'categories',       label: 'Categories', icon: '🏷️' },
   { key: 'orders',           label: 'Orders',     icon: '🛒' },
   { key: 'users',            label: 'Users',      icon: '👥' },
+  { key: 'wallet',           label: 'Wallet',     icon: '💳' },
   { key: 'delivery_areas',   label: 'Delivery',   icon: '🗺️' },
   { key: 'delivery_charges', label: 'Charges',    icon: '💰' },
   { key: 'sales_report',     label: 'Sales',      icon: '📊' },
@@ -137,6 +139,7 @@ export default function AdminPage() {
         {tab === 'categories'       && <CategoriesTab />}
         {tab === 'orders'           && <OrdersTab />}
         {tab === 'users'            && <UsersTab />}
+        {tab === 'wallet'           && <WalletTab />}
         {tab === 'delivery_areas'   && <DeliveryAreasTab />}
         {tab === 'delivery_charges' && <DeliveryChargesTab />}
         {tab === 'sales_report'     && <SalesReportTab />}
