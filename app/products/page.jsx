@@ -58,6 +58,7 @@ function SkeletonCard() {
       <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div style={{ height: '10px', background: '#f3f4f6', borderRadius: '6px', width: '70%' }} />
         <div style={{ height: '12px', background: '#f3f4f6', borderRadius: '6px', width: '90%' }} />
+        <div style={{ height: '10px', background: '#f3f4f6', borderRadius: '6px', width: '100%' }} />
         <div style={{ height: '16px', background: '#f3f4f6', borderRadius: '6px', width: '40%' }} />
         <div style={{ height: '34px', background: '#f3f4f6', borderRadius: '8px' }} />
       </div>
@@ -113,6 +114,19 @@ function ProductCard({ product, onAddToCart, cartItems, isMobile }) {
         <h3 style={{ fontSize: isMobile ? '12px' : '13px', fontWeight: '600', color: '#1a1a1a', lineHeight: '1.3', marginBottom: '3px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {product.name}
         </h3>
+
+        {/* ✅ Description */}
+        {product.description && (
+          <p style={{
+            fontSize: '10px', color: '#9ca3af', lineHeight: '1.4',
+            marginBottom: '5px',
+            display: '-webkit-box', WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>
+            {product.description}
+          </p>
+        )}
+
         {product.unit && (
           <p style={{ fontSize: '10px', color: '#aaa', marginBottom: '6px' }}>Per {product.unit}</p>
         )}
@@ -251,7 +265,6 @@ export default function ProductsPage() {
     fetchData();
   }, []);
 
-  // ✅ FIX: cart load করার সময় qty না থাকলে 1 set করো
   useEffect(() => {
     const saved = localStorage.getItem('paikari_cart');
     if (saved) {
