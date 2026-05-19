@@ -17,7 +17,7 @@ const st = {
 };
 
 const emptyForm = {
-  name: '', category_id: '', sub_category_id: '', cost_price: '',
+  name: '', description: '', category_id: '', sub_category_id: '', cost_price: '',
   trade_price: '', mrp: '', discount_price: '', unit: 'kg',
   stock: '', moq: '1', max_qty: '',
 };
@@ -47,6 +47,7 @@ function Toast({ msg, type }) {
 function EditModal({ product, onClose, onSave }) {
   const [form, setForm] = useState({
     name: product.name || '',
+    description: product.description || '',
     unit: product.unit || '',
     stock: product.stock ?? '',
     moq: product.moq ?? 1,
@@ -73,6 +74,18 @@ function EditModal({ product, onClose, onSave }) {
             <label style={st.label}>Product Name *</label>
             <input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
           </div>
+
+          {/* ✅ Description in Edit Modal */}
+          <div style={{ gridColumn: '1/-1' }}>
+            <label style={st.label}>Description</label>
+            <textarea
+              style={{ ...inp, minHeight: '80px', resize: 'vertical', lineHeight: '1.5' }}
+              placeholder="Product description (optional)..."
+              value={form.description}
+              onChange={e => setForm({ ...form, description: e.target.value })}
+            />
+          </div>
+
           <div>
             <label style={st.label}>Unit</label>
             <input style={inp} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} />
@@ -164,14 +177,12 @@ export default function ProductsTab() {
     loadCategories();
   }, []);
 
-  // ─── Toast Helper ───────────────────────────────────────────
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast({ msg: '', type: 'success' }), 2800);
   };
 
-  // ─── Data Loaders ───────────────────────────────────────────
   const loadCategories = async () => {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/categories?parent_id=is.null&order=created_at.asc`, { headers });
     const data = await res.json();
@@ -191,7 +202,6 @@ export default function ProductsTab() {
     setProducts(Array.isArray(data) ? data : []);
   };
 
-  // ─── Derived: Filter + Sort ─────────────────────────────────
   const filteredProducts = products
     .filter(p => {
       if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -215,7 +225,6 @@ export default function ProductsTab() {
   const lowStockCount = products.filter(p => p.stock > 0 && p.stock < LOW_STOCK_THRESHOLD).length;
   const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
 
-  // ─── Image Upload ───────────────────────────────────────────
   const handleImageSelect = (index, e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -249,7 +258,6 @@ export default function ProductsTab() {
     return `${SUPABASE_URL}/storage/v1/object/public/products/${fileName}`;
   };
 
-  // ─── Add Product ────────────────────────────────────────────
   const addProduct = async () => {
     if (!form.name) { showToast('❌ Product name is required', 'error'); return; }
     if (!form.trade_price) { showToast('❌ Trade price is required', 'error'); return; }
@@ -263,6 +271,7 @@ export default function ProductsTab() {
 
     const body = {
       name: form.name,
+      description: form.description || null,   // ✅ description
       category_id: form.category_id || null,
       sub_category_id: form.sub_category_id || null,
       category: categoryName,
@@ -301,7 +310,6 @@ export default function ProductsTab() {
     }
   };
 
-  // ─── Toggle Active ──────────────────────────────────────────
   const toggleActive = async (id, active) => {
     await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
       method: 'PATCH', headers, body: JSON.stringify({ active: !active }),
@@ -310,7 +318,6 @@ export default function ProductsTab() {
     loadProducts();
   };
 
-  // ─── Delete ─────────────────────────────────────────────────
   const deleteProduct = async (id) => {
     if (!confirm('Delete this product? This cannot be undone.')) return;
     await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, { method: 'DELETE', headers });
@@ -318,7 +325,6 @@ export default function ProductsTab() {
     loadProducts();
   };
 
-  // ─── Inline Stock Update ────────────────────────────────────
   const updateStock = async (id, newStock) => {
     const stock = Math.max(0, Number(newStock) || 0);
     await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
@@ -328,10 +334,10 @@ export default function ProductsTab() {
     showToast(`Stock updated → ${stock}`, 'success');
   };
 
-  // ─── Edit Save ──────────────────────────────────────────────
   const saveEdit = async (formData) => {
     const body = {
       name: formData.name,
+      description: formData.description || null,   // ✅ description
       unit: formData.unit,
       stock: Number(formData.stock) || 0,
       moq: Number(formData.moq) || 1,
@@ -354,7 +360,6 @@ export default function ProductsTab() {
     }
   };
 
-  // ─── Selection ──────────────────────────────────────────────
   const toggleSelect = (id) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -367,7 +372,6 @@ export default function ProductsTab() {
     setSelectedIds(checked ? new Set(filteredProducts.map(p => p.id)) : new Set());
   };
 
-  // ─── Bulk Actions ───────────────────────────────────────────
   const bulkToggle = async (active) => {
     await Promise.all([...selectedIds].map(id =>
       fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, { method: 'PATCH', headers, body: JSON.stringify({ active }) })
@@ -387,11 +391,10 @@ export default function ProductsTab() {
     loadProducts();
   };
 
-  // ─── Export CSV ─────────────────────────────────────────────
   const exportCSV = () => {
-    const rows = [['Name', 'Category', 'Unit', 'Stock', 'MOQ', 'Cost Price', 'Trade Price', 'MRP', 'Discount', 'Active']];
+    const rows = [['Name', 'Description', 'Category', 'Unit', 'Stock', 'MOQ', 'Cost Price', 'Trade Price', 'MRP', 'Discount', 'Active']];
     filteredProducts.forEach(p => rows.push([
-      p.name, p.category || '', p.unit, p.stock, p.moq,
+      p.name, p.description || '', p.category || '', p.unit, p.stock, p.moq,
       p.cost_price || '', p.trade_price || p.price || '',
       p.mrp || '', p.discount_price || '', p.active ? 'Yes' : 'No',
     ]));
@@ -403,10 +406,9 @@ export default function ProductsTab() {
     showToast('📤 CSV exported', 'success');
   };
 
-  // ─── Print ──────────────────────────────────────────────────
   const printProducts = () => {
     const rows = filteredProducts.map(p =>
-      `<tr><td>${p.name}</td><td>${p.category || '-'}</td><td>${p.unit}</td><td>${p.stock}</td><td>৳${p.trade_price || p.price || 0}</td><td>${p.active ? 'Active' : 'Inactive'}</td></tr>`
+      `<tr><td>${p.name}</td><td>${p.description || '-'}</td><td>${p.category || '-'}</td><td>${p.unit}</td><td>${p.stock}</td><td>৳${p.trade_price || p.price || 0}</td><td>${p.active ? 'Active' : 'Inactive'}</td></tr>`
     ).join('');
     const w = window.open('', '_blank');
     w.document.write(`
@@ -414,7 +416,7 @@ export default function ProductsTab() {
       <style>body{font-family:sans-serif;padding:20px}h2{margin-bottom:16px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:13px}th{background:#f3f4f6;font-weight:600}</style>
       </head><body>
       <h2>আড়ৎ — Product List (${filteredProducts.length} items)</h2>
-      <table><tr><th>Name</th><th>Category</th><th>Unit</th><th>Stock</th><th>Trade Price</th><th>Status</th></tr>${rows}</table>
+      <table><tr><th>Name</th><th>Description</th><th>Category</th><th>Unit</th><th>Stock</th><th>Trade Price</th><th>Status</th></tr>${rows}</table>
       </body></html>
     `);
     w.print();
@@ -432,7 +434,6 @@ export default function ProductsTab() {
     { key: 'profit', label: 'Profit ↓' },
   ];
 
-  // ─── Render ─────────────────────────────────────────────────
   return (
     <div>
       <Toast msg={toast.msg} type={toast.type} />
@@ -517,6 +518,18 @@ export default function ProductsTab() {
                 <label style={st.label}>Product Name *</label>
                 <input style={inp} placeholder="e.g. Miniket Rice (50kg bag)" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
+
+              {/* ✅ Description field */}
+              <div style={{ gridColumn: '1/-1' }}>
+                <label style={st.label}>Description</label>
+                <textarea
+                  style={{ ...inp, minHeight: '80px', resize: 'vertical', lineHeight: '1.5' }}
+                  placeholder="Product description, quality info, origin, etc. (optional)"
+                  value={form.description}
+                  onChange={e => setForm({ ...form, description: e.target.value })}
+                />
+              </div>
+
               <div>
                 <label style={st.label}>Category</label>
                 <select style={inp} value={form.category_id} onChange={e => { setForm({ ...form, category_id: e.target.value, sub_category_id: '' }); loadSubCategories(e.target.value); }}>
@@ -643,7 +656,6 @@ export default function ProductsTab() {
           )}
         </div>
 
-        {/* Select All */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #334155' }}>
           <input
             type="checkbox"
@@ -654,7 +666,6 @@ export default function ProductsTab() {
           <label style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }}>Select All</label>
         </div>
 
-        {/* Product Rows */}
         {filteredProducts.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px', color: '#475569' }}>
             <div style={{ fontSize: '40px', marginBottom: '10px' }}>📭</div>
@@ -670,7 +681,6 @@ export default function ProductsTab() {
 
           return (
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: '1px solid #1e293b' }}>
-              {/* Checkbox */}
               <input
                 type="checkbox"
                 checked={selectedIds.has(p.id)}
@@ -678,19 +688,25 @@ export default function ProductsTab() {
                 style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#f59e0b', flexShrink: 0 }}
               />
 
-              {/* Image */}
               {p.image_url
                 ? <img src={p.image_url} alt={p.name} style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #334155', flexShrink: 0 }} />
                 : <div style={{ width: '52px', height: '52px', background: '#0f172a', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>📦</div>
               }
 
-              {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: '600', fontSize: '14px', color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                   {p.name}
                   {isOut && <span style={{ background: '#1a0505', color: '#ef4444', border: '1px solid #7f1d1d', borderRadius: '4px', padding: '1px 6px', fontSize: '10px', fontWeight: '700' }}>OUT OF STOCK</span>}
                   {isLow && <span style={{ background: '#431407', color: '#fb923c', border: '1px solid #9a3412', borderRadius: '4px', padding: '1px 6px', fontSize: '10px', fontWeight: '700' }}>⚠️ LOW STOCK</span>}
                 </div>
+
+                {/* ✅ Description preview in list */}
+                {p.description && (
+                  <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '400px' }}>
+                    {p.description}
+                  </div>
+                )}
+
                 <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
                   {p.category || 'No category'} · {p.unit} · MOQ: {p.moq}
                 </div>
@@ -704,7 +720,6 @@ export default function ProductsTab() {
                     </span>
                   )}
                 </div>
-                {/* Extra images gallery */}
                 {extraImgs.length > 0 && (
                   <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
                     {extraImgs.map((url, i) => (
@@ -715,7 +730,6 @@ export default function ProductsTab() {
                 )}
               </div>
 
-              {/* Inline Stock Control */}
               <div style={{ textAlign: 'center', minWidth: '90px', flexShrink: 0 }}>
                 <div style={{ fontSize: '10px', color: '#475569', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Stock</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -731,7 +745,6 @@ export default function ProductsTab() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                 <button
                   onClick={() => toggleActive(p.id, p.active)}
