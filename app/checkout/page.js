@@ -26,6 +26,10 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [note, setNote] = useState('');
 
+  // Pickup state
+  const [pickupPoints, setPickupPoints] = useState([]);
+  const [selectedPickup, setSelectedPickup] = useState(null);
+
   const [deliveryOptions, setDeliveryOptions] = useState([
     { id: 'standard',  name: 'স্ট্যান্ডার্ড',    info: '৩-৫ কার্যদিবস', price: 60 },
     { id: 'express',   name: 'এক্সপ্রেস',         info: '১-২ কার্যদিবস', price: 120 },
@@ -56,13 +60,19 @@ export default function CheckoutPage() {
       // Fetch wallet balance
       fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${u.id}&select=wallet`, { headers: SB_HEADERS })
         .then(r => r.json()),
-    ]).then(([chargesData, userData]) => {
+      // Fetch active pickup points
+      fetch(`${SUPABASE_URL}/rest/v1/pickup_points?active=eq.true&order=name`, { headers: SB_HEADERS })
+        .then(r => r.json()),
+    ]).then(([chargesData, userData, pickupData]) => {
       if (chargesData[0]?.value) {
         const c = chargesData[0].value;
         setDeliveryOptions(prev => prev.map(opt => ({ ...opt, price: c[opt.id] ?? opt.price })));
       }
       if (userData[0]) {
         setWalletBalance(userData[0].wallet || 0);
+      }
+      if (Array.isArray(pickupData)) {
+        setPickupPoints(pickupData);
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -77,6 +87,9 @@ export default function CheckoutPage() {
     if (deliveryMethod === 'scheduled' && !deliveryDate) {
       alert('অনুগ্রহ করে ডেলিভারি তারিখ বেছে নিন।'); return;
     }
+    if (deliveryMethod === 'pickup' && !selectedPickup) {
+      alert('অনুগ্রহ করে একটি পিকআপ পয়েন্ট বেছে নিন।'); return;
+    }
     if (walletInsufficient) {
       alert(`ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই।\nপ্রয়োজন: ৳${grandTotal.toLocaleString()}\nআপনার ব্যালেন্স: ৳${walletBalance.toLocaleString()}`);
       return;
@@ -89,6 +102,8 @@ export default function CheckoutPage() {
         qty: item.qty || item.quantity || 1,
         quantity: item.qty || item.quantity || 1,
       }));
+
+      const selectedPickupPoint = pickupPoints.find(p => p.id === selectedPickup);
 
       // Place order
       const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
@@ -104,6 +119,9 @@ export default function CheckoutPage() {
           payment_method: paymentMethod,
           delivery_method: deliveryMethod,
           delivery_date: deliveryDate || null,
+          pickup_point_id: selectedPickup || null,
+          pickup_point_name: selectedPickupPoint?.name || null,
+          pickup_point_address: selectedPickupPoint?.address || null,
           note: note || null,
           status: 'pending',
         }),
@@ -154,6 +172,7 @@ export default function CheckoutPage() {
   };
 
   if (orderSuccess) {
+    const selectedPickupPoint = pickupPoints.find(p => p.id === selectedPickup);
     return (
       <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: '20px', padding: '2.5rem 2rem', maxWidth: '380px', width: '100%', textAlign: 'center' }}>
@@ -179,6 +198,12 @@ export default function CheckoutPage() {
                 {paymentMethod === 'wallet' ? '💳 ওয়ালেট' : paymentMethod === 'cod' ? '💵 ক্যাশ' : paymentMethod === 'mobile' ? '📱 মোবাইল' : paymentMethod === 'bank' ? '🏦 ব্যাংক' : '📒 বাকি'}
               </span>
             </div>
+            {deliveryMethod === 'pickup' && selectedPickupPoint && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', color: '#888' }}>পিকআপ পয়েন্ট</span>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: '#059669' }}>{selectedPickupPoint.name}</span>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '13px', color: '#888' }}>স্ট্যাটাস</span>
               <span style={{ fontSize: '12px', fontWeight: '600', color: '#ff6a00', background: '#fff3eb', padding: '2px 10px', borderRadius: '20px' }}>অপেক্ষমান</span>
@@ -230,7 +255,7 @@ export default function CheckoutPage() {
             {deliveryOptions.map(opt => {
               const active = deliveryMethod === opt.id;
               return (
-                <div key={opt.id} onClick={() => setDeliveryMethod(opt.id)} style={{ border: `${active ? '2px solid #ff6a00' : '1px solid #eee'}`, borderRadius: '10px', padding: '10px', cursor: 'pointer', background: active ? '#fff3eb' : '#fff', transition: 'all 0.15s' }}>
+                <div key={opt.id} onClick={() => { setDeliveryMethod(opt.id); setSelectedPickup(null); }} style={{ border: `${active ? '2px solid #ff6a00' : '1px solid #eee'}`, borderRadius: '10px', padding: '10px', cursor: 'pointer', background: active ? '#fff3eb' : '#fff', transition: 'all 0.15s' }}>
                   <div style={{ color: '#1a1a1a', fontSize: '13px', fontWeight: '700', marginBottom: '2px' }}>{opt.name}</div>
                   <div style={{ color: '#999', fontSize: '11px', marginBottom: '4px' }}>{opt.info}</div>
                   <div style={{ color: opt.price === 0 ? '#22c55e' : '#ff6a00', fontSize: '12px', fontWeight: '700' }}>{opt.price === 0 ? 'বিনামূল্যে' : `৳${opt.price}`}</div>
@@ -238,10 +263,54 @@ export default function CheckoutPage() {
               );
             })}
           </div>
+
+          {/* Scheduled date picker */}
           {deliveryMethod === 'scheduled' && (
             <div style={{ marginTop: '10px' }}>
               <label style={{ ...s.label, marginBottom: '6px' }}>ডেলিভারি তারিখ</label>
               <input type="date" style={s.input} value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} min={new Date().toISOString().split('T')[0]} />
+            </div>
+          )}
+
+          {/* Pickup point selector */}
+          {deliveryMethod === 'pickup' && (
+            <div style={{ marginTop: '12px' }}>
+              <label style={{ ...s.label, marginBottom: '8px' }}>📍 পিকআপ পয়েন্ট বেছে নিন</label>
+              {pickupPoints.length === 0 ? (
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '12px', fontSize: '13px', color: '#dc2626', textAlign: 'center' }}>
+                  কোনো সক্রিয় পিকআপ পয়েন্ট পাওয়া যায়নি
+                </div>
+              ) : pickupPoints.map(p => (
+                <div
+                  key={p.id}
+                  onClick={() => setSelectedPickup(p.id)}
+                  style={{
+                    border: `${selectedPickup === p.id ? '2px solid #ff6a00' : '1px solid #eee'}`,
+                    borderRadius: '10px',
+                    padding: '12px',
+                    marginBottom: '8px',
+                    cursor: 'pointer',
+                    background: selectedPickup === p.id ? '#fff3eb' : '#fafafa',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: '700', color: selectedPickup === p.id ? '#ff6a00' : '#1a1a1a' }}>
+                          {selectedPickup === p.id ? '🟠' : '⚪'} {p.name}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#888', lineHeight: '1.4' }}>{p.address}</div>
+                    </div>
+                    {p.area && (
+                      <span style={{ fontSize: '11px', color: '#ff6a00', background: '#fff3eb', padding: '3px 10px', borderRadius: '20px', fontWeight: '600', border: '1px solid #ffcc99', flexShrink: 0 }}>
+                        {p.area}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
