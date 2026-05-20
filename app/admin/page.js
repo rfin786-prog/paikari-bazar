@@ -10,6 +10,7 @@ import DeliveryAreasTab from './_components/DeliveryAreasTab';
 import DeliveryChargesTab from './_components/DeliveryChargesTab';
 import SalesReportTab from './_components/SalesReportTab';
 import WalletTab from './_components/WalletTab';
+import PickupPointsTab from './_components/PickupPointsTab';
 
 const TABS = [
   { key: 'dashboard',        label: 'Dashboard',  icon: '🏠' },
@@ -20,6 +21,7 @@ const TABS = [
   { key: 'wallet',           label: 'Wallet',     icon: '💳' },
   { key: 'delivery_areas',   label: 'Delivery',   icon: '🗺️' },
   { key: 'delivery_charges', label: 'Charges',    icon: '💰' },
+  { key: 'pickup_points',    label: 'Pickup',     icon: '📍' },
   { key: 'sales_report',     label: 'Sales',      icon: '📊' },
 ];
 
@@ -142,6 +144,7 @@ export default function AdminPage() {
         {tab === 'wallet'           && <WalletTab />}
         {tab === 'delivery_areas'   && <DeliveryAreasTab />}
         {tab === 'delivery_charges' && <DeliveryChargesTab />}
+        {tab === 'pickup_points'    && <PickupPointsTab />}
         {tab === 'sales_report'     && <SalesReportTab />}
       </main>
     </div>
