@@ -50,17 +50,16 @@ export default function CheckoutPage() {
     if (!saved) { router.push('/login'); return; }
     const u = JSON.parse(saved);
     setUser(u);
-    const cart = localStorage.getItem('paikari_cart');
+
+    // ✅ FIX: key হলো 'cart', 'paikari_cart' না
+    const cart = localStorage.getItem('cart');
     if (cart) setCartItems(JSON.parse(cart));
 
     Promise.all([
-      // Fetch delivery charges
       fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.delivery_charges&select=value`, { headers: SB_HEADERS })
         .then(r => r.json()),
-      // Fetch wallet balance
       fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${u.id}&select=wallet`, { headers: SB_HEADERS })
         .then(r => r.json()),
-      // Fetch active pickup points
       fetch(`${SUPABASE_URL}/rest/v1/pickup_points?active=eq.true&order=name`, { headers: SB_HEADERS })
         .then(r => r.json()),
     ]).then(([chargesData, userData, pickupData]) => {
@@ -105,7 +104,6 @@ export default function CheckoutPage() {
 
       const selectedPickupPoint = pickupPoints.find(p => p.id === selectedPickup);
 
-      // Place order
       const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
         method: 'POST',
         headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
@@ -128,9 +126,9 @@ export default function CheckoutPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Error');
+      if (!res.ok) throw new Error(data.message || JSON.stringify(data));
 
-      // If wallet payment — deduct balance & insert transaction
+      // wallet payment — balance deduct + transaction
       if (paymentMethod === 'wallet') {
         const newBalance = walletBalance - grandTotal;
 
@@ -152,11 +150,12 @@ export default function CheckoutPage() {
         });
       }
 
-      localStorage.removeItem('paikari_cart');
+      // ✅ FIX: 'cart' key দিয়ে clear করতে হবে
+      localStorage.removeItem('cart');
       window.dispatchEvent(new Event('cartUpdated'));
       setOrderSuccess(Array.isArray(data) ? data[0] : data);
     } catch (err) {
-      console.error(err);
+      console.error('Order error:', err);
       alert('অর্ডার দেওয়া যায়নি। আবার চেষ্টা করুন।');
     } finally {
       setPlacing(false);
@@ -376,14 +375,12 @@ export default function CheckoutPage() {
             })}
           </div>
 
-          {/* Wallet insufficient warning */}
           {walletInsufficient && (
             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: '#dc2626', fontWeight: '600' }}>
               ⚠️ ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই। আরও ৳{(grandTotal - walletBalance).toLocaleString()} প্রয়োজন।
             </div>
           )}
 
-          {/* Wallet sufficient info */}
           {paymentMethod === 'wallet' && !walletInsufficient && (
             <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: '#059669', fontWeight: '600' }}>
               ✅ পেমেন্টের পর ওয়ালেট ব্যালেন্স: ৳{(walletBalance - grandTotal).toLocaleString()}
