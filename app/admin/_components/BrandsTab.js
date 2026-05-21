@@ -1,358 +1,171 @@
-# BrandsTab.js (নতুন)
-
-```jsx
 'use client';
-
 import { useEffect, useState } from 'react';
+
+const FONT = 'var(--font-hind-siliguri), sans-serif';
+
+const C = {
+  bg: '#0f0e17',
+  surface: '#1a1828',
+  surfaceHover: '#201e30',
+  border: 'rgba(255,255,255,.08)',
+  amber: '#f59e0b',
+  amberText: '#0f0e17',
+  text: '#ffffff',
+  textMuted: 'rgba(255,255,255,.55)',
+  textLabel: 'rgba(255,255,255,.8)',
+  red: '#f87171',
+  input: '#12111f',
+};
+
+const inputStyle = {
+  background: C.input,
+  border: '1px solid rgba(255,255,255,.15)',
+  borderRadius: 10,
+  padding: '10px 14px',
+  color: C.text,
+  fontSize: 15,
+  fontFamily: FONT,
+  outline: 'none',
+  width: '100%',
+  boxSizing: 'border-box',
+};
+
+function Toast({ toasts }) {
+  return (
+    <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {toasts.map((t) => (
+        <div key={t.id} style={{
+          padding: '12px 18px', borderRadius: 12, fontSize: 14, fontWeight: 600,
+          fontFamily: FONT, boxShadow: '0 4px 20px rgba(0,0,0,.4)',
+          background: t.type === 'success' ? C.amber : C.red,
+          color: t.type === 'success' ? C.amberText : '#fff',
+        }}>{t.msg}</div>
+      ))}
+    </div>
+  );
+}
 
 export default function BrandsTab() {
   const [brands, setBrands] = useState([]);
   const [brandName, setBrandName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [toasts, setToasts] = useState([]);
 
-  useEffect(() => {
-    fetchBrands();
-  }, []);
+  useEffect(() => { fetchBrands(); }, []);
+
+  const toast = (msg, type = 'success') => {
+    const id = Date.now();
+    setToasts((p) => [...p, { id, msg, type }]);
+    setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 3000);
+  };
 
   const fetchBrands = async () => {
     try {
       const res = await fetch('/api/brands');
       const data = await res.json();
-      setBrands(data || []);
-    } catch (error) {
-      console.error('Brand fetch error:', error);
-    }
+      setBrands(Array.isArray(data) ? data : []);
+    } catch { toast('লোড ব্যর্থ', 'error'); }
   };
 
-  const handleAddBrand = async (e) => {
-    e.preventDefault();
-
-    if (!brandName.trim()) return;
-
+  const handleAdd = async () => {
+    if (!brandName.trim()) { toast('ব্র্যান্ডের নাম দিন', 'error'); return; }
+    setLoading(true);
     try {
-      setLoading(true);
-
       const res = await fetch('/api/brands', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: brandName,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: brandName.trim() }),
       });
-
-      if (!res.ok) {
-        throw new Error('Failed to add brand');
-      }
-
+      if (!res.ok) throw new Error();
+      toast('ব্র্যান্ড যোগ হয়েছে ✓');
       setBrandName('');
       fetchBrands();
-    } catch (error) {
-      console.error(error);
-      alert('Brand add failed');
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast('যোগ করতে ব্যর্থ', 'error'); }
+    finally { setLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = confirm('Brand delete করতে চান?');
-
-    if (!confirmDelete) return;
-
+  const handleDelete = async (id, name) => {
+    if (!confirm(`"${name}" মুছবেন?`)) return;
     try {
-      const res = await fetch(`/api/brands/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        throw new Error('Delete failed');
-      }
-
+      const res = await fetch(`/api/brands?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      toast('মুছে ফেলা হয়েছে');
       fetchBrands();
-    } catch (error) {
-      console.error(error);
-      alert('Delete failed');
-    }
+    } catch { toast('মুছতে ব্যর্থ', 'error'); }
   };
 
   return (
-    <div className="space-y-6">
-      <form
-        onSubmit={handleAddBrand}
-        className="bg-white p-5 rounded-2xl shadow border"
-      >
-        <h2 className="text-xl font-semibold mb-4">নতুন ব্র্যান্ড যোগ করুন</h2>
+    <div style={{ fontFamily: FONT, color: C.text }}>
+      <Toast toasts={toasts} />
 
-        <div className="flex gap-3">
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.amber, fontFamily: FONT }}>ব্র্যান্ড ব্যবস্থাপনা</h2>
+        <p style={{ margin: '4px 0 0', fontSize: 13, color: C.textMuted, fontFamily: FONT }}>{brands.length}টি ব্র্যান্ড মোট</p>
+      </div>
+
+      {/* Add Form */}
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20, marginBottom: 20 }}>
+        <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 600, color: C.textLabel, fontFamily: FONT }}>নতুন ব্র্যান্ড যোগ</h3>
+        <div style={{ display: 'flex', gap: 12 }}>
           <input
-            type="text"
-            placeholder="Brand name"
             value={brandName}
             onChange={(e) => setBrandName(e.target.value)}
-            className="w-full border rounded-xl px-4 py-3 outline-none"
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+            placeholder="ব্র্যান্ডের নাম লিখুন..."
+            style={{ ...inputStyle, flex: 1 }}
           />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-black text-white px-5 rounded-xl"
-          >
-            {loading ? 'Adding...' : 'Add'}
+          <button onClick={handleAdd} disabled={loading} style={{
+            background: loading ? 'rgba(245,158,11,.5)' : C.amber,
+            color: C.amberText, border: 'none',
+            padding: '10px 24px', borderRadius: 10,
+            fontSize: 14, fontWeight: 700, fontFamily: FONT,
+            cursor: 'pointer', whiteSpace: 'nowrap',
+          }}>
+            {loading ? 'যোগ হচ্ছে...' : '+ যোগ করুন'}
           </button>
         </div>
-      </form>
+      </div>
 
-      <div className="bg-white rounded-2xl shadow border overflow-hidden">
-        <div className="p-4 border-b">
-          <h2 className="font-semibold text-lg">সব ব্র্যান্ড</h2>
+      {/* Brand List */}
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.border}` }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: C.textLabel, fontFamily: FONT }}>সব ব্র্যান্ড</span>
         </div>
-
-        <div className="divide-y">
-          {brands.map((brand) => (
-            <div
-              key={brand._id}
-              className="flex items-center justify-between p-4"
+        {brands.length === 0 ? (
+          <div style={{ padding: '40px 0', textAlign: 'center', color: C.textMuted, fontFamily: FONT }}>কোনো ব্র্যান্ড নেই</div>
+        ) : (
+          brands.map((brand, i) => (
+            <div key={brand.id || brand._id} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 20px',
+              borderBottom: i < brands.length - 1 ? `1px solid ${C.border}` : 'none',
+            }}
+              onMouseEnter={(e) => e.currentTarget.style.background = C.surfaceHover}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <p className="font-medium">{brand.name}</p>
-
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 8, background: 'rgba(245,158,11,.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 16, color: C.amber, fontWeight: 700, fontFamily: FONT,
+                }}>
+                  {brand.name?.charAt(0)?.toUpperCase()}
+                </div>
+                <span style={{ fontSize: 15, fontWeight: 500, color: C.text, fontFamily: FONT }}>{brand.name}</span>
+              </div>
               <button
-                onClick={() => handleDelete(brand._id)}
-                className="text-red-500"
-              >
-                Delete
-              </button>
+                onClick={() => handleDelete(brand.id || brand._id, brand.name)}
+                style={{
+                  background: 'rgba(248,113,113,.1)', border: 'none',
+                  color: C.red, padding: '6px 14px', borderRadius: 8,
+                  fontSize: 13, fontWeight: 600, fontFamily: FONT, cursor: 'pointer',
+                }}
+              >মুছুন</button>
             </div>
-          ))}
-
-          {brands.length === 0 && (
-            <div className="p-6 text-center text-gray-500">
-              কোনো ব্র্যান্ড নেই
-            </div>
-          )}
-        </div>
+          ))
+        )}
       </div>
     </div>
   );
 }
-```
-
----
-
-# ProductsTab.js (updated — brand dropdown)
-
-```jsx
-'use client';
-
-import { useEffect, useState } from 'react';
-
-export default function ProductsTab() {
-  const [brands, setBrands] = useState([]);
-  const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    brand: '',
-  });
-
-  useEffect(() => {
-    fetchBrands();
-  }, []);
-
-  const fetchBrands = async () => {
-    try {
-      const res = await fetch('/api/brands');
-      const data = await res.json();
-      setBrands(data || []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        throw new Error('Product add failed');
-      }
-
-      alert('Product added');
-
-      setFormData({
-        name: '',
-        price: '',
-        brand: '',
-      });
-    } catch (error) {
-      console.error(error);
-      alert('Error');
-    }
-  };
-
-  return (
-    <div className="bg-white p-5 rounded-2xl shadow border">
-      <h2 className="text-xl font-semibold mb-5">Add Product</h2>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Product name"
-          value={formData.name}
-          onChange={handleChange}
-          className="w-full border rounded-xl px-4 py-3 outline-none"
-        />
-
-        <input
-          type="number"
-          name="price"
-          placeholder="Price"
-          value={formData.price}
-          onChange={handleChange}
-          className="w-full border rounded-xl px-4 py-3 outline-none"
-        />
-
-        <select
-          name="brand"
-          value={formData.brand}
-          onChange={handleChange}
-          className="w-full border rounded-xl px-4 py-3 outline-none"
-        >
-          <option value="">Select Brand</option>
-
-          {brands.map((brand) => (
-            <option key={brand._id} value={brand.name}>
-              {brand.name}
-            </option>
-          ))}
-        </select>
-
-        <button
-          type="submit"
-          className="bg-black text-white px-5 py-3 rounded-xl"
-        >
-          Save Product
-        </button>
-      </form>
-    </div>
-  );
-}
-```
-
----
-
-# products/page.js (updated — brand filter)
-
-```jsx
-'use client';
-
-import { useEffect, useState } from 'react';
-
-export default function ProductsPage() {
-  const [products, setProducts] = useState([]);
-  const [brands, setBrands] = useState([]);
-  const [selectedBrand, setSelectedBrand] = useState('');
-
-  useEffect(() => {
-    fetchProducts();
-    fetchBrands();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch('/api/products');
-      const data = await res.json();
-      setProducts(data || []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const fetchBrands = async () => {
-    try {
-      const res = await fetch('/api/brands');
-      const data = await res.json();
-      setBrands(data || []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const filteredProducts = selectedBrand
-    ? products.filter((item) => item.brand === selectedBrand)
-    : products;
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <h1 className="text-3xl font-bold">Products</h1>
-
-        <select
-          value={selectedBrand}
-          onChange={(e) => setSelectedBrand(e.target.value)}
-          className="border rounded-xl px-4 py-3 outline-none min-w-[220px]"
-        >
-          <option value="">All Brands</option>
-
-          {brands.map((brand) => (
-            <option key={brand._id} value={brand.name}>
-              {brand.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-        {filteredProducts.map((product) => (
-          <div
-            key={product._id}
-            className="border rounded-2xl p-4 bg-white shadow-sm"
-          >
-            <h2 className="font-semibold text-lg">{product.name}</h2>
-
-            <p className="text-gray-500 mt-1">{product.brand}</p>
-
-            <p className="font-bold mt-3">৳ {product.price}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-```
-
----
-
-# প্রয়োজনীয় Product Schema Example
-
-```js
-const ProductSchema = new mongoose.Schema({
-  name: String,
-  price: Number,
-  brand: String,
-});
-```
-
-# প্রয়োজনীয় Brand Schema Example
-
-```js
-const BrandSchema = new mongoose.Schema({
-  name: String,
-});
-```
