@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 
 const FONT = 'var(--font-hind-siliguri), sans-serif';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const C = {
   bg: '#0f0e17',
@@ -48,7 +50,8 @@ function Toast({ toasts }) {
 export default function BrandsTab() {
   const [brands, setBrands] = useState([]);
   const [brandName, setBrandName] = useState('');
-  const [logoUrl, setLogoUrl] = useState('');
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState([]);
 
@@ -68,19 +71,50 @@ export default function BrandsTab() {
     } catch { toast('লোড ব্যর্থ', 'error'); }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
+  const uploadLogo = async (file) => {
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${ext}`;
+    const res = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/brands/${fileName}`,
+      {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': file.type,
+        },
+        body: file,
+      }
+    );
+    if (!res.ok) throw new Error('Upload failed');
+    return `${SUPABASE_URL}/storage/v1/object/public/brands/${fileName}`;
+  };
+
   const handleAdd = async () => {
     if (!brandName.trim()) { toast('ব্র্যান্ডের নাম দিন', 'error'); return; }
     setLoading(true);
     try {
+      let logo_url = null;
+      if (logoFile) {
+        logo_url = await uploadLogo(logoFile);
+      }
       const res = await fetch('/api/brands', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: brandName.trim(), logo_url: logoUrl.trim() || null }),
+        body: JSON.stringify({ name: brandName.trim(), logo_url }),
       });
       if (!res.ok) throw new Error();
       toast('ব্র্যান্ড যোগ হয়েছে ✓');
       setBrandName('');
-      setLogoUrl('');
+      setLogoFile(null);
+      setLogoPreview('');
       fetchBrands();
     } catch { toast('যোগ করতে ব্যর্থ', 'error'); }
     finally { setLoading(false); }
@@ -109,7 +143,9 @@ export default function BrandsTab() {
       {/* Add Form */}
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20, marginBottom: 20 }}>
         <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 600, color: C.textLabel, fontFamily: FONT }}>নতুন ব্র্যান্ড যোগ</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+          {/* Brand Name */}
           <input
             value={brandName}
             onChange={(e) => setBrandName(e.target.value)}
@@ -117,24 +153,44 @@ export default function BrandsTab() {
             placeholder="ব্র্যান্ডের নাম লিখুন..."
             style={inputStyle}
           />
-          <input
-            value={logoUrl}
-            onChange={(e) => setLogoUrl(e.target.value)}
-            placeholder="লোগো URL লিখুন... (যেমন: https://example.com/logo.png)"
-            style={inputStyle}
-          />
-          {/* Logo Preview */}
-          {logoUrl.trim() && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 12, color: C.textMuted, fontFamily: FONT }}>প্রিভিউ:</span>
-              <img
-                src={logoUrl}
-                alt="logo preview"
-                onError={(e) => e.target.style.display = 'none'}
-                style={{ height: 40, maxWidth: 120, objectFit: 'contain', borderRadius: 6, background: '#fff', padding: 4 }}
-              />
+
+          {/* Logo Upload */}
+          <div>
+            <label style={{ fontSize: 13, color: C.textMuted, fontFamily: FONT, display: 'block', marginBottom: 8 }}>
+              লোগো আপলোড করুন
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <label style={{
+                background: C.input, border: '1px dashed rgba(255,255,255,.25)',
+                borderRadius: 10, padding: '10px 20px', cursor: 'pointer',
+                fontSize: 13, color: C.textMuted, fontFamily: FONT,
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                📁 ছবি বেছে নিন
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              {logoPreview && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <img
+                    src={logoPreview}
+                    alt="preview"
+                    style={{ height: 48, maxWidth: 120, objectFit: 'contain', borderRadius: 8, background: '#fff', padding: 4 }}
+                  />
+                  <button onClick={() => { setLogoFile(null); setLogoPreview(''); }} style={{
+                    background: 'rgba(248,113,113,.1)', border: 'none',
+                    color: C.red, padding: '4px 10px', borderRadius: 6,
+                    fontSize: 12, fontFamily: FONT, cursor: 'pointer',
+                  }}>✕ সরান</button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
           <button onClick={handleAdd} disabled={loading} style={{
             background: loading ? 'rgba(245,158,11,.5)' : C.amber,
             color: C.amberText, border: 'none',
@@ -160,30 +216,27 @@ export default function BrandsTab() {
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '14px 20px',
               borderBottom: i < brands.length - 1 ? `1px solid ${C.border}` : 'none',
+              transition: 'background .15s',
             }}
               onMouseEnter={(e) => e.currentTarget.style.background = C.surfaceHover}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {/* Logo or Fallback */}
                 {brand.logo_url ? (
                   <img
                     src={brand.logo_url}
                     alt={brand.name}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                    style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'contain', background: '#fff', padding: 3 }}
+                    style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'contain', background: '#fff', padding: 4 }}
                   />
-                ) : null}
-                <div style={{
-                  width: 36, height: 36, borderRadius: 8, background: 'rgba(245,158,11,.1)',
-                  display: brand.logo_url ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 16, color: C.amber, fontWeight: 700, fontFamily: FONT, flexShrink: 0,
-                }}>
-                  {brand.name?.charAt(0)?.toUpperCase()}
-                </div>
+                ) : (
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 8, background: 'rgba(245,158,11,.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 18, color: C.amber, fontWeight: 700, fontFamily: FONT,
+                  }}>
+                    {brand.name?.charAt(0)?.toUpperCase()}
+                  </div>
+                )}
                 <span style={{ fontSize: 15, fontWeight: 500, color: C.text, fontFamily: FONT }}>{brand.name}</span>
               </div>
               <button
