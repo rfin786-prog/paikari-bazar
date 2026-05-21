@@ -48,6 +48,7 @@ function Toast({ toasts }) {
 export default function BrandsTab() {
   const [brands, setBrands] = useState([]);
   const [brandName, setBrandName] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState([]);
 
@@ -74,11 +75,12 @@ export default function BrandsTab() {
       const res = await fetch('/api/brands', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: brandName.trim() }),
+        body: JSON.stringify({ name: brandName.trim(), logo_url: logoUrl.trim() || null }),
       });
       if (!res.ok) throw new Error();
       toast('ব্র্যান্ড যোগ হয়েছে ✓');
       setBrandName('');
+      setLogoUrl('');
       fetchBrands();
     } catch { toast('যোগ করতে ব্যর্থ', 'error'); }
     finally { setLoading(false); }
@@ -107,20 +109,38 @@ export default function BrandsTab() {
       {/* Add Form */}
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20, marginBottom: 20 }}>
         <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 600, color: C.textLabel, fontFamily: FONT }}>নতুন ব্র্যান্ড যোগ</h3>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <input
             value={brandName}
             onChange={(e) => setBrandName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             placeholder="ব্র্যান্ডের নাম লিখুন..."
-            style={{ ...inputStyle, flex: 1 }}
+            style={inputStyle}
           />
+          <input
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+            placeholder="লোগো URL লিখুন... (যেমন: https://example.com/logo.png)"
+            style={inputStyle}
+          />
+          {/* Logo Preview */}
+          {logoUrl.trim() && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 12, color: C.textMuted, fontFamily: FONT }}>প্রিভিউ:</span>
+              <img
+                src={logoUrl}
+                alt="logo preview"
+                onError={(e) => e.target.style.display = 'none'}
+                style={{ height: 40, maxWidth: 120, objectFit: 'contain', borderRadius: 6, background: '#fff', padding: 4 }}
+              />
+            </div>
+          )}
           <button onClick={handleAdd} disabled={loading} style={{
             background: loading ? 'rgba(245,158,11,.5)' : C.amber,
             color: C.amberText, border: 'none',
             padding: '10px 24px', borderRadius: 10,
             fontSize: 14, fontWeight: 700, fontFamily: FONT,
-            cursor: 'pointer', whiteSpace: 'nowrap',
+            cursor: 'pointer', alignSelf: 'flex-start',
           }}>
             {loading ? 'যোগ হচ্ছে...' : '+ যোগ করুন'}
           </button>
@@ -145,10 +165,22 @@ export default function BrandsTab() {
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {/* Logo or Fallback */}
+                {brand.logo_url ? (
+                  <img
+                    src={brand.logo_url}
+                    alt={brand.name}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                    style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'contain', background: '#fff', padding: 3 }}
+                  />
+                ) : null}
                 <div style={{
                   width: 36, height: 36, borderRadius: 8, background: 'rgba(245,158,11,.1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 16, color: C.amber, fontWeight: 700, fontFamily: FONT,
+                  display: brand.logo_url ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 16, color: C.amber, fontWeight: 700, fontFamily: FONT, flexShrink: 0,
                 }}>
                   {brand.name?.charAt(0)?.toUpperCase()}
                 </div>
