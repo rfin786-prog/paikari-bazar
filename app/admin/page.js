@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import DashboardTab from './_components/DashboardTab';
 import ProductsTab from './_components/ProductsTab';
 import CategoriesTab from './_components/CategoriesTab';
+import BrandsTab from './_components/BrandsTab';
 import OrdersTab from './_components/OrdersTab';
 import UsersTab from './_components/UsersTab';
 import DeliveryAreasTab from './_components/DeliveryAreasTab';
@@ -16,6 +17,7 @@ const TABS = [
   { key: 'dashboard',        label: 'Dashboard',  icon: '🏠' },
   { key: 'products',         label: 'Products',   icon: '📦' },
   { key: 'categories',       label: 'Categories', icon: '🏷️' },
+  { key: 'brands',           label: 'Brands',     icon: '🎯' },
   { key: 'orders',           label: 'Orders',     icon: '🛒' },
   { key: 'users',            label: 'Users',      icon: '👥' },
   { key: 'wallet',           label: 'Wallet',     icon: '💳' },
@@ -139,6 +141,7 @@ export default function AdminPage() {
         {tab === 'dashboard'        && <DashboardTab setTab={setTab} />}
         {tab === 'products'         && <ProductsTab />}
         {tab === 'categories'       && <CategoriesTab />}
+        {tab === 'brands'           && <BrandsTab />}
         {tab === 'orders'           && <OrdersTab />}
         {tab === 'users'            && <UsersTab />}
         {tab === 'wallet'           && <WalletTab />}
