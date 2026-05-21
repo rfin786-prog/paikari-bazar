@@ -6,34 +6,46 @@ export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [brands, setBrands] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProducts();
     fetchBrands();
   }, []);
 
+  // Fetch Products
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/products');
+
       const data = await res.json();
 
-      setProducts(data || []);
+      console.log('PRODUCTS:', data);
+
+      setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error(error);
+      console.error('Product Fetch Error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Fetch Brands
   const fetchBrands = async () => {
     try {
       const res = await fetch('/api/brands');
+
       const data = await res.json();
 
-      setBrands(data || []);
+      console.log('BRANDS:', data);
+
+      setBrands(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error(error);
+      console.error('Brand Fetch Error:', error);
     }
   };
 
+  // Filter Products
   const filteredProducts = selectedBrand
     ? products.filter(
         (product) => product.brand === selectedBrand
@@ -42,8 +54,10 @@ export default function ProductsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
+
+      {/* Top Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+
         <div>
           <h1 className="text-3xl font-bold">
             Products
@@ -54,7 +68,7 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        {/* Brand Filter */}
+        {/* Brand Dropdown */}
         <select
           value={selectedBrand}
           onChange={(e) =>
@@ -77,47 +91,58 @@ export default function ProductsPage() {
         </select>
       </div>
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-        {filteredProducts.map((product) => (
-          <div
-            key={product._id}
-            className="bg-white border rounded-2xl p-4 shadow-sm hover:shadow-md transition"
-          >
-            {/* Product Image */}
-            <div className="aspect-square bg-gray-100 rounded-xl mb-4"></div>
+      {/* Loading */}
+      {loading && (
+        <div className="text-center py-20">
+          Loading...
+        </div>
+      )}
 
-            {/* Product Name */}
-            <h2 className="font-semibold text-lg line-clamp-2">
-              {product.name}
-            </h2>
+      {/* Products */}
+      {!loading && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
 
-            {/* Brand */}
-            <p className="text-sm text-gray-500 mt-1">
-              {product.brand}
-            </p>
+          {filteredProducts.map((product) => (
+            <div
+              key={product._id}
+              className="bg-white border rounded-2xl p-4 shadow-sm hover:shadow-md transition"
+            >
 
-            {/* Price */}
-            <p className="font-bold text-xl mt-3">
-              ৳ {product.price}
-            </p>
+              {/* Fake Image */}
+              <div className="aspect-square bg-gray-100 rounded-xl mb-4"></div>
 
-            {/* Button */}
-            <button className="w-full mt-4 bg-black text-white py-2 rounded-xl">
-              View Product
-            </button>
-          </div>
-        ))}
+              {/* Product Name */}
+              <h2 className="font-semibold text-lg">
+                {product.name}
+              </h2>
 
-        {/* Empty State */}
-        {filteredProducts.length === 0 && (
-          <div className="col-span-full text-center py-20">
-            <p className="text-gray-500 text-lg">
-              কোনো প্রোডাক্ট পাওয়া যায়নি
-            </p>
-          </div>
-        )}
-      </div>
+              {/* Brand */}
+              <p className="text-gray-500 text-sm mt-1">
+                {product.brand}
+              </p>
+
+              {/* Price */}
+              <p className="font-bold text-xl mt-3">
+                ৳ {product.price}
+              </p>
+
+              {/* Button */}
+              <button className="w-full mt-4 bg-black text-white py-2 rounded-xl">
+                View Product
+              </button>
+            </div>
+          ))}
+
+          {/* Empty State */}
+          {filteredProducts.length === 0 && (
+            <div className="col-span-full text-center py-20">
+              <p className="text-gray-500 text-lg">
+                কোনো প্রোডাক্ট পাওয়া যায়নি
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
