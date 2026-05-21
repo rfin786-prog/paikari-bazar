@@ -7,6 +7,7 @@ const headers = {
   'apikey': SUPABASE_KEY,
   'Authorization': `Bearer ${SUPABASE_KEY}`,
   'Content-Type': 'application/json',
+  'Prefer': 'return=representation',
 };
 
 export async function GET() {
@@ -17,6 +18,36 @@ export async function GET() {
     );
     const data = await res.json();
     return NextResponse.json(data);
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/brands`,
+      { method: 'POST', headers, body: JSON.stringify(body) }
+    );
+    const data = await res.json();
+    return NextResponse.json(data);
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/brands?id=eq.${id}`,
+      { method: 'DELETE', headers }
+    );
+    return NextResponse.json({ success: res.ok });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
