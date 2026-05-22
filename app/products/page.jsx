@@ -48,13 +48,14 @@ function ProductsPageContent() {
     } catch (e) {}
   };
 
+  // ✅ FIX: 'paikari_cart' → 'cart'
   const addToCart = (e, product) => {
     e.stopPropagation();
-    const cart = JSON.parse(localStorage.getItem('paikari_cart') || '[]');
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const exists = cart.find(i => i.id === product.id);
     if (!exists) {
       cart.push({ ...product, quantity: 1 });
-      localStorage.setItem('paikari_cart', JSON.stringify(cart));
+      localStorage.setItem('cart', JSON.stringify(cart));
       window.dispatchEvent(new Event('cartUpdated'));
     }
     setAddedIds(prev => ({ ...prev, [product.id]: true }));
