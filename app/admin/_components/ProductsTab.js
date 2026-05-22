@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 const FONT = 'var(--font-hind-siliguri), sans-serif';
 
 const SUPABASE_URL = 'https://xxqtdlwglpggqafecuka.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // ← replace this
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4cXRkbHdnbHBnZ3FhZmVjdWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNDQwODcsImV4cCI6MjA5MjcyMDA4N30.gkqQTxM1n6Jqe-fBrf9RaI1EByJTX7Uv1QvECqzSDDI';
 
 const CATEGORIES = [
   'Food & Grocery', 'Grains', 'Dal & Lentils', 'Oil & Ghee',
@@ -74,7 +74,6 @@ const inputStyle = {
   boxSizing: 'border-box',
 };
 
-// Upload image to Supabase Storage
 async function uploadToSupabase(file) {
   const ext = file.name.split('.').pop();
   const fileName = `product_${Date.now()}.${ext}`;
@@ -91,7 +90,6 @@ async function uploadToSupabase(file) {
   return `${SUPABASE_URL}/storage/v1/object/public/product-images/${fileName}`;
 }
 
-// Profit/Loss indicator
 function ProfitBadge({ cost, selling }) {
   const c = parseFloat(cost);
   const s = parseFloat(selling);
@@ -466,8 +464,6 @@ export default function ProductsTab() {
                       onChange={handleChange} placeholder="0" style={inputStyle} />
                   </Field>
                 </div>
-
-                {/* Profit/Loss */}
                 <ProfitBadge cost={formData.cost_price} selling={formData.price} />
               </div>
 
