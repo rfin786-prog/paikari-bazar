@@ -190,11 +190,12 @@ function UserIcon() {
   );
 }
 
+// ✅ FIX: 'paikari_cart' → 'cart'
 function CartCount() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     const update = () => {
-      const cart = JSON.parse(localStorage.getItem('paikari_cart') || '[]');
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
       setCount(cart.length);
     };
     update();
