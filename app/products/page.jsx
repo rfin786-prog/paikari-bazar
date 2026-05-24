@@ -6,37 +6,59 @@ import { useRouter, useSearchParams } from 'next/navigation';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-/* ─── Shimmer Skeleton Card ─────────────────────────── */
+/* ─── Cart helpers ───────────────────────────────────── */
+const getCart = () => JSON.parse(localStorage.getItem('cart') || '[]');
+const saveCart = (cart) => {
+  localStorage.setItem('cart', JSON.stringify(cart));
+  window.dispatchEvent(new Event('cartUpdated'));
+};
+
+/* ─── Shimmer Skeleton ───────────────────────────────── */
 function SkeletonCard() {
   return (
     <div style={{ background: '#fff', borderRadius: 14, border: '1.5px solid #f0f0f0', overflow: 'hidden' }}>
-      <div style={{ height: 170, background: 'linear-gradient(90deg, #f5f5f5 25%, #ececec 50%, #f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
-      <div style={{ padding: '12px' }}>
-        <div style={{ height: 11, background: 'linear-gradient(90deg, #f5f5f5 25%, #ececec 50%, #f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6, marginBottom: 8 }} />
-        <div style={{ height: 11, width: '65%', background: 'linear-gradient(90deg, #f5f5f5 25%, #ececec 50%, #f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6, marginBottom: 14 }} />
-        <div style={{ height: 34, background: 'linear-gradient(90deg, #f5f5f5 25%, #ececec 50%, #f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 9 }} />
+      <div style={{ height: 170, background: 'linear-gradient(90deg,#f5f5f5 25%,#ececec 50%,#f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+      <div style={{ padding: 12 }}>
+        <div style={{ height: 11, background: 'linear-gradient(90deg,#f5f5f5 25%,#ececec 50%,#f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6, marginBottom: 8 }} />
+        <div style={{ height: 11, width: '65%', background: 'linear-gradient(90deg,#f5f5f5 25%,#ececec 50%,#f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6, marginBottom: 14 }} />
+        <div style={{ height: 36, background: 'linear-gradient(90deg,#f5f5f5 25%,#ececec 50%,#f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 9 }} />
       </div>
     </div>
   );
 }
 
-/* ─── Main Page Content ──────────────────────────────── */
+/* ─── Main Content ───────────────────────────────────── */
 function ProductsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [products, setProducts] = useState([]);
-  const [brands, setBrands] = useState([]);
-  const [categories, setCategories] = useState([]);
+
+  const [products, setProducts]       = useState([]);
+  const [brands, setBrands]           = useState([]);
+  const [categories, setCategories]   = useState([]);
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedCat, setSelectedCat] = useState(searchParams.get('cat') || '');
-  const [sortBy, setSortBy] = useState('newest');
-  const [loading, setLoading] = useState(true);
-  const [addedIds, setAddedIds] = useState({});
-  const [drawerOpen, setDrawerOpen] = useState(false); // mobile brand drawer
-  const [isMobile, setIsMobile] = useState(false);
+  const [sortBy, setSortBy]           = useState('newest');
+  const [loading, setLoading]         = useState(true);
+  const [cartQty, setCartQty]         = useState({});   // { productId: quantity }
+  const [drawerOpen, setDrawerOpen]   = useState(false);
+  const [isMobile, setIsMobile]       = useState(false);
   const drawerRef = useRef(null);
 
-  /* Detect mobile */
+  /* ── Read cart from localStorage on mount & on updates ── */
+  const syncCart = useCallback(() => {
+    const cart = getCart();
+    const map = {};
+    cart.forEach(i => { map[i.id] = i.quantity; });
+    setCartQty(map);
+  }, []);
+
+  useEffect(() => {
+    syncCart();
+    window.addEventListener('cartUpdated', syncCart);
+    return () => window.removeEventListener('cartUpdated', syncCart);
+  }, [syncCart]);
+
+  /* ── Mobile detection ── */
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -44,16 +66,15 @@ function ProductsPageContent() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  /* Close drawer on outside click */
+  /* ── Close drawer on outside click ── */
   useEffect(() => {
     if (!drawerOpen) return;
-    const handleClick = (e) => {
-      if (drawerRef.current && !drawerRef.current.contains(e.target)) setDrawerOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    const h = (e) => { if (drawerRef.current && !drawerRef.current.contains(e.target)) setDrawerOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
   }, [drawerOpen]);
 
+  /* ── Fetch ── */
   const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch(
@@ -63,14 +84,10 @@ function ProductsPageContent() {
       const data = await res.json();
       if (Array.isArray(data)) {
         setProducts(data);
-        const cats = [...new Set(data.map(p => p.category).filter(Boolean))].sort();
-        setCategories(cats);
+        setCategories([...new Set(data.map(p => p.category).filter(Boolean))].sort());
       }
-    } catch (e) {
-      console.error('Products fetch error:', e);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   }, []);
 
   const fetchBrands = useCallback(async () => {
@@ -78,57 +95,64 @@ function ProductsPageContent() {
       const res = await fetch('/api/brands');
       const data = await res.json();
       setBrands(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error('Brands fetch error:', e);
-    }
+    } catch (e) { console.error(e); }
   }, []);
 
-  useEffect(() => {
-    fetchProducts();
-    fetchBrands();
-  }, [fetchProducts, fetchBrands]);
+  useEffect(() => { fetchProducts(); fetchBrands(); }, [fetchProducts, fetchBrands]);
 
-  /* Cart handler */
-  const addToCart = (e, product) => {
+  /* ── Cart actions ── */
+  const handleAddToCart = (e, product) => {
     e.stopPropagation();
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    if (!cart.find(i => i.id === product.id)) {
+    const cart = getCart();
+    const idx = cart.findIndex(i => i.id === product.id);
+    if (idx === -1) {
       cart.push({ ...product, quantity: 1 });
-      localStorage.setItem('cart', JSON.stringify(cart));
-      window.dispatchEvent(new Event('cartUpdated'));
+    } else {
+      cart[idx].quantity += 1;
     }
-    setAddedIds(prev => ({ ...prev, [product.id]: true }));
-    setTimeout(() => setAddedIds(prev => ({ ...prev, [product.id]: false })), 1600);
+    saveCart(cart);
   };
 
-  /* Filtering & sorting */
+  const handleIncrease = (e, product) => {
+    e.stopPropagation();
+    const cart = getCart();
+    const idx = cart.findIndex(i => i.id === product.id);
+    if (idx !== -1) { cart[idx].quantity += 1; saveCart(cart); }
+  };
+
+  const handleDecrease = (e, product) => {
+    e.stopPropagation();
+    const cart = getCart();
+    const idx = cart.findIndex(i => i.id === product.id);
+    if (idx === -1) return;
+    if (cart[idx].quantity <= 1) {
+      cart.splice(idx, 1);
+    } else {
+      cart[idx].quantity -= 1;
+    }
+    saveCart(cart);
+  };
+
+  /* ── Filter & sort ── */
   let filtered = products;
   if (selectedBrand) filtered = filtered.filter(p => p.brand_id === selectedBrand);
-  if (selectedCat) filtered = filtered.filter(p => p.category === selectedCat);
-  if (sortBy === 'price_asc') filtered = [...filtered].sort((a, b) => a.price - b.price);
-  if (sortBy === 'price_desc') filtered = [...filtered].sort((a, b) => b.price - a.price);
+  if (selectedCat)   filtered = filtered.filter(p => p.category === selectedCat);
+  if (sortBy === 'price_asc')  filtered = [...filtered].sort((a,b) => a.price - b.price);
+  if (sortBy === 'price_desc') filtered = [...filtered].sort((a,b) => b.price - a.price);
 
-  const hasActiveFilter = selectedBrand || selectedCat;
-  const activeBrandName = brands.find(b => b.id === selectedBrand)?.name;
+  const hasActiveFilter  = selectedBrand || selectedCat;
+  const activeBrandName  = brands.find(b => b.id === selectedBrand)?.name;
 
-  /* ─── Brand Sidebar / Drawer Content ─── */
+  /* ── Brand list (shared by sidebar & drawer) ── */
   const BrandList = () => (
     <div style={{ padding: '16px 12px' }}>
       <p style={{ fontSize: 10, fontWeight: 800, color: '#bbb', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, paddingLeft: 6 }}>ব্র্যান্ড বাছুন</p>
       {[{ id: '', name: 'সব ব্র্যান্ড', emoji: '🏪' }, ...brands].map(brand => {
         const isActive = selectedBrand === brand.id;
         return (
-          <button
-            key={brand.id || 'all'}
+          <button key={brand.id || 'all'}
             onClick={() => { setSelectedBrand(brand.id === selectedBrand ? '' : brand.id); if (isMobile) setDrawerOpen(false); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 9, width: '100%',
-              padding: '9px 10px', borderRadius: 10, marginBottom: 3,
-              border: 'none', cursor: 'pointer', textAlign: 'left',
-              background: isActive ? '#fff5f0' : 'transparent',
-              borderLeft: `3px solid ${isActive ? '#ff6a00' : 'transparent'}`,
-              transition: 'all 0.15s',
-            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 10px', borderRadius: 10, marginBottom: 3, border: 'none', cursor: 'pointer', textAlign: 'left', background: isActive ? '#fff5f0' : 'transparent', borderLeft: `3px solid ${isActive ? '#ff6a00' : 'transparent'}`, transition: 'all 0.15s' }}
             onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#fafafa'; }}
             onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
           >
@@ -138,9 +162,7 @@ function ProductsPageContent() {
                 ? <img src={brand.logo_url} alt={brand.name} style={{ height: 22, width: 44, objectFit: 'contain', borderRadius: 4 }} />
                 : <div style={{ width: 36, height: 22, background: '#f0f0f0', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#bbb' }}>{brand.name?.charAt(0)}</div>
             }
-            <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? '#ff6a00' : '#444', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {brand.name}
-            </span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? '#ff6a00' : '#444', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{brand.name}</span>
             {isActive && <span style={{ fontSize: 10, color: '#ff6a00' }}>✓</span>}
           </button>
         );
@@ -154,41 +176,38 @@ function ProductsPageContent() {
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { font-family: 'Hind Siliguri', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
 
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes shimmer  { 0%   { background-position: 200% 0; }  100% { background-position: -200% 0; } }
+        @keyframes fadeUp   { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn    { 0%   { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes slideLeft{ from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes fadeScrim{ from { opacity: 0; } to { opacity: 1; } }
 
-        .prod-card {
-          animation: fadeUp 0.3s ease forwards;
-          background: #fff; cursor: pointer;
-          transition: transform 0.22s cubic-bezier(.4,0,.2,1), box-shadow 0.22s cubic-bezier(.4,0,.2,1), border-color 0.22s;
-        }
-        .prod-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 16px 40px rgba(255,106,0,0.12) !important;
-          border-color: #ffcfaa !important;
-        }
+        .prod-card { animation: fadeUp 0.3s ease forwards; background: #fff; cursor: pointer; transition: transform 0.22s cubic-bezier(.4,0,.2,1), box-shadow 0.22s, border-color 0.22s; }
+        .prod-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(255,106,0,0.12) !important; border-color: #ffcfaa !important; }
         .prod-card:active { transform: scale(0.98); }
 
         .prod-img { transition: transform 0.35s ease; display: block; width: 100%; height: 100%; object-fit: cover; }
         .prod-card:hover .prod-img { transform: scale(1.06); }
 
+        .qty-badge { animation: popIn 0.3s cubic-bezier(.4,0,.2,1) forwards; }
+
+        .qty-btn { border: none; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; font-weight: 800; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: none; }
+        .qty-btn:active { transform: scale(0.88); }
+
         .cart-btn { border: none; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; transition: all 0.18s; }
         .cart-btn:hover { filter: brightness(0.92); }
         .cart-btn:active { transform: scale(0.97); }
 
-        .cat-chip { cursor: pointer; white-space: nowrap; border: none; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; }
+        .cat-chip { cursor: pointer; white-space: nowrap; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; }
         .cat-chip:hover { border-color: #ff6a00 !important; color: #ff6a00 !important; }
 
         .sort-select { cursor: pointer; font-family: 'Hind Siliguri', sans-serif; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
         .sort-select:focus { outline: none; border-color: #ff6a00 !important; }
 
-        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; animation: scaleIn 0.2s ease; }
-        .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 260px; background: #fff; z-index: 201; overflow-y: auto; animation: slideInLeft 0.25s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.12); }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.38); z-index: 200; animation: fadeScrim 0.2s ease; }
+        .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 260px; background: #fff; z-index: 201; overflow-y: auto; animation: slideLeft 0.25s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.13); }
 
         ::-webkit-scrollbar { height: 4px; width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
 
         @media (max-width: 480px) {
@@ -198,33 +217,20 @@ function ProductsPageContent() {
           .prod-price { font-size: 15px !important; }
           .cart-btn { font-size: 11px !important; padding: 7px !important; }
         }
-        @media (min-width: 481px) and (max-width: 768px) {
-          .product-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (min-width: 769px) and (max-width: 1024px) {
-          .product-grid { grid-template-columns: repeat(3, 1fr) !important; }
-        }
-        @media (min-width: 1025px) {
-          .product-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)) !important; }
-        }
+        @media (min-width: 481px) and (max-width: 768px)  { .product-grid { grid-template-columns: repeat(2,1fr) !important; } }
+        @media (min-width: 769px) and (max-width: 1024px) { .product-grid { grid-template-columns: repeat(3,1fr) !important; } }
+        @media (min-width: 1025px) { .product-grid { grid-template-columns: repeat(auto-fill, minmax(190px,1fr)) !important; } }
       `}</style>
 
       <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>
 
-        {/* ── Top Filter Bar ── */}
-        <div style={{
-          background: '#fff', borderBottom: '1px solid #ebebeb',
-          position: 'sticky', top: 0, zIndex: 100,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-        }}>
-          {/* Category chips row */}
+        {/* ── Top Bar ── */}
+        <div style={{ background: '#fff', borderBottom: '1px solid #ebebeb', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+          {/* Category chips */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-            <style>{`.cat-scroll::-webkit-scrollbar { display: none; }`}</style>
-            {/* Mobile brand button */}
             {isMobile && brands.length > 0 && (
               <button onClick={() => setDrawerOpen(true)} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 20, border: `1.5px solid ${selectedBrand ? '#ff6a00' : '#e8e8e8'}`, background: selectedBrand ? '#fff5f0' : '#fafafa', color: selectedBrand ? '#ff6a00' : '#666', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                <span>🏪</span>
-                <span>{activeBrandName || 'ব্র্যান্ড'}</span>
+                <span>🏪</span><span>{activeBrandName || 'ব্র্যান্ড'}</span>
                 {selectedBrand && <span style={{ fontSize: 10 }}>✓</span>}
               </button>
             )}
@@ -238,18 +244,14 @@ function ProductsPageContent() {
             ))}
           </div>
 
-          {/* Results count + sort row */}
+          {/* Count + sort */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderTop: '1px solid #f5f5f5' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 13, color: '#888' }}>
-                <b style={{ color: '#1a1a1a', fontWeight: 800 }}>{filtered.length}</b>টি পণ্য
-              </span>
+              <span style={{ fontSize: 13, color: '#888' }}><b style={{ color: '#1a1a1a', fontWeight: 800 }}>{filtered.length}</b>টি পণ্য</span>
               {selectedCat && <span style={{ fontSize: 11, background: '#fff5f0', color: '#ff6a00', fontWeight: 700, padding: '2px 8px', borderRadius: 20, border: '1px solid #ffcfaa' }}>{selectedCat}</span>}
               {activeBrandName && <span style={{ fontSize: 11, background: '#fff5f0', color: '#ff6a00', fontWeight: 700, padding: '2px 8px', borderRadius: 20, border: '1px solid #ffcfaa' }}>{activeBrandName}</span>}
               {hasActiveFilter && (
-                <button onClick={() => { setSelectedBrand(''); setSelectedCat(''); }} style={{ fontSize: 11, color: '#999', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', textDecoration: 'underline', fontFamily: 'Hind Siliguri, sans-serif' }}>
-                  ফিল্টার সরান
-                </button>
+                <button onClick={() => { setSelectedBrand(''); setSelectedCat(''); }} style={{ fontSize: 11, color: '#999', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', textDecoration: 'underline', fontFamily: 'Hind Siliguri, sans-serif' }}>ফিল্টার সরান</button>
               )}
             </div>
             <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="sort-select" style={{ border: '1.5px solid #e8e8e8', borderRadius: 9, padding: '6px 28px 6px 10px', fontSize: 12, color: '#555', outline: 'none', background: '#fafafa', minWidth: 110 }}>
@@ -260,12 +262,12 @@ function ProductsPageContent() {
           </div>
         </div>
 
-        {/* ── Mobile Brand Drawer ── */}
+        {/* ── Mobile Drawer ── */}
         {isMobile && drawerOpen && (
           <>
             <div className="drawer-overlay" onClick={() => setDrawerOpen(false)} />
             <div className="drawer" ref={drawerRef}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #f0f0f0', position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottom: '1px solid #f0f0f0', position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
                 <span style={{ fontWeight: 800, fontSize: 15, color: '#1a1a1a' }}>ব্র্যান্ড বাছুন</span>
                 <button onClick={() => setDrawerOpen(false)} style={{ background: '#f5f5f5', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#666' }}>✕</button>
               </div>
@@ -274,70 +276,71 @@ function ProductsPageContent() {
           </>
         )}
 
-        {/* ── Layout: Sidebar + Main ── */}
+        {/* ── Layout ── */}
         <div style={{ display: 'flex', maxWidth: 1440, margin: '0 auto' }}>
 
           {/* Desktop Sidebar */}
           {!isMobile && brands.length > 0 && (
-            <aside style={{ width: 210, flexShrink: 0, background: '#fff', borderRight: '1px solid #ebebeb', minHeight: 'calc(100vh - 93px)', position: 'sticky', top: 93, alignSelf: 'flex-start', overflowY: 'auto', maxHeight: 'calc(100vh - 93px)' }}>
+            <aside style={{ width: 210, flexShrink: 0, background: '#fff', borderRight: '1px solid #ebebeb', position: 'sticky', top: 93, alignSelf: 'flex-start', overflowY: 'auto', maxHeight: 'calc(100vh - 93px)' }}>
               <BrandList />
             </aside>
           )}
 
-          {/* Main Content */}
-          <main style={{ flex: 1, padding: isMobile ? '10px' : '16px' }}>
-
+          {/* Products */}
+          <main style={{ flex: 1, padding: isMobile ? 10 : 16 }}>
             {loading ? (
               <div className="product-grid" style={{ display: 'grid', gap: 12 }}>
                 {[...Array(isMobile ? 4 : 8)].map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '80px 20px', color: '#aaa', animation: 'fadeUp 0.4s ease' }}>
+              <div style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeUp 0.4s ease' }}>
                 <div style={{ fontSize: 64, marginBottom: 16 }}>📦</div>
                 <p style={{ fontSize: 16, fontWeight: 700, color: '#555', marginBottom: 6 }}>কোনো পণ্য পাওয়া যায়নি</p>
                 <p style={{ fontSize: 13, color: '#aaa', marginBottom: 20 }}>ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন</p>
                 {hasActiveFilter && (
-                  <button onClick={() => { setSelectedBrand(''); setSelectedCat(''); }} style={{ background: '#ff6a00', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif' }}>
-                    সব পণ্য দেখুন
-                  </button>
+                  <button onClick={() => { setSelectedBrand(''); setSelectedCat(''); }} style={{ background: '#ff6a00', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif' }}>সব পণ্য দেখুন</button>
                 )}
               </div>
             ) : (
               <div className="product-grid" style={{ display: 'grid', gap: 12 }}>
                 {filtered.map((p, i) => {
-                  const discount = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : null;
-                  const isNew = i < 6;
+                  const discount  = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : null;
+                  const isNew     = i < 6;
+                  const qty       = cartQty[p.id] || 0;
+                  const inCart    = qty > 0;
+
                   return (
-                    <div
-                      key={p.id}
-                      className="prod-card"
+                    <div key={p.id} className="prod-card"
                       onClick={() => router.push(`/products/${p.id}`)}
-                      style={{
-                        borderRadius: 14,
-                        border: '1.5px solid #ebebeb',
-                        overflow: 'hidden',
-                        animationDelay: `${Math.min(i * 0.05, 0.4)}s`,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                      }}
+                      style={{ borderRadius: 14, border: `1.5px solid ${inCart ? '#ffcfaa' : '#ebebeb'}`, overflow: 'hidden', animationDelay: `${Math.min(i * 0.05, 0.4)}s`, boxShadow: inCart ? '0 4px 16px rgba(255,106,0,0.1)' : '0 2px 8px rgba(0,0,0,0.04)' }}
                     >
                       {/* Image */}
                       <div className="prod-img-wrap" style={{ height: 170, position: 'relative', overflow: 'hidden', background: '#f8f8f8' }}>
-                        {p.image_url ? (
-                          <img src={p.image_url} alt={p.name} className="prod-img" />
-                        ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg, #fafafa, #f0f0f0)' }}>
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                            <span style={{ fontSize: 10, color: '#ccc', fontWeight: 600 }}>ছবি নেই</span>
-                          </div>
+                        {p.image_url
+                          ? <img src={p.image_url} alt={p.name} className="prod-img" />
+                          : (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg,#fafafa,#f0f0f0)' }}>
+                              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                              <span style={{ fontSize: 10, color: '#ccc', fontWeight: 600 }}>ছবি নেই</span>
+                            </div>
+                          )
+                        }
+
+                        {/* New badge */}
+                        {isNew && (
+                          <span style={{ position: 'absolute', top: 8, left: 8, background: 'linear-gradient(135deg,#ff6a00,#ff8c38)', color: '#fff', fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, boxShadow: '0 2px 6px rgba(255,106,0,0.3)' }}>নতুন</span>
                         )}
-                        {/* Badges */}
-                        <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          {isNew && <span style={{ background: 'linear-gradient(135deg, #ff6a00, #ff8c38)', color: '#fff', fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, boxShadow: '0 2px 6px rgba(255,106,0,0.3)' }}>নতুন</span>}
-                        </div>
+
+                        {/* Discount badge */}
                         {discount && (
-                          <span style={{ position: 'absolute', top: 8, right: 8, background: 'linear-gradient(135deg, #ef4444, #f87171)', color: '#fff', fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, boxShadow: '0 2px 6px rgba(239,68,68,0.3)' }}>
-                            -{discount}%
-                          </span>
+                          <span style={{ position: 'absolute', top: inCart || isNew ? 34 : 8, right: 8, background: 'linear-gradient(135deg,#ef4444,#f87171)', color: '#fff', fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, boxShadow: '0 2px 6px rgba(239,68,68,0.3)' }}>-{discount}%</span>
+                        )}
+
+                        {/* ★ Quantity badge on image corner */}
+                        {inCart && (
+                          <div className="qty-badge" style={{ position: 'absolute', top: 8, right: 8, background: '#ff6a00', color: '#fff', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, boxShadow: '0 2px 8px rgba(255,106,0,0.4)', border: '2px solid #fff' }}>
+                            {qty}
+                          </div>
                         )}
                       </div>
 
@@ -358,32 +361,19 @@ function ProductsPageContent() {
                           <p style={{ fontSize: 10, color: '#b0b0b0', marginBottom: 9, fontWeight: 500 }}>সর্বনিম্ন: {p.min_order}টি</p>
                         )}
 
-                        <button
-                          className="cart-btn"
-                          onClick={(e) => addToCart(e, p)}
-                          style={{
-                            width: '100%',
-                            background: addedIds[p.id]
-                              ? 'linear-gradient(135deg, #22c55e, #16a34a)'
-                              : 'linear-gradient(135deg, #ff6a00, #ff8c38)',
-                            color: '#fff',
-                            borderRadius: 10,
-                            padding: '9px 8px',
-                            fontSize: 12,
-                            fontWeight: 700,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 5,
-                            boxShadow: addedIds[p.id] ? '0 3px 10px rgba(34,197,94,0.25)' : '0 3px 10px rgba(255,106,0,0.2)',
-                          }}
-                        >
-                          {addedIds[p.id] ? (
-                            <><span>✓</span><span>যোগ হয়েছে</span></>
-                          ) : (
-                            <><span>🛒</span><span>কার্টে যোগ করুন</span></>
-                          )}
-                        </button>
+                        {/* ★ Cart button — switches to +/- when in cart */}
+                        {inCart ? (
+                          <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(135deg,#ff6a00,#ff8c38)', borderRadius: 10, overflow: 'hidden', boxShadow: '0 3px 10px rgba(255,106,0,0.25)' }}>
+                            <button className="qty-btn" onClick={e => handleDecrease(e, p)} style={{ width: 40, height: 36, color: '#fff', fontSize: 20 }}>−</button>
+                            <span style={{ color: '#fff', fontWeight: 800, fontSize: 14, letterSpacing: 0.5 }}>{qty}</span>
+                            <button className="qty-btn" onClick={e => handleIncrease(e, p)} style={{ width: 40, height: 36, color: '#fff', fontSize: 20 }}>+</button>
+                          </div>
+                        ) : (
+                          <button className="cart-btn" onClick={e => handleAddToCart(e, p)}
+                            style={{ width: '100%', background: 'linear-gradient(135deg,#ff6a00,#ff8c38)', color: '#fff', borderRadius: 10, padding: '9px 8px', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, boxShadow: '0 3px 10px rgba(255,106,0,0.2)' }}>
+                            <span>🛒</span><span>কার্টে যোগ করুন</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
