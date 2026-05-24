@@ -6,14 +6,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-/* ─── Cart helpers ───────────────────────────────────── */
 const getCart = () => JSON.parse(localStorage.getItem('cart') || '[]');
 const saveCart = (cart) => {
   localStorage.setItem('cart', JSON.stringify(cart));
   window.dispatchEvent(new Event('cartUpdated'));
 };
 
-/* ─── Shimmer Skeleton ───────────────────────────────── */
 function SkeletonCard() {
   return (
     <div style={{ background: '#fff', borderRadius: 14, border: '1.5px solid #f0f0f0', overflow: 'hidden' }}>
@@ -27,29 +25,36 @@ function SkeletonCard() {
   );
 }
 
-/* ─── Main Content ───────────────────────────────────── */
 function ProductsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [products, setProducts]       = useState([]);
-  const [brands, setBrands]           = useState([]);
-  const [categories, setCategories]   = useState([]);
+  const [products, setProducts]           = useState([]);
+  const [brands, setBrands]               = useState([]);
+  const [categories, setCategories]       = useState([]);
   const [selectedBrand, setSelectedBrand] = useState('');
-  const [selectedCat, setSelectedCat] = useState(searchParams.get('cat') || '');
-  const [sortBy, setSortBy]           = useState('newest');
-  const [loading, setLoading]         = useState(true);
-  const [cartQty, setCartQty]         = useState({});   // { productId: quantity }
-  const [drawerOpen, setDrawerOpen]   = useState(false);
-  const [isMobile, setIsMobile]       = useState(false);
+  const [selectedCat, setSelectedCat]     = useState(searchParams.get('cat') || '');
+  const [sortBy, setSortBy]               = useState('newest');
+  const [loading, setLoading]             = useState(true);
+  const [cartQty, setCartQty]             = useState({});
+  const [cartTotal, setCartTotal]         = useState(0);
+  const [cartCount, setCartCount]         = useState(0);
+  const [drawerOpen, setDrawerOpen]       = useState(false);
+  const [isMobile, setIsMobile]           = useState(false);
   const drawerRef = useRef(null);
 
-  /* ── Read cart from localStorage on mount & on updates ── */
   const syncCart = useCallback(() => {
     const cart = getCart();
     const map = {};
-    cart.forEach(i => { map[i.id] = i.quantity; });
+    let total = 0, count = 0;
+    cart.forEach(i => {
+      map[i.id] = i.quantity;
+      total += (i.price || 0) * i.quantity;
+      count += i.quantity;
+    });
     setCartQty(map);
+    setCartTotal(total);
+    setCartCount(count);
   }, []);
 
   useEffect(() => {
@@ -58,7 +63,6 @@ function ProductsPageContent() {
     return () => window.removeEventListener('cartUpdated', syncCart);
   }, [syncCart]);
 
-  /* ── Mobile detection ── */
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -66,7 +70,6 @@ function ProductsPageContent() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  /* ── Close drawer on outside click ── */
   useEffect(() => {
     if (!drawerOpen) return;
     const h = (e) => { if (drawerRef.current && !drawerRef.current.contains(e.target)) setDrawerOpen(false); };
@@ -74,7 +77,6 @@ function ProductsPageContent() {
     return () => document.removeEventListener('mousedown', h);
   }, [drawerOpen]);
 
-  /* ── Fetch ── */
   const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch(
@@ -100,13 +102,13 @@ function ProductsPageContent() {
 
   useEffect(() => { fetchProducts(); fetchBrands(); }, [fetchProducts, fetchBrands]);
 
-  /* ── Cart actions ── */
   const handleAddToCart = (e, product) => {
     e.stopPropagation();
+    const minQty = product.min_order ? parseInt(product.min_order) : 1;
     const cart = getCart();
     const idx = cart.findIndex(i => i.id === product.id);
     if (idx === -1) {
-      cart.push({ ...product, quantity: 1 });
+      cart.push({ ...product, quantity: minQty });
     } else {
       cart[idx].quantity += 1;
     }
@@ -122,10 +124,11 @@ function ProductsPageContent() {
 
   const handleDecrease = (e, product) => {
     e.stopPropagation();
+    const minQty = product.min_order ? parseInt(product.min_order) : 1;
     const cart = getCart();
     const idx = cart.findIndex(i => i.id === product.id);
     if (idx === -1) return;
-    if (cart[idx].quantity <= 1) {
+    if (cart[idx].quantity <= minQty) {
       cart.splice(idx, 1);
     } else {
       cart[idx].quantity -= 1;
@@ -133,17 +136,15 @@ function ProductsPageContent() {
     saveCart(cart);
   };
 
-  /* ── Filter & sort ── */
   let filtered = products;
   if (selectedBrand) filtered = filtered.filter(p => p.brand_id === selectedBrand);
   if (selectedCat)   filtered = filtered.filter(p => p.category === selectedCat);
   if (sortBy === 'price_asc')  filtered = [...filtered].sort((a,b) => a.price - b.price);
   if (sortBy === 'price_desc') filtered = [...filtered].sort((a,b) => b.price - a.price);
 
-  const hasActiveFilter  = selectedBrand || selectedCat;
-  const activeBrandName  = brands.find(b => b.id === selectedBrand)?.name;
+  const hasActiveFilter = selectedBrand || selectedCat;
+  const activeBrandName = brands.find(b => b.id === selectedBrand)?.name;
 
-  /* ── Brand list (shared by sidebar & drawer) ── */
   const BrandList = () => (
     <div style={{ padding: '16px 12px' }}>
       <p style={{ fontSize: 10, fontWeight: 800, color: '#bbb', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, paddingLeft: 6 }}>ব্র্যান্ড বাছুন</p>
@@ -176,42 +177,38 @@ function ProductsPageContent() {
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { font-family: 'Hind Siliguri', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
 
-        @keyframes shimmer  { 0%   { background-position: 200% 0; }  100% { background-position: -200% 0; } }
-        @keyframes fadeUp   { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes popIn    { 0%   { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes slideLeft{ from { transform: translateX(-100%); } to { transform: translateX(0); } }
-        @keyframes fadeScrim{ from { opacity: 0; } to { opacity: 1; } }
+        @keyframes shimmer   { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @keyframes fadeUp    { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn     { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes slideLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes fadeScrim { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp   { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         .prod-card { animation: fadeUp 0.3s ease forwards; background: #fff; cursor: pointer; transition: transform 0.22s cubic-bezier(.4,0,.2,1), box-shadow 0.22s, border-color 0.22s; }
         .prod-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(255,106,0,0.12) !important; border-color: #ffcfaa !important; }
         .prod-card:active { transform: scale(0.98); }
-
         .prod-img { transition: transform 0.35s ease; display: block; width: 100%; height: 100%; object-fit: cover; }
         .prod-card:hover .prod-img { transform: scale(1.06); }
-
         .qty-badge { animation: popIn 0.3s cubic-bezier(.4,0,.2,1) forwards; }
-
-        .qty-btn { border: none; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; font-weight: 800; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: none; }
-        .qty-btn:active { transform: scale(0.88); }
-
+        .qty-btn { border: none; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; font-weight: 800; font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: none; }
+        .qty-btn:active { transform: scale(0.85); }
         .cart-btn { border: none; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; transition: all 0.18s; }
         .cart-btn:hover { filter: brightness(0.92); }
         .cart-btn:active { transform: scale(0.97); }
-
         .cat-chip { cursor: pointer; white-space: nowrap; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; }
         .cat-chip:hover { border-color: #ff6a00 !important; color: #ff6a00 !important; }
-
         .sort-select { cursor: pointer; font-family: 'Hind Siliguri', sans-serif; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
         .sort-select:focus { outline: none; border-color: #ff6a00 !important; }
-
         .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.38); z-index: 200; animation: fadeScrim 0.2s ease; }
         .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 260px; background: #fff; z-index: 201; overflow-y: auto; animation: slideLeft 0.25s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.13); }
-
+        .float-cart { animation: slideUp 0.35s cubic-bezier(.4,0,.2,1) forwards; }
+        .float-cart:hover { filter: brightness(0.93); transform: translateY(-2px); }
+        .float-cart:active { transform: scale(0.97); }
         ::-webkit-scrollbar { height: 4px; width: 4px; }
         ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
 
         @media (max-width: 480px) {
-          .product-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+          .product-grid { grid-template-columns: repeat(2,1fr) !important; gap: 8px !important; }
           .prod-img-wrap { height: 140px !important; }
           .prod-name { font-size: 12px !important; min-height: 32px !important; }
           .prod-price { font-size: 15px !important; }
@@ -219,14 +216,13 @@ function ProductsPageContent() {
         }
         @media (min-width: 481px) and (max-width: 768px)  { .product-grid { grid-template-columns: repeat(2,1fr) !important; } }
         @media (min-width: 769px) and (max-width: 1024px) { .product-grid { grid-template-columns: repeat(3,1fr) !important; } }
-        @media (min-width: 1025px) { .product-grid { grid-template-columns: repeat(auto-fill, minmax(190px,1fr)) !important; } }
+        @media (min-width: 1025px) { .product-grid { grid-template-columns: repeat(auto-fill,minmax(190px,1fr)) !important; } }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>
+      <div style={{ minHeight: '100vh', background: '#f5f5f5', paddingBottom: cartCount > 0 ? 80 : 0 }}>
 
-        {/* ── Top Bar ── */}
+        {/* Top Bar */}
         <div style={{ background: '#fff', borderBottom: '1px solid #ebebeb', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-          {/* Category chips */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', overflowX: 'auto', scrollbarWidth: 'none' }}>
             {isMobile && brands.length > 0 && (
               <button onClick={() => setDrawerOpen(true)} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 20, border: `1.5px solid ${selectedBrand ? '#ff6a00' : '#e8e8e8'}`, background: selectedBrand ? '#fff5f0' : '#fafafa', color: selectedBrand ? '#ff6a00' : '#666', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
@@ -243,15 +239,13 @@ function ProductsPageContent() {
               </button>
             ))}
           </div>
-
-          {/* Count + sort */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderTop: '1px solid #f5f5f5' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 13, color: '#888' }}><b style={{ color: '#1a1a1a', fontWeight: 800 }}>{filtered.length}</b>টি পণ্য</span>
               {selectedCat && <span style={{ fontSize: 11, background: '#fff5f0', color: '#ff6a00', fontWeight: 700, padding: '2px 8px', borderRadius: 20, border: '1px solid #ffcfaa' }}>{selectedCat}</span>}
               {activeBrandName && <span style={{ fontSize: 11, background: '#fff5f0', color: '#ff6a00', fontWeight: 700, padding: '2px 8px', borderRadius: 20, border: '1px solid #ffcfaa' }}>{activeBrandName}</span>}
               {hasActiveFilter && (
-                <button onClick={() => { setSelectedBrand(''); setSelectedCat(''); }} style={{ fontSize: 11, color: '#999', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', textDecoration: 'underline', fontFamily: 'Hind Siliguri, sans-serif' }}>ফিল্টার সরান</button>
+                <button onClick={() => { setSelectedBrand(''); setSelectedCat(''); }} style={{ fontSize: 11, color: '#999', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'Hind Siliguri, sans-serif' }}>ফিল্টার সরান</button>
               )}
             </div>
             <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="sort-select" style={{ border: '1.5px solid #e8e8e8', borderRadius: 9, padding: '6px 28px 6px 10px', fontSize: 12, color: '#555', outline: 'none', background: '#fafafa', minWidth: 110 }}>
@@ -262,7 +256,7 @@ function ProductsPageContent() {
           </div>
         </div>
 
-        {/* ── Mobile Drawer ── */}
+        {/* Mobile Drawer */}
         {isMobile && drawerOpen && (
           <>
             <div className="drawer-overlay" onClick={() => setDrawerOpen(false)} />
@@ -276,17 +270,14 @@ function ProductsPageContent() {
           </>
         )}
 
-        {/* ── Layout ── */}
+        {/* Layout */}
         <div style={{ display: 'flex', maxWidth: 1440, margin: '0 auto' }}>
-
-          {/* Desktop Sidebar */}
           {!isMobile && brands.length > 0 && (
             <aside style={{ width: 210, flexShrink: 0, background: '#fff', borderRight: '1px solid #ebebeb', position: 'sticky', top: 93, alignSelf: 'flex-start', overflowY: 'auto', maxHeight: 'calc(100vh - 93px)' }}>
               <BrandList />
             </aside>
           )}
 
-          {/* Products */}
           <main style={{ flex: 1, padding: isMobile ? 10 : 16 }}>
             {loading ? (
               <div className="product-grid" style={{ display: 'grid', gap: 12 }}>
@@ -305,19 +296,20 @@ function ProductsPageContent() {
               <div className="product-grid" style={{ display: 'grid', gap: 12 }}>
                 {filtered.map((p, i) => {
                   const discount  = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : null;
-                  const isNew     = i < 6;
                   const qty       = cartQty[p.id] || 0;
                   const inCart    = qty > 0;
+                  const outOfStock = p.stock !== undefined && p.stock !== null && p.stock <= 0;
+                  const minQty    = p.min_order ? parseInt(p.min_order) : 1;
 
                   return (
                     <div key={p.id} className="prod-card"
-                      onClick={() => router.push(`/products/${p.id}`)}
-                      style={{ borderRadius: 14, border: `1.5px solid ${inCart ? '#ffcfaa' : '#ebebeb'}`, overflow: 'hidden', animationDelay: `${Math.min(i * 0.05, 0.4)}s`, boxShadow: inCart ? '0 4px 16px rgba(255,106,0,0.1)' : '0 2px 8px rgba(0,0,0,0.04)' }}
+                      onClick={() => !outOfStock && router.push(`/products/${p.id}`)}
+                      style={{ borderRadius: 14, border: `1.5px solid ${inCart ? '#ffcfaa' : '#ebebeb'}`, overflow: 'hidden', animationDelay: `${Math.min(i * 0.05, 0.4)}s`, boxShadow: inCart ? '0 4px 16px rgba(255,106,0,0.1)' : '0 2px 8px rgba(0,0,0,0.04)', opacity: outOfStock ? 0.72 : 1 }}
                     >
                       {/* Image */}
                       <div className="prod-img-wrap" style={{ height: 170, position: 'relative', overflow: 'hidden', background: '#f8f8f8' }}>
                         {p.image_url
-                          ? <img src={p.image_url} alt={p.name} className="prod-img" />
+                          ? <img src={p.image_url} alt={p.name} className="prod-img" loading="lazy" />
                           : (
                             <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg,#fafafa,#f0f0f0)' }}>
                               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
@@ -326,21 +318,23 @@ function ProductsPageContent() {
                           )
                         }
 
-                        {/* New badge */}
-                        {isNew && (
-                          <span style={{ position: 'absolute', top: 8, left: 8, background: 'linear-gradient(135deg,#ff6a00,#ff8c38)', color: '#fff', fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, boxShadow: '0 2px 6px rgba(255,106,0,0.3)' }}>নতুন</span>
+                        {/* Out of stock overlay */}
+                        {outOfStock && (
+                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ background: '#ef4444', color: '#fff', fontSize: 11, fontWeight: 800, padding: '5px 14px', borderRadius: 20 }}>স্টক শেষ</span>
+                          </div>
                         )}
 
-                        {/* Discount badge */}
-                        {discount && (
-                          <span style={{ position: 'absolute', top: inCart || isNew ? 34 : 8, right: 8, background: 'linear-gradient(135deg,#ef4444,#f87171)', color: '#fff', fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, boxShadow: '0 2px 6px rgba(239,68,68,0.3)' }}>-{discount}%</span>
-                        )}
-
-                        {/* ★ Quantity badge on image corner */}
+                        {/* Quantity badge — top LEFT */}
                         {inCart && (
-                          <div className="qty-badge" style={{ position: 'absolute', top: 8, right: 8, background: '#ff6a00', color: '#fff', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, boxShadow: '0 2px 8px rgba(255,106,0,0.4)', border: '2px solid #fff' }}>
+                          <div className="qty-badge" style={{ position: 'absolute', top: 8, left: 8, background: '#ff6a00', color: '#fff', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, boxShadow: '0 2px 8px rgba(255,106,0,0.4)', border: '2px solid #fff' }}>
                             {qty}
                           </div>
+                        )}
+
+                        {/* Discount badge — top RIGHT */}
+                        {discount && !outOfStock && (
+                          <span style={{ position: 'absolute', top: 8, right: 8, background: 'linear-gradient(135deg,#ef4444,#f87171)', color: '#fff', fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, boxShadow: '0 2px 6px rgba(239,68,68,0.3)' }}>-{discount}%</span>
                         )}
                       </div>
 
@@ -350,23 +344,29 @@ function ProductsPageContent() {
                           {p.name}
                         </p>
 
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: p.min_order ? 4 : 10 }}>
-                          <span className="prod-price" style={{ fontSize: 17, fontWeight: 800, color: '#ff6a00' }}>৳{p.price?.toLocaleString('bn-BD')}</span>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: minQty > 1 ? 4 : 10 }}>
+                          <span className="prod-price" style={{ fontSize: 17, fontWeight: 800, color: outOfStock ? '#aaa' : '#ff6a00' }}>
+                            ৳{p.price?.toLocaleString('bn-BD')}
+                          </span>
+                          {/* MRP: শুধু দেখাবে যদি আসলেই বড় হয় */}
                           {p.mrp && p.mrp > p.price && (
                             <span style={{ fontSize: 11, color: '#c0c0c0', textDecoration: 'line-through', fontWeight: 500 }}>৳{p.mrp?.toLocaleString('bn-BD')}</span>
                           )}
                         </div>
 
-                        {p.min_order && (
-                          <p style={{ fontSize: 10, color: '#b0b0b0', marginBottom: 9, fontWeight: 500 }}>সর্বনিম্ন: {p.min_order}টি</p>
+                        {/* Min order — শুধু দেখাবে যদি ১ এর বেশি হয় */}
+                        {minQty > 1 && (
+                          <p style={{ fontSize: 10, color: '#f59e0b', marginBottom: 9, fontWeight: 600 }}>সর্বনিম্ন অর্ডার: {minQty}টি</p>
                         )}
 
-                        {/* ★ Cart button — switches to +/- when in cart */}
-                        {inCart ? (
+                        {/* Cart button */}
+                        {outOfStock ? (
+                          <div style={{ width: '100%', background: '#f3f4f6', color: '#aaa', borderRadius: 10, padding: '9px 8px', fontSize: 12, fontWeight: 700, textAlign: 'center' }}>স্টক শেষ</div>
+                        ) : inCart ? (
                           <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(135deg,#ff6a00,#ff8c38)', borderRadius: 10, overflow: 'hidden', boxShadow: '0 3px 10px rgba(255,106,0,0.25)' }}>
-                            <button className="qty-btn" onClick={e => handleDecrease(e, p)} style={{ width: 40, height: 36, color: '#fff', fontSize: 20 }}>−</button>
-                            <span style={{ color: '#fff', fontWeight: 800, fontSize: 14, letterSpacing: 0.5 }}>{qty}</span>
-                            <button className="qty-btn" onClick={e => handleIncrease(e, p)} style={{ width: 40, height: 36, color: '#fff', fontSize: 20 }}>+</button>
+                            <button className="qty-btn" onClick={e => handleDecrease(e, p)} style={{ width: 40, height: 36, color: '#fff', fontSize: 22 }}>−</button>
+                            <span style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>{qty}</span>
+                            <button className="qty-btn" onClick={e => handleIncrease(e, p)} style={{ width: 40, height: 36, color: '#fff', fontSize: 22 }}>+</button>
                           </div>
                         ) : (
                           <button className="cart-btn" onClick={e => handleAddToCart(e, p)}
@@ -382,12 +382,31 @@ function ProductsPageContent() {
             )}
           </main>
         </div>
+
+        {/* ── Floating Cart Button ── */}
+        {cartCount > 0 && (
+          <div style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 150, width: 'calc(100% - 32px)', maxWidth: 420 }}>
+            <button className="float-cart" onClick={() => router.push('/cart')}
+              style={{ width: '100%', background: 'linear-gradient(135deg,#ff6a00,#ff8c38)', color: '#fff', border: 'none', borderRadius: 16, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', boxShadow: '0 8px 28px rgba(255,106,0,0.38)', fontFamily: 'Hind Siliguri, sans-serif', transition: 'all 0.2s' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ background: 'rgba(255,255,255,0.25)', borderRadius: 10, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛒</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 11, opacity: 0.85 }}>{cartCount}টি পণ্য</div>
+                  <div style={{ fontSize: 15, fontWeight: 800 }}>৳{cartTotal.toLocaleString('bn-BD')}</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700 }}>
+                <span>কার্ট দেখুন</span>
+                <span style={{ fontSize: 16 }}>→</span>
+              </div>
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
 }
 
-/* ─── Page Wrapper ───────────────────────────────────── */
 export default function ProductsPage() {
   return (
     <Suspense fallback={
