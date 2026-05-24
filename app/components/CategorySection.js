@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -10,21 +10,20 @@ const headers = {
   'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
 };
 
-// fallback icons for categories
 const CAT_META = {
-  'পোশাক': { icon: '👕', bg: '#fff3eb' },
-  'মুদি': { icon: '🛒', bg: '#e8f5e9' },
-  'খাদ্য': { icon: '🍚', bg: '#e8f5e9' },
-  'ইলেকট্রনিক': { icon: '📱', bg: '#e3f2fd' },
-  'গৃহস্থালি': { icon: '🏠', bg: '#fce4ec' },
-  'কৃষি': { icon: '🌾', bg: '#f1f8e9' },
-  'সৌন্দর্য': { icon: '🧴', bg: '#f3e5f5' },
-  'শিশু': { icon: '👶', bg: '#fff8e1' },
-  'প্যাকেজিং': { icon: '📦', bg: '#e0f2f1' },
-  'হার্ডওয়্যার': { icon: '🔧', bg: '#fbe9e7' },
-  'অর্গানিক': { icon: '🌿', bg: '#f9fbe7' },
-  'পানীয়': { icon: '🥤', bg: '#e3f2fd' },
-  'default': { icon: '🏷️', bg: '#f5f5f5' },
+  'পোশাক':     { icon: '👕', color: '#f97316' },
+  'মুদি':      { icon: '🛒', color: '#16a34a' },
+  'খাদ্য':     { icon: '🍚', color: '#16a34a' },
+  'ইলেকট্রনিক':{ icon: '📱', color: '#2563eb' },
+  'গৃহস্থালি': { icon: '🏠', color: '#db2777' },
+  'কৃষি':      { icon: '🌾', color: '#65a30d' },
+  'সৌন্দর্য':  { icon: '🧴', color: '#9333ea' },
+  'শিশু':      { icon: '👶', color: '#d97706' },
+  'প্যাকেজিং': { icon: '📦', color: '#0891b2' },
+  'হার্ডওয়্যার':{ icon: '🔧', color: '#dc2626' },
+  'অর্গানিক':  { icon: '🌿', color: '#65a30d' },
+  'পানীয়':    { icon: '🥤', color: '#0284c7' },
+  'default':   { icon: '🏷️', color: '#f97316' },
 };
 
 function getMeta(name) {
@@ -39,6 +38,7 @@ export default function CategorySection() {
   const [activeId, setActiveId] = useState(null);
   const [visible, setVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const subRef = useRef(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -56,23 +56,16 @@ export default function CategorySection() {
         );
         const data = await res.json();
         if (!Array.isArray(data)) return;
-
-        // parent_id null = main category
         const parents = data.filter(c => !c.parent_id);
         const children = data.filter(c => c.parent_id);
-
-        // sub category map: { parent_id: [children] }
         const map = {};
         children.forEach(c => {
           if (!map[c.parent_id]) map[c.parent_id] = [];
           map[c.parent_id].push(c);
         });
-
         setCategories(parents);
         setSubMap(map);
-
-        // animate in
-        setTimeout(() => setVisible(true), 100);
+        setTimeout(() => setVisible(true), 80);
       } catch (e) {
         console.error(e);
       }
@@ -80,9 +73,15 @@ export default function CategorySection() {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    if (activeId && subRef.current) {
+      subRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [activeId]);
+
   const handleCatClick = (cat) => {
     if (subMap[cat.id]?.length > 0) {
-      setActiveId(activeId === cat.id ? null : cat.id);
+      setActiveId(prev => prev === cat.id ? null : cat.id);
     } else {
       router.push(`/products?cat=${encodeURIComponent(cat.name)}`);
     }
@@ -92,72 +91,131 @@ export default function CategorySection() {
     <>
       <style>{`
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes subSlide {
-          from { opacity: 0; max-height: 0; }
-          to { opacity: 1; max-height: 300px; }
+        @keyframes subIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        .cat-card {
+        @keyframes chipPop {
+          from { opacity: 0; transform: scale(0.88); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pulse-ring {
+          0%   { box-shadow: 0 0 0 0 rgba(249,115,22,0.35); }
+          70%  { box-shadow: 0 0 0 8px rgba(249,115,22,0); }
+          100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+        }
+
+        .cs-card {
           cursor: pointer;
-          transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-          border: 1.5px solid #eee;
+          transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s ease;
+          -webkit-tap-highlight-color: transparent;
+          user-select: none;
         }
-        .cat-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 6px 20px rgba(255,106,0,0.12);
-          border-color: #ff6a00 !important;
+        .cs-card:hover {
+          transform: translateY(-4px) scale(1.03);
+          box-shadow: 0 8px 24px rgba(249,115,22,0.18);
         }
-        .cat-card.active {
-          border-color: #ff6a00 !important;
-          box-shadow: 0 4px 16px rgba(255,106,0,0.15);
+        .cs-card:active {
+          transform: scale(0.96);
         }
+        .cs-card.active {
+          box-shadow: 0 0 0 2px #f97316, 0 8px 24px rgba(249,115,22,0.22);
+          animation: pulse-ring 0.6s ease forwards;
+        }
+
+        .cs-icon-wrap {
+          transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .cs-card.active .cs-icon-wrap {
+          background: #f97316 !important;
+          transform: scale(1.08);
+        }
+        .cs-card.active .cs-label {
+          color: #f97316 !important;
+          font-weight: 800 !important;
+        }
+
         .sub-chip {
           cursor: pointer;
-          transition: background 0.15s, color 0.15s;
-          font-size: 11px;
-          padding: 5px 12px;
-          border-radius: 20px;
-          border: 1px solid #eee;
-          background: #fff;
-          color: #555;
+          transition: all 0.15s ease;
           white-space: nowrap;
+          flex-shrink: 0;
+          -webkit-tap-highlight-color: transparent;
         }
         .sub-chip:hover {
-          background: #ff6a00;
-          color: #fff;
-          border-color: #ff6a00;
+          background: #f97316 !important;
+          color: #fff !important;
+          border-color: #f97316 !important;
+          transform: translateY(-1px);
+          box-shadow: 0 3px 10px rgba(249,115,22,0.25);
+        }
+        .sub-chip:active {
+          transform: scale(0.95);
         }
         .sub-scroll::-webkit-scrollbar { display: none; }
         .sub-scroll { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      <div style={{ padding: isMobile ? '14px 12px' : '16px 20px' }}>
+      <div style={{
+        padding: isMobile ? '16px 12px' : '20px 20px',
+        background: '#fff',
+        borderRadius: isMobile ? 0 : '16px',
+      }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          marginBottom: '16px',
+        }}>
           <div>
-            <h2 style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: '800', color: '#1a1a1a', margin: 0 }}>
+            <div style={{
+              fontSize: '10px',
+              fontWeight: '700',
+              color: '#f97316',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              marginBottom: '3px',
+            }}>
+              ব্রাউজ করুন
+            </div>
+            <h2 style={{
+              fontSize: isMobile ? '16px' : '18px',
+              fontWeight: '800',
+              color: '#111',
+              margin: 0,
+              lineHeight: 1.2,
+            }}>
               পণ্য বিভাগ
             </h2>
-            <p style={{ fontSize: '11px', color: '#999', margin: '2px 0 0' }}>
-              বিভাগ বেছে নিন
-            </p>
           </div>
-          <span
-            style={{ fontSize: '13px', color: '#ff6a00', cursor: 'pointer', fontWeight: '600' }}
+          <button
             onClick={() => router.push('/products')}
+            style={{
+              fontSize: '12px',
+              color: '#f97316',
+              fontWeight: '700',
+              background: '#fff3eb',
+              border: 'none',
+              padding: '6px 14px',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              letterSpacing: '0.02em',
+            }}
           >
             সব দেখুন →
-          </span>
+          </button>
         </div>
 
-        {/* Category grid */}
+        {/* Category Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? 'repeat(4, 1fr)' : 'repeat(auto-fill, minmax(100px, 1fr))',
-          gap: isMobile ? '8px' : '10px'
+          gridTemplateColumns: isMobile ? 'repeat(4, 1fr)' : 'repeat(auto-fill, minmax(90px, 1fr))',
+          gap: isMobile ? '10px' : '12px',
         }}>
           {categories.map((cat, i) => {
             const meta = getMeta(cat.name);
@@ -167,93 +225,182 @@ export default function CategorySection() {
             return (
               <div
                 key={cat.id}
-                className={`cat-card${isActive ? ' active' : ''}`}
+                className={`cs-card${isActive ? ' active' : ''}`}
                 onClick={() => handleCatClick(cat)}
                 style={{
                   background: '#fff',
-                  borderRadius: isMobile ? '10px' : '12px',
-                  padding: isMobile ? '10px 6px' : '14px 10px',
+                  borderRadius: '14px',
+                  padding: isMobile ? '10px 6px 8px' : '14px 8px 10px',
                   textAlign: 'center',
+                  border: isActive ? '2px solid #f97316' : '1.5px solid #f0f0f0',
+                  position: 'relative',
                   opacity: visible ? 1 : 0,
-                  animation: visible ? `fadeUp 0.4s ease forwards` : 'none',
-                  animationDelay: `${i * 0.05}s`,
-                  position: 'relative'
+                  animation: visible ? `fadeUp 0.35s ease forwards` : 'none',
+                  animationDelay: `${i * 0.04}s`,
                 }}
               >
-                {/* Sub indicator */}
+                {/* Sub-indicator dot */}
                 {hasSubs && (
-                  <span style={{
-                    position: 'absolute', top: 6, right: 6,
-                    fontSize: '8px', color: '#ff6a00', fontWeight: '800'
-                  }}>
-                    {isActive ? '▲' : '▼'}
-                  </span>
+                  <div style={{
+                    position: 'absolute',
+                    top: 7, right: 7,
+                    width: 6, height: 6,
+                    borderRadius: '50%',
+                    background: isActive ? '#f97316' : '#d1d5db',
+                    transition: 'background 0.2s',
+                  }} />
                 )}
 
-                <div style={{
-                  width: isMobile ? '36px' : '44px',
-                  height: isMobile ? '36px' : '44px',
-                  borderRadius: '10px',
-                  background: isActive ? '#ff6a00' : meta.bg,
-                  margin: '0 auto 6px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: isMobile ? '18px' : '22px',
-                  transition: 'background 0.2s'
-                }}>
+                {/* Icon */}
+                <div
+                  className="cs-icon-wrap"
+                  style={{
+                    width: isMobile ? '40px' : '48px',
+                    height: isMobile ? '40px' : '48px',
+                    borderRadius: '12px',
+                    background: isActive ? '#f97316' : `${meta.color}15`,
+                    margin: '0 auto 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: isMobile ? '20px' : '24px',
+                    overflow: 'hidden',
+                  }}
+                >
                   {cat.image_url
-                    ? <img src={cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} />
+                    ? <img
+                        src={cat.image_url}
+                        alt={cat.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
+                      />
                     : meta.icon
                   }
                 </div>
 
-                <div style={{
-                  fontSize: isMobile ? '10px' : '12px',
-                  fontWeight: '700',
-                  color: isActive ? '#ff6a00' : '#222',
-                  lineHeight: 1.3
-                }}>
+                {/* Label */}
+                <div
+                  className="cs-label"
+                  style={{
+                    fontSize: isMobile ? '10px' : '11px',
+                    fontWeight: isActive ? '800' : '600',
+                    color: isActive ? '#f97316' : '#333',
+                    lineHeight: 1.3,
+                    transition: 'color 0.2s, font-weight 0.2s',
+                  }}
+                >
                   {cat.name}
                 </div>
+
+                {/* Chevron for sub */}
+                {hasSubs && (
+                  <div style={{
+                    fontSize: '8px',
+                    color: isActive ? '#f97316' : '#bbb',
+                    marginTop: '3px',
+                    transition: 'transform 0.2s, color 0.2s',
+                    transform: isActive ? 'rotate(180deg)' : 'rotate(0deg)',
+                    display: 'inline-block',
+                  }}>
+                    ▼
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
 
-        {/* Sub categories — active category এর নিচে */}
+        {/* Sub-categories panel */}
         {activeId && subMap[activeId] && (
           <div
-            className="sub-scroll"
+            ref={subRef}
             style={{
-              marginTop: 12,
-              display: 'flex',
-              gap: 8,
-              overflowX: 'auto',
-              padding: '10px 4px',
-              animation: 'subSlide 0.3s ease forwards',
-              borderTop: '1px solid #f3f4f6'
+              marginTop: '14px',
+              padding: '14px 4px 4px',
+              borderTop: '1.5px dashed #f0f0f0',
+              animation: 'subIn 0.25s ease forwards',
             }}
           >
-            {/* সব দেখুন chip */}
-            <span
-              className="sub-chip"
-              style={{ background: '#fff3eb', color: '#ff6a00', borderColor: '#ff6a00', fontWeight: '700' }}
-              onClick={() => {
-                const parent = categories.find(c => c.id === activeId);
-                router.push(`/products?cat=${encodeURIComponent(parent?.name)}`);
+            {/* Sub panel header */}
+            <div style={{
+              fontSize: '10px',
+              fontWeight: '700',
+              color: '#aaa',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: '10px',
+              paddingLeft: '4px',
+            }}>
+              {categories.find(c => c.id === activeId)?.name} → সাব-ক্যাটাগরি
+            </div>
+
+            {/* Chips row */}
+            <div
+              className="sub-scroll"
+              style={{
+                display: 'flex',
+                gap: '8px',
+                overflowX: 'auto',
+                paddingBottom: '6px',
               }}
             >
-              সব দেখুন
-            </span>
-
-            {subMap[activeId].map(sub => (
+              {/* All chip */}
               <span
-                key={sub.id}
                 className="sub-chip"
-                onClick={() => router.push(`/products?cat=${encodeURIComponent(sub.name)}`)}
+                onClick={() => {
+                  const parent = categories.find(c => c.id === activeId);
+                  router.push(`/products?cat=${encodeURIComponent(parent?.name)}`);
+                }}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '20px',
+                  border: '1.5px solid #f97316',
+                  background: '#fff3eb',
+                  color: '#f97316',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  animation: 'chipPop 0.2s ease forwards',
+                }}
               >
-                {sub.name}
+                🏷️ সব
               </span>
-            ))}
+
+              {subMap[activeId].map((sub, i) => (
+                <span
+                  key={sub.id}
+                  className="sub-chip"
+                  onClick={() => router.push(`/products?sub=${encodeURIComponent(sub.name)}`)}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: '20px',
+                    border: '1.5px solid #e5e7eb',
+                    background: '#fafafa',
+                    color: '#444',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    animation: `chipPop 0.2s ease forwards`,
+                    animationDelay: `${i * 0.04}s`,
+                    opacity: 0,
+                  }}
+                >
+                  {sub.image_url && (
+                    <img
+                      src={sub.image_url}
+                      alt={sub.name}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '4px',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  )}
+                  {sub.name}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>
