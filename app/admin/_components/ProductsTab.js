@@ -6,16 +6,10 @@ const FONT = 'var(--font-hind-siliguri), sans-serif';
 const SUPABASE_URL = 'https://xxqtdlwglpggqafecuka.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4cXRkbHdnbHBnZ3FhZmVjdWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNDQwODcsImV4cCI6MjA5MjcyMDA4N30.gkqQTxM1n6Jqe-fBrf9RaI1EByJTX7Uv1QvECqzSDDI';
 
-const CATEGORIES = [
-  'Food & Grocery', 'Grains', 'Dal & Lentils', 'Oil & Ghee',
-  'Sugar & Salt', 'Soft Drinks', 'Snacks', 'Beverages',
-  'Personal Care', 'Household', 'Stationery', 'Electronics',
-];
-
 const UNITS = ['Piece', 'Dozen', 'KG', 'Gram', 'Litre', 'ML', 'Sack', 'Packet', 'Carton', 'Box'];
 
 const EMPTY_FORM = {
-  name: '', category: '', cost_price: '', mrp: '', price: '',
+  name: '', category: '', sub_category: '', cost_price: '', mrp: '', price: '',
   trade_price: '', discount_price: '',
   unit: '', stock: '', moq: '1', max_qty: '',
   image_url: '', description: '', brand: '', sku: '', weight: '', active: true,
@@ -118,6 +112,8 @@ function ProfitBadge({ cost, selling }) {
 export default function ProductsTab() {
   const [products, setProducts] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
@@ -128,7 +124,6 @@ export default function ProductsTab() {
   const [filterCat, setFilterCat] = useState('');
   const [toasts, setToasts] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [dynCats, setDynCats] = useState([]);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef();
 
@@ -143,12 +138,22 @@ export default function ProductsTab() {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [pRes, bRes] = await Promise.all([fetch('/api/products'), fetch('/api/brands')]);
+      const [pRes, bRes, cRes] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/brands'),
+        fetch(`${SUPABASE_URL}/rest/v1/categories?order=name.asc`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          }
+        })
+      ]);
       const pData = await pRes.json();
       const bData = await bRes.json();
+      const cData = await cRes.json();
       setProducts(pData || []);
       setBrands(bData || []);
-      setDynCats([...new Set((pData || []).map((p) => p.category).filter(Boolean))]);
+      setCategories(Array.isArray(cData) ? cData : []);
     } catch { toast('Failed to load data', 'error'); }
     finally { setLoading(false); }
   };
@@ -156,6 +161,13 @@ export default function ProductsTab() {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((p) => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleCategoryChange = (e) => {
+    const parentId = e.target.value;
+    setFormData(p => ({ ...p, category: parentId, sub_category: '' }));
+    const subs = categories.filter(c => c.parent_id === parentId);
+    setSubCategories(subs);
   };
 
   const handleImageUpload = async (e) => {
@@ -177,10 +189,16 @@ export default function ProductsTab() {
     if (fileRef.current) fileRef.current.value = '';
   };
 
-  const openAdd = () => { setFormData(EMPTY_FORM); setEditId(null); setShowForm(true); };
+  const openAdd = () => {
+    setFormData(EMPTY_FORM);
+    setSubCategories([]);
+    setEditId(null);
+    setShowForm(true);
+  };
+
   const openEdit = (p) => {
     setFormData({
-      name: p.name || '', category: p.category || '',
+      name: p.name || '', category: p.category || '', sub_category: p.sub_category || '',
       cost_price: p.cost_price || '', mrp: p.mrp || '', price: p.price || '',
       trade_price: p.trade_price || '', discount_price: p.discount_price || '',
       unit: p.unit || '', stock: p.stock || '', moq: p.moq || '1',
@@ -188,7 +206,15 @@ export default function ProductsTab() {
       description: p.description || '', brand: p.brand || '',
       sku: p.sku || '', weight: p.weight || '', active: p.active !== false,
     });
-    setEditId(p.id); setShowForm(true);
+    // load sub-categories for this product's parent category
+    if (p.category) {
+      const subs = categories.filter(c => c.parent_id === p.category);
+      setSubCategories(subs);
+    } else {
+      setSubCategories([]);
+    }
+    setEditId(p.id);
+    setShowForm(true);
   };
 
   const handleSubmit = async () => {
@@ -226,7 +252,8 @@ export default function ProductsTab() {
     } catch { toast('Update failed', 'error'); }
   };
 
-  const allCats = [...new Set([...CATEGORIES, ...dynCats])];
+  const parentCategories = categories.filter(c => !c.parent_id);
+
   const filtered = products.filter((p) => {
     const s = p.name?.toLowerCase().includes(search.toLowerCase());
     const c = filterCat ? p.category === filterCat : true;
@@ -257,7 +284,7 @@ export default function ProductsTab() {
           style={{ ...inputStyle, flex: 1, minWidth: 200 }} />
         <select value={filterCat} onChange={(e) => setFilterCat(e.target.value)} style={{ ...inputStyle, width: 200 }}>
           <option value="">All Categories</option>
-          {allCats.map((c) => <option key={c} value={c}>{c}</option>)}
+          {parentCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
 
@@ -284,6 +311,8 @@ export default function ProductsTab() {
             <tbody>
               {filtered.map((p) => {
                 const profit = p.price && p.cost_price ? parseFloat(p.price) - parseFloat(p.cost_price) : null;
+                const parentCat = categories.find(c => c.id === p.category);
+                const subCat = categories.find(c => c.id === p.sub_category);
                 return (
                   <tr key={p.id} style={{ borderBottom: `1px solid ${C.border}` }}
                     onMouseEnter={(e) => e.currentTarget.style.background = C.surfaceHover}
@@ -305,7 +334,10 @@ export default function ProductsTab() {
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: 13, color: C.textMuted, fontFamily: FONT }}>{p.category || '—'}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ fontSize: 13, color: C.textMuted, fontFamily: FONT }}>{parentCat?.name || '—'}</div>
+                      {subCat && <div style={{ fontSize: 11, color: C.amber, fontFamily: FONT }}>↳ {subCat.name}</div>}
+                    </td>
                     <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                       <div style={{ fontSize: 13, color: C.textMuted, fontFamily: FONT }}>{p.cost_price ? `৳${p.cost_price}` : '—'}</div>
                     </td>
@@ -421,21 +453,45 @@ export default function ProductsTab() {
                   placeholder="e.g. Masur Dal" style={inputStyle} />
               </Field>
 
-              {/* Category + Unit */}
+              {/* Category + Sub Category */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <Field label="Category">
-                  <select name="category" value={formData.category} onChange={handleChange} style={inputStyle}>
+                  <select name="category" value={formData.category} onChange={handleCategoryChange} style={inputStyle}>
                     <option value="">Select category</option>
-                    {allCats.map((c) => <option key={c} value={c}>{c}</option>)}
+                    {parentCategories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
                   </select>
                 </Field>
-                <Field label="Unit">
-                  <select name="unit" value={formData.unit} onChange={handleChange} style={inputStyle}>
-                    <option value="">Select unit</option>
-                    {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                <Field label="Sub Category">
+                  <select
+                    name="sub_category"
+                    value={formData.sub_category}
+                    onChange={handleChange}
+                    disabled={subCategories.length === 0}
+                    style={{
+                      ...inputStyle,
+                      opacity: subCategories.length === 0 ? 0.5 : 1,
+                      cursor: subCategories.length === 0 ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    <option value="">
+                      {subCategories.length === 0 ? 'আগে category বেছে নিন' : 'Select sub-category'}
+                    </option>
+                    {subCategories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
                   </select>
                 </Field>
               </div>
+
+              {/* Unit */}
+              <Field label="Unit">
+                <select name="unit" value={formData.unit} onChange={handleChange} style={inputStyle}>
+                  <option value="">Select unit</option>
+                  {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </Field>
 
               {/* Price Section */}
               <div style={{ background: 'rgba(255,255,255,.03)', borderRadius: 12, padding: 16, border: `1px solid rgba(255,255,255,.06)` }}>
