@@ -5,6 +5,44 @@ import { useEffect, useState } from 'react';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+const CAT_GRADIENT = {
+  'সৌন্দর্য':    'linear-gradient(135deg,#fff7ed,#ffedd5)',
+  'খাদ্য':       'linear-gradient(135deg,#f0fdf4,#dcfce7)',
+  'খাদ্যশস্য':   'linear-gradient(135deg,#f0fdf4,#dcfce7)',
+  'পানীয়':      'linear-gradient(135deg,#eff6ff,#dbeafe)',
+  'প্যাকেজিং':   'linear-gradient(135deg,#fdf4ff,#fae8ff)',
+  'পোশাক':       'linear-gradient(135deg,#fff1f2,#ffe4e6)',
+  'ইলেকট্রনিক':  'linear-gradient(135deg,#f0f9ff,#e0f2fe)',
+  'গৃহস্থালি':   'linear-gradient(135deg,#fdf2f8,#fce7f3)',
+  'কৃষি':        'linear-gradient(135deg,#f7fee7,#ecfccb)',
+  'মুদি':        'linear-gradient(135deg,#fffbeb,#fef3c7)',
+  'default':     'linear-gradient(135deg,#f8fafc,#f1f5f9)',
+};
+
+const CAT_COLOR = {
+  'সৌন্দর্য':    '#f97316',
+  'খাদ্য':       '#16a34a',
+  'খাদ্যশস্য':   '#16a34a',
+  'পানীয়':      '#3b82f6',
+  'প্যাকেজিং':   '#9333ea',
+  'পোশাক':       '#f43f5e',
+  'ইলেকট্রনিক':  '#0ea5e9',
+  'গৃহস্থালি':   '#ec4899',
+  'কৃষি':        '#65a30d',
+  'মুদি':        '#d97706',
+  'default':     '#f97316',
+};
+
+function getGradient(cat) {
+  const key = Object.keys(CAT_GRADIENT).find(k => cat?.includes(k));
+  return key ? CAT_GRADIENT[key] : CAT_GRADIENT['default'];
+}
+
+function getCatColor(cat) {
+  const key = Object.keys(CAT_COLOR).find(k => cat?.includes(k));
+  return key ? CAT_COLOR[key] : CAT_COLOR['default'];
+}
+
 export default function ProductsSection() {
   const router = useRouter();
   const [products, setProducts] = useState([]);
@@ -23,7 +61,7 @@ export default function ProductsSection() {
     const fetchProducts = async () => {
       try {
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/products?select=*&limit=8&order=created_at.desc`,
+          `${SUPABASE_URL}/rest/v1/products?select=*&active=eq.true&limit=8&order=created_at.desc`,
           { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
         );
         const data = await res.json();
@@ -36,18 +74,17 @@ export default function ProductsSection() {
     fetchProducts();
   }, []);
 
-  // ✅ FIX: 'paikari_cart' → 'cart'
   const addToCart = (e, product) => {
     e.stopPropagation();
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const exists = cart.find(i => i.id === product.id);
     if (!exists) {
-      cart.push({ ...product, quantity: 1 });
+      cart.push({ ...product, quantity: product.moq || 1 });
       localStorage.setItem('cart', JSON.stringify(cart));
       window.dispatchEvent(new Event('cartUpdated'));
     }
     setAddedIds(prev => ({ ...prev, [product.id]: true }));
-    setTimeout(() => setAddedIds(prev => ({ ...prev, [product.id]: false })), 1500);
+    setTimeout(() => setAddedIds(prev => ({ ...prev, [product.id]: false })), 1800);
   };
 
   if (products.length === 0) return null;
@@ -56,184 +93,205 @@ export default function ProductsSection() {
     <>
       <style>{`
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(14px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        .prod-card {
-          transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+        @keyframes popIn {
+          from { transform: scale(0.9); opacity: 0; }
+          to   { transform: scale(1); opacity: 1; }
+        }
+        .ps-card {
+          transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s ease;
           cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
         }
-        .prod-card:hover {
-          border-color: #ff6a00 !important;
+        .ps-card:hover {
           transform: translateY(-3px);
-          box-shadow: 0 8px 24px rgba(255,106,0,0.12) !important;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.10);
         }
-        .add-btn { transition: background 0.2s, transform 0.1s; }
-        .add-btn:hover { background: #e55a00 !important; }
-        .add-btn:active { transform: scale(0.97); }
-        .prod-scroll::-webkit-scrollbar { display: none; }
-        .prod-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .ps-card:active { transform: scale(0.97); }
+        .ps-add-btn {
+          transition: transform 0.12s ease, background 0.15s ease;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .ps-add-btn:active { transform: scale(0.88); }
       `}</style>
 
-      <div style={{ padding: isMobile ? '4px 12px 16px' : '4px 20px 16px' }}>
+      <div style={{ padding: isMobile ? '4px 12px 20px' : '4px 20px 20px' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
-            <h2 style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: '800', color: '#1a1a1a', margin: 0 }}>
+            <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '500', color: 'var(--color-text-primary)', lineHeight: 1.2 }}>
               ফিচার্ড পণ্য
-            </h2>
-            <p style={{ fontSize: '11px', color: '#999', margin: '2px 0 0' }}>সর্বশেষ যোগ হওয়া পণ্য</p>
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+              সর্বশেষ যোগ হওয়া পণ্য
+            </div>
           </div>
-          <span
-            style={{ fontSize: '13px', color: '#ff6a00', cursor: 'pointer', fontWeight: '600' }}
+          <button
             onClick={() => router.push('/products')}
+            style={{
+              background: '#f97316', color: '#fff', border: 'none',
+              fontSize: '11px', fontWeight: '500', padding: '6px 14px',
+              borderRadius: '20px', cursor: 'pointer',
+            }}
           >
             সব দেখুন →
-          </span>
+          </button>
         </div>
 
-        {/* Mobile: horizontal scroll, Desktop: grid */}
-        {isMobile ? (
-          <div
-            className="prod-scroll"
-            style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}
-          >
-            {products.map((p, i) => (
-              <ProductCard
+        {/* Grid — always 2 col on mobile, auto on desktop */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? 'repeat(2, minmax(0,1fr))' : 'repeat(auto-fill, minmax(170px, 1fr))',
+          gap: '10px',
+        }}>
+          {products.map((p, i) => {
+            const isAdded = addedIds[p.id];
+            const hasDiscount = p.mrp && parseFloat(p.mrp) > parseFloat(p.price);
+            const discountPct = hasDiscount
+              ? Math.round(((p.mrp - p.price) / p.mrp) * 100)
+              : null;
+            const gradient = getGradient(p.category);
+            const catColor = getCatColor(p.category);
+
+            return (
+              <div
                 key={p.id}
-                p={p}
-                i={i}
-                visible={visible}
-                addedIds={addedIds}
-                addToCart={addToCart}
-                router={router}
-                isMobile={true}
-              />
-            ))}
-          </div>
-        ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-            gap: '12px'
-          }}>
-            {products.map((p, i) => (
-              <ProductCard
-                key={p.id}
-                p={p}
-                i={i}
-                visible={visible}
-                addedIds={addedIds}
-                addToCart={addToCart}
-                router={router}
-                isMobile={false}
-              />
-            ))}
-          </div>
-        )}
+                className="ps-card"
+                onClick={() => router.push('/products')}
+                style={{
+                  background: 'var(--color-background-primary)',
+                  borderRadius: '14px',
+                  border: '0.5px solid var(--color-border-tertiary)',
+                  overflow: 'hidden',
+                  opacity: visible ? 1 : 0,
+                  animation: visible ? `fadeUp 0.35s ease forwards` : 'none',
+                  animationDelay: `${i * 0.06}s`,
+                }}
+              >
+                {/* Image area */}
+                <div style={{
+                  height: isMobile ? '140px' : '150px',
+                  background: p.image_url ? '#f9f9f9' : gradient,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                  {p.image_url ? (
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ fontSize: '52px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.08))' }}>
+                      📦
+                    </div>
+                  )}
+
+                  {/* Discount badge */}
+                  {discountPct && (
+                    <div style={{
+                      position: 'absolute', top: 8, left: 8,
+                      background: '#ef4444', color: '#fff',
+                      fontSize: '9px', fontWeight: '500',
+                      padding: '3px 7px', borderRadius: '4px',
+                    }}>
+                      −{discountPct}%
+                    </div>
+                  )}
+
+                  {/* New badge (first 3) */}
+                  {!discountPct && i < 3 && (
+                    <div style={{
+                      position: 'absolute', top: 8, left: 8,
+                      background: '#f97316', color: '#fff',
+                      fontSize: '9px', fontWeight: '500',
+                      padding: '3px 7px', borderRadius: '4px',
+                    }}>
+                      নতুন
+                    </div>
+                  )}
+
+                  {/* MOQ badge */}
+                  {(p.moq || p.min_order) && (
+                    <div style={{
+                      position: 'absolute', bottom: 8, right: 8,
+                      background: 'rgba(255,255,255,0.92)',
+                      borderRadius: '7px', padding: '3px 8px',
+                      fontSize: '10px', fontWeight: '500', color: catColor,
+                    }}>
+                      MOQ: {p.moq || p.min_order}
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div style={{ padding: '10px 10px 12px' }}>
+                  {p.category && (
+                    <div style={{
+                      fontSize: '9px', fontWeight: '500',
+                      color: 'var(--color-text-secondary)',
+                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                      marginBottom: '3px',
+                    }}>
+                      {p.category}
+                    </div>
+                  )}
+
+                  <div style={{
+                    fontSize: '13px', fontWeight: '500',
+                    color: 'var(--color-text-primary)',
+                    lineHeight: '1.35', marginBottom: '10px',
+                    overflow: 'hidden', display: '-webkit-box',
+                    WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                  }}>
+                    {p.name}
+                  </div>
+
+                  {/* Price row */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ fontSize: '15px', fontWeight: '500', color: '#f97316', lineHeight: 1 }}>
+                        ৳{parseFloat(p.price).toLocaleString('bn-BD')}
+                      </div>
+                      {hasDiscount ? (
+                        <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)', textDecoration: 'line-through', marginTop: '1px' }}>
+                          ৳{parseFloat(p.mrp).toLocaleString('bn-BD')}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '10px', color: 'transparent' }}>—</div>
+                      )}
+                    </div>
+
+                    {/* Add button */}
+                    <button
+                      className="ps-add-btn"
+                      onClick={(e) => addToCart(e, p)}
+                      style={{
+                        width: '34px', height: '34px',
+                        background: isAdded ? '#22c55e' : '#f97316',
+                        color: '#fff', border: 'none',
+                        borderRadius: '10px', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
+                        animation: isAdded ? 'popIn 0.2s ease' : 'none',
+                      }}
+                      aria-label={isAdded ? 'যোগ হয়েছে' : 'কার্টে যোগ করুন'}
+                    >
+                      {isAdded
+                        ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      }
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </>
-  );
-}
-
-function ProductCard({ p, i, visible, addedIds, addToCart, router, isMobile }) {
-  return (
-    <div
-      className="prod-card"
-      onClick={() => router.push('/products')}
-      style={{
-        background: '#fff',
-        borderRadius: '12px',
-        border: '1px solid #eee',
-        overflow: 'hidden',
-        flexShrink: 0,
-        width: isMobile ? '150px' : 'auto',
-        opacity: visible ? 1 : 0,
-        animation: visible ? `fadeUp 0.4s ease forwards` : 'none',
-        animationDelay: `${i * 0.06}s`,
-        boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
-      }}
-    >
-      {/* Image */}
-      <div style={{
-        height: isMobile ? '120px' : '130px',
-        background: '#f9f9f9',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        overflow: 'hidden', position: 'relative'
-      }}>
-        {p.image_url ? (
-          <img
-            src={p.image_url}
-            alt={p.name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', background: '#f5f5f5',
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: '6px'
-          }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <path d="m21 15-5-5L5 21"/>
-            </svg>
-            <span style={{ fontSize: '10px', color: '#ccc' }}>ছবি নেই</span>
-          </div>
-        )}
-
-        {/* Badge */}
-        {i < 3 && (
-          <span style={{
-            position: 'absolute', top: 8, left: 8,
-            background: '#ff6a00', color: '#fff',
-            fontSize: '9px', fontWeight: '700',
-            padding: '2px 8px', borderRadius: '20px'
-          }}>
-            নতুন
-          </span>
-        )}
-      </div>
-
-      {/* Info */}
-      <div style={{ padding: isMobile ? '8px' : '10px' }}>
-        <div style={{
-          fontSize: isMobile ? '12px' : '13px',
-          fontWeight: '600', color: '#1a1a1a',
-          marginBottom: '4px', lineHeight: '1.3',
-          overflow: 'hidden', display: '-webkit-box',
-          WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'
-        }}>
-          {p.name}
-        </div>
-
-        <div style={{ fontSize: isMobile ? '14px' : '15px', fontWeight: '800', color: '#ff6a00', marginBottom: '2px' }}>
-          ৳{p.price?.toLocaleString('bn-BD')}
-        </div>
-
-        {p.min_order && (
-          <div style={{ fontSize: '10px', color: '#aaa', marginBottom: '8px' }}>
-            MOQ: {p.min_order}
-          </div>
-        )}
-
-        <button
-          className="add-btn"
-          onClick={(e) => addToCart(e, p)}
-          style={{
-            width: '100%',
-            background: addedIds[p.id] ? '#22c55e' : '#ff6a00',
-            color: '#fff', border: 'none',
-            borderRadius: '7px',
-            padding: isMobile ? '7px' : '8px',
-            fontSize: '11px', fontWeight: '700',
-            cursor: 'pointer',
-          }}
-        >
-          {addedIds[p.id] ? '✓ যোগ হয়েছে' : '🛒 কার্টে যোগ করুন'}
-        </button>
-      </div>
-    </div>
   );
 }
