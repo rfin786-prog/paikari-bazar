@@ -11,11 +11,24 @@ export default function Home() {
   const [selectedBrand, setSelectedBrand] = useState(null);
 
   return (
-    <main style={{ minHeight: '100vh', background: '#f5f5f5', fontFamily: 'Hind Siliguri, sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <main style={{
+      minHeight: '100vh',
+      background: '#f5f5f5',
+      fontFamily: 'Hind Siliguri, sans-serif',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px'
+    }}>
       <HeroSection />
-      <CategorySection />
-      <BrandsSection selectedBrand={selectedBrand} setSelectedBrand={setSelectedBrand} />
-      <ProductsSection selectedBrand={selectedBrand} />
+      <div style={{ background: '#fff' }}>
+        <CategorySection />
+      </div>
+      <div style={{ background: '#fff' }}>
+        <BrandsSection selectedBrand={selectedBrand} setSelectedBrand={setSelectedBrand} />
+      </div>
+      <div style={{ background: '#fff' }}>
+        <ProductsSection selectedBrand={selectedBrand} />
+      </div>
       <CTABanner />
       <Footer />
     </main>
