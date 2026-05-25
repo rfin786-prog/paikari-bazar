@@ -117,15 +117,15 @@ export default function ProductsSection() {
         .ps-add-btn:active { transform: scale(0.88); }
       `}</style>
 
-      <div style={{ padding: isMobile ? '4px 12px 20px' : '4px 20px 20px' }}>
+      <div style={{ padding: isMobile ? '4px 12px 20px' : '4px 20px 24px' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
-            <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '500', color: 'var(--color-text-primary)', lineHeight: 1.2 }}>
+            <div style={{ fontSize: isMobile ? '15px' : '17px', fontWeight: '700', color: '#111', lineHeight: 1.2 }}>
               ফিচার্ড পণ্য
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px' }}>
               সর্বশেষ যোগ হওয়া পণ্য
             </div>
           </div>
@@ -141,11 +141,13 @@ export default function ProductsSection() {
           </button>
         </div>
 
-        {/* Grid — always 2 col on mobile, auto on desktop */}
+        {/* Grid — 2 col mobile, 4 col desktop */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? 'repeat(2, minmax(0,1fr))' : 'repeat(auto-fill, minmax(170px, 1fr))',
-          gap: '10px',
+          gridTemplateColumns: isMobile
+            ? 'repeat(2, minmax(0,1fr))'
+            : 'repeat(4, minmax(0,1fr))',
+          gap: isMobile ? '10px' : '12px',
         }}>
           {products.map((p, i) => {
             const isAdded = addedIds[p.id];
@@ -162,9 +164,9 @@ export default function ProductsSection() {
                 className="ps-card"
                 onClick={() => router.push('/products')}
                 style={{
-                  background: 'var(--color-background-primary)',
+                  background: '#fff',
                   borderRadius: '14px',
-                  border: '0.5px solid var(--color-border-tertiary)',
+                  border: '0.5px solid #e5e5e5',
                   overflow: 'hidden',
                   opacity: visible ? 1 : 0,
                   animation: visible ? `fadeUp 0.35s ease forwards` : 'none',
@@ -173,7 +175,7 @@ export default function ProductsSection() {
               >
                 {/* Image area */}
                 <div style={{
-                  height: isMobile ? '140px' : '150px',
+                  height: isMobile ? '130px' : '150px',
                   background: p.image_url ? '#f9f9f9' : gradient,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   position: 'relative', overflow: 'hidden',
@@ -185,36 +187,33 @@ export default function ProductsSection() {
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (
-                    <div style={{ fontSize: '52px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.08))' }}>
+                    <div style={{ fontSize: '48px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.08))' }}>
                       📦
                     </div>
                   )}
 
-                  {/* Discount badge */}
                   {discountPct && (
                     <div style={{
                       position: 'absolute', top: 8, left: 8,
                       background: '#ef4444', color: '#fff',
-                      fontSize: '9px', fontWeight: '500',
+                      fontSize: '9px', fontWeight: '600',
                       padding: '3px 7px', borderRadius: '4px',
                     }}>
                       −{discountPct}%
                     </div>
                   )}
 
-                  {/* New badge (first 3) */}
                   {!discountPct && i < 3 && (
                     <div style={{
                       position: 'absolute', top: 8, left: 8,
                       background: '#f97316', color: '#fff',
-                      fontSize: '9px', fontWeight: '500',
+                      fontSize: '9px', fontWeight: '600',
                       padding: '3px 7px', borderRadius: '4px',
                     }}>
                       নতুন
                     </div>
                   )}
 
-                  {/* MOQ badge */}
                   {(p.moq || p.min_order) && (
                     <div style={{
                       position: 'absolute', bottom: 8, right: 8,
@@ -231,8 +230,8 @@ export default function ProductsSection() {
                 <div style={{ padding: '10px 10px 12px' }}>
                   {p.category && (
                     <div style={{
-                      fontSize: '9px', fontWeight: '500',
-                      color: 'var(--color-text-secondary)',
+                      fontSize: '9px', fontWeight: '600',
+                      color: '#aaa',
                       textTransform: 'uppercase', letterSpacing: '0.06em',
                       marginBottom: '3px',
                     }}>
@@ -241,8 +240,8 @@ export default function ProductsSection() {
                   )}
 
                   <div style={{
-                    fontSize: '13px', fontWeight: '500',
-                    color: 'var(--color-text-primary)',
+                    fontSize: isMobile ? '12px' : '13px', fontWeight: '500',
+                    color: '#111',
                     lineHeight: '1.35', marginBottom: '10px',
                     overflow: 'hidden', display: '-webkit-box',
                     WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
@@ -250,14 +249,13 @@ export default function ProductsSection() {
                     {p.name}
                   </div>
 
-                  {/* Price row */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <div style={{ fontSize: '15px', fontWeight: '500', color: '#f97316', lineHeight: 1 }}>
+                      <div style={{ fontSize: isMobile ? '14px' : '15px', fontWeight: '600', color: '#f97316', lineHeight: 1 }}>
                         ৳{parseFloat(p.price).toLocaleString('bn-BD')}
                       </div>
                       {hasDiscount ? (
-                        <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)', textDecoration: 'line-through', marginTop: '1px' }}>
+                        <div style={{ fontSize: '10px', color: '#bbb', textDecoration: 'line-through', marginTop: '1px' }}>
                           ৳{parseFloat(p.mrp).toLocaleString('bn-BD')}
                         </div>
                       ) : (
@@ -265,12 +263,12 @@ export default function ProductsSection() {
                       )}
                     </div>
 
-                    {/* Add button */}
                     <button
                       className="ps-add-btn"
                       onClick={(e) => addToCart(e, p)}
                       style={{
-                        width: '34px', height: '34px',
+                        width: isMobile ? '30px' : '34px',
+                        height: isMobile ? '30px' : '34px',
                         background: isAdded ? '#22c55e' : '#f97316',
                         color: '#fff', border: 'none',
                         borderRadius: '10px', cursor: 'pointer',
@@ -281,8 +279,8 @@ export default function ProductsSection() {
                       aria-label={isAdded ? 'যোগ হয়েছে' : 'কার্টে যোগ করুন'}
                     >
                       {isAdded
-                        ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                       }
                     </button>
                   </div>
