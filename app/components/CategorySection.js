@@ -18,7 +18,7 @@ const CAT_META = {
   'গৃহস্থালি':   { icon: '🏠', color: '#db2777' },
   'কৃষি':        { icon: '🌾', color: '#65a30d' },
   'সৌন্দর্য':    { icon: '🧴', color: '#9333ea' },
-  'শিশু':        { icon: '👶', color: '#d97706' },
+  'শিশ':        { icon: '👶', color: '#d97706' },
   'প্যাকেজিং':   { icon: '📦', color: '#0891b2' },
   'হার্ডওয়্যার': { icon: '🔧', color: '#dc2626' },
   'অর্গানিক':    { icon: '🌿', color: '#65a30d' },
@@ -94,9 +94,7 @@ export default function CategorySection() {
     }
   };
 
-  // desktop: 4 cols subcategory grid, mobile: 3 cols
   const subGridCols = isMobile ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)';
-  // desktop: wider left panel
   const leftPanelWidth = isMobile ? 88 : 100;
 
   return (
@@ -128,20 +126,6 @@ export default function CategorySection() {
       `}</style>
 
       <div style={{ background: '#fff', borderRadius: 0, overflow: 'hidden' }}>
-
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px 10px' }}>
-          <div>
-            <p style={{ fontSize: 10, fontWeight: 700, color: '#f97316', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>ব্রাউজ করুন</p>
-            <h2 style={{ fontSize: isMobile ? 15 : 17, fontWeight: 800, color: '#111', margin: 0 }}>পণ্য বিভাগ</h2>
-          </div>
-          <button
-            onClick={() => router.push('/products')}
-            style={{ fontSize: 12, color: '#f97316', fontWeight: 700, background: '#fff3eb', border: 'none', padding: '6px 14px', borderRadius: 20, cursor: 'pointer', fontFamily: 'inherit' }}
-          >
-            সব দেখুন →
-          </button>
-        </div>
 
         {/* Two-column layout */}
         <div style={{ display: 'flex', minHeight: 380, maxHeight: isMobile ? 380 : 440 }}>
@@ -222,7 +206,7 @@ export default function CategorySection() {
                     onClick={handleViewAll}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: '#fff3eb', borderRadius: 10, marginBottom: 10, cursor: 'pointer', border: '1px solid #ffe0cc' }}
                   >
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#f97316' }}>সব {activeCategory.name} দেখুন</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#f97316' }}>View all {activeCategory.name}</span>
                     <span style={{ fontSize: 13, color: '#f97316' }}>→</span>
                   </div>
                 )}
@@ -278,7 +262,7 @@ export default function CategorySection() {
                       }}>
                         <span style={{ fontSize: 20, color: '#bbb' }}>•••</span>
                       </div>
-                      <p style={{ fontSize: 10, fontWeight: 600, color: '#aaa', textAlign: 'center', margin: 0 }}>আরও দেখুন</p>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: '#aaa', textAlign: 'center', margin: 0 }}>View More</p>
                     </div>
                   </div>
                 ) : (
@@ -289,7 +273,7 @@ export default function CategorySection() {
                       onClick={handleViewAll}
                       style={{ background: '#f97316', color: '#fff', border: 'none', borderRadius: 20, padding: '8px 20px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                     >
-                      সব পণ্য দেখুন →
+                      View All Products →
                     </button>
                   </div>
                 )}
