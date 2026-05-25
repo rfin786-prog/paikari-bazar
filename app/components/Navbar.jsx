@@ -35,7 +35,6 @@ function getCatIcon(name) {
 export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [query, setQuery] = useState('');
   const [isMobile, setIsMobile] = useState(false);
 
   // Category dropdown state
@@ -88,11 +87,6 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (query.trim()) router.push(`/products?q=${encodeURIComponent(query)}`);
-  };
-
   const handleMenuEnter = () => {
     clearTimeout(closeTimer.current);
     setMenuOpen(true);
@@ -108,6 +102,10 @@ export default function Navbar() {
   return (
     <>
       <style>{`
+        @keyframes slideInLeft {
+          from { transform: translateX(-100%); }
+          to   { transform: translateX(0); }
+        }
         @keyframes blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
@@ -134,9 +132,6 @@ export default function Navbar() {
           outline: none !important;
           box-shadow: none !important;
         }
-        .search-input::placeholder { color: #aaa; }
-        .search-input:focus { outline: none; }
-
         /* Category bar */
         .cat-bar-btn {
           background: none;
@@ -290,81 +285,45 @@ export default function Navbar() {
 
       {/* Main nav */}
       <nav style={{
-        background: '#fff',
-        padding: isMobile ? '8px 14px' : '10px 20px',
+        background: '#1a1a2e',
+        padding: isMobile ? '10px 16px' : '10px 20px',
         display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        alignItems: isMobile ? 'stretch' : 'center',
-        gap: isMobile ? '8px' : '12px',
-        borderBottom: isMobile ? '2px solid #ff6a00' : 'none',
-        boxShadow: isMobile ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '2px solid #ff6a00',
         position: 'sticky', top: 0, zIndex: 100
       }}>
 
-        {/* Mobile: Logo row */}
-        {isMobile ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <LogoMark router={router} size="small" />
-            <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
-              <button className="nav-icon-btn" onClick={() => router.push('/checkout')}>
-                <CartIcon />
-                <CartCount />
-              </button>
-              <button className="nav-icon-btn" onClick={() => router.push(user ? '/dashboard' : '/login')}>
-                <UserIcon />
-              </button>
-            </div>
-          </div>
-        ) : (
-          <LogoMark router={router} size="large" />
-        )}
-
-        {/* Search bar */}
-        <form onSubmit={handleSearch} style={{
-          flex: 1,
-          display: 'flex',
-          border: '2px solid #ff6a00',
-          borderRadius: isMobile ? '8px' : '4px',
-          overflow: 'hidden'
-        }}>
-          {!isMobile && (
-            <select style={{ border: 'none', borderRight: '1px solid #eee', padding: '0 10px', fontSize: '12px', color: '#555', background: '#f9f9f9', outline: 'none' }}>
-              <option>All Products</option>
-              <option>Clothing</option>
-              <option>Groceries</option>
-              <option>Electronics</option>
-              <option>Household</option>
-            </select>
+        {/* Left: Hamburger (mobile) + Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 0 }}>
+          {isMobile && (
+            <button
+              className="nav-icon-btn"
+              onClick={() => setMenuOpen(prev => !prev)}
+              style={{ padding: '4px' }}
+            >
+              <HamburgerIcon color="#fff" />
+            </button>
           )}
-          <input
-            className="search-input"
-            type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Search products or categories..."
-            style={{
-              flex: 1, border: 'none',
-              padding: isMobile ? '10px 12px' : '8px 12px',
-              fontSize: '13px', background: '#fff', color: '#333'
-            }}
-          />
-          <button type="submit" style={{ background: '#ff6a00', color: '#fff', border: 'none', padding: '0 16px', cursor: 'pointer' }}>
-            <SearchIcon />
-          </button>
-        </form>
+          <LogoMark router={router} size={isMobile ? 'small' : 'large'} />
+        </div>
 
-        {/* Desktop icons */}
-        {!isMobile && (
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexShrink: 0 }}>
-            <button className="nav-icon-btn" onClick={() => router.push('/checkout')}>
-              <CartIcon />
-              <CartCount />
-            </button>
-            <button className="nav-icon-btn" onClick={() => router.push(user ? '/dashboard' : '/login')}>
-              <UserIcon />
-            </button>
-          </div>
-        )}
+        {/* Right: Sign in + Cart */}
+        <div style={{ display: 'flex', gap: isMobile ? 20 : 24, alignItems: 'center' }}>
+          <button
+            className="nav-icon-btn"
+            onClick={() => router.push(user ? '/dashboard' : '/login')}
+            style={{ flexDirection: 'column', gap: 2 }}
+          >
+            <UserIcon />
+            {!isMobile && <span style={{ fontSize: 10, color: '#ccc', fontWeight: 600 }}>Sign in</span>}
+          </button>
+          <button className="nav-icon-btn" onClick={() => router.push('/checkout')}>
+            <CartIcon />
+            <CartCount />
+          </button>
+        </div>
       </nav>
 
       {/* Category bar — desktop only */}
@@ -376,7 +335,7 @@ export default function Navbar() {
           overflowX: 'auto',
           scrollbarWidth: 'none',
           position: 'sticky',
-          top: 57,
+          top: 54,
           zIndex: 99,
           boxShadow: '0 2px 8px rgba(255,106,0,0.18)',
         }}>
@@ -533,6 +492,68 @@ export default function Navbar() {
           ))}
         </div>
       )}
+      {/* Mobile: slide-out category drawer */}
+      {isMobile && menuOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          display: 'flex',
+        }}>
+          {/* Backdrop */}
+          <div
+            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }}
+            onClick={() => setMenuOpen(false)}
+          />
+          {/* Drawer */}
+          <div style={{
+            position: 'relative', width: 280, background: '#fff',
+            height: '100%', overflowY: 'auto', zIndex: 1,
+            animation: 'slideInLeft 0.22s ease forwards',
+          }}>
+            <div style={{ background: '#1a1a2e', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>All Categories</span>
+              <button className="nav-icon-btn" onClick={() => setMenuOpen(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            {categories.map(cat => (
+              <div key={cat.id}>
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '13px 16px', borderBottom: '1px solid #f0f0f0',
+                    cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#222',
+                  }}
+                  onClick={() => {
+                    router.push(`/products?cat=${encodeURIComponent(cat.name)}`);
+                    setMenuOpen(false);
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>{getCatIcon(cat.name)}</span>
+                  {cat.name}
+                  {subMap[cat.id]?.length > 0 && <span style={{ marginLeft: 'auto', color: '#bbb' }}>›</span>}
+                </div>
+                {subMap[cat.id]?.map(sub => (
+                  <div
+                    key={sub.id}
+                    style={{
+                      padding: '9px 16px 9px 48px', borderBottom: '1px solid #f8f8f8',
+                      fontSize: 13, color: '#555', cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      router.push(`/products?cat=${encodeURIComponent(sub.name)}`);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    {sub.name}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -548,7 +569,7 @@ function LogoMark({ router, size }) {
       style={{ display: 'inline-flex', alignItems: 'flex-end', cursor: 'pointer', flexShrink: 0 }}
       onClick={() => router.push('/')}
     >
-      <Image src="/logo.png" alt="Arat" width={w} height={h} style={{ objectFit: 'contain', mixBlendMode: 'multiply' }} />
+      <Image src="/logo.png" alt="Arat" width={w} height={h} style={{ objectFit: 'contain' }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginLeft: '3px', marginBottom: '3px' }}>
         {['#ff3b3b', '#e8a020', '#22c55e'].map((bg, i) => (
           <span key={i} style={{ width: dot, height: dot, borderRadius: '50%', background: bg, display: 'block', animation: `blink 1.2s ease-in-out infinite ${i * 0.4}s` }} />
@@ -558,9 +579,9 @@ function LogoMark({ router, size }) {
   );
 }
 
-function HamburgerIcon() {
+function HamburgerIcon({ color = '#fff' }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round">
       <line x1="3" y1="6" x2="21" y2="6"/>
       <line x1="3" y1="12" x2="21" y2="12"/>
       <line x1="3" y1="18" x2="21" y2="18"/>
@@ -568,17 +589,9 @@ function HamburgerIcon() {
   );
 }
 
-function SearchIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-    </svg>
-  );
-}
-
 function CartIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
       <path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.99-1.61L23 6H6"/>
     </svg>
@@ -587,7 +600,7 @@ function CartIcon() {
 
 function UserIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff6a00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
       <circle cx="12" cy="7" r="4"/>
     </svg>
