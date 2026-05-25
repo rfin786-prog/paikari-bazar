@@ -29,7 +29,7 @@ export default function HeroSection() {
           textShadow: '0 1px 4px rgba(0,0,0,0.5)',
           fontFamily: 'Hind Siliguri, sans-serif'
         }}>
-          পইকারি এখন আপনার হাতের মুঠোয়
+          পাইকারি এখন আপনার হাতের মুঠোয়
         </p>
       </div>
     </div>
