@@ -227,7 +227,6 @@ function ProductsPageContent() {
 
         @media (max-width: 480px) {
           .product-grid { grid-template-columns: repeat(2,1fr) !important; gap: 8px !important; }
-          .prod-img-wrap { height: 140px !important; }
           .prod-name { font-size: 12px !important; min-height: 32px !important; }
           .cart-btn { font-size: 11px !important; padding: 7px !important; }
         }
@@ -316,9 +315,10 @@ function ProductsPageContent() {
                   const inCart     = qty > 0;
                   const outOfStock = p.stock !== undefined && p.stock !== null && p.stock <= 0;
                   const minQty     = p.min_order ? parseInt(p.min_order) : 1;
-                  const profit     = p.mrp && p.price ? p.mrp - p.price : 0;
+                  const profit     = p.mrp && p.price && p.mrp > p.price ? p.mrp - p.price : 0;
                   const discount   = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : null;
-                  const isFlipped  = flipCards[p.id] || false;
+                  const isFlipped  = (flipCards[p.id] || false) && profit > 0;
+                  const hasImage   = !!p.image_url;
 
                   return (
                     <div key={p.id} className="prod-card"
@@ -326,13 +326,13 @@ function ProductsPageContent() {
                       style={{ borderRadius: 14, border: `1.5px solid ${inCart ? '#ffcfaa' : '#ebebeb'}`, overflow: 'hidden', animationDelay: `${Math.min(i * 0.05, 0.4)}s`, boxShadow: inCart ? '0 4px 16px rgba(255,106,0,0.1)' : '0 2px 8px rgba(0,0,0,0.04)', opacity: outOfStock ? 0.72 : 1 }}
                     >
                       {/* Image */}
-                      <div className="prod-img-wrap" style={{ height: 170, position: 'relative', overflow: 'hidden', background: '#f8f8f8' }}>
-                        {p.image_url
+                      <div className="prod-img-wrap" style={{ height: hasImage ? 170 : 90, position: 'relative', overflow: 'hidden', background: '#f8f8f8' }}>
+                        {hasImage
                           ? <img src={p.image_url} alt={p.name} className="prod-img" loading="lazy" />
                           : (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg,#fafafa,#f0f0f0)' }}>
-                              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                              <span style={{ fontSize: 10, color: '#ccc', fontWeight: 600 }}>No Image</span>
+                            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'linear-gradient(135deg,#fafafa,#f0f0f0)' }}>
+                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                              <span style={{ fontSize: 9, color: '#ccc', fontWeight: 600 }}>No Image</span>
                             </div>
                           )
                         }
@@ -374,8 +374,8 @@ function ProductsPageContent() {
                           <div style={{ height: 1, background: '#ebebeb', margin: '4px 0' }} />
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <span style={{ fontSize: 10, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: 0.5 }}>MRP</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: '#bbb' }}>
-                              {p.mrp ? `৳${p.mrp?.toLocaleString('bn-BD')}` : 'N/A'}
+                            <span style={{ fontSize: 13, fontWeight: 600, color: p.mrp && p.mrp > p.price ? '#555' : '#ccc' }}>
+                              {p.mrp && p.mrp > p.price ? `৳${p.mrp?.toLocaleString('bn-BD')}` : 'N/A'}
                             </span>
                           </div>
                         </div>
@@ -415,15 +415,13 @@ function ProductsPageContent() {
                               overflow: 'hidden',
                             }}
                           >
-                            {/* Add to Cart text */}
                             <span className={`btn-text btn-text-cart${isFlipped ? ' hide' : ''}`}>
                               <span>+</span>
                               <span>Add to Cart</span>
                             </span>
-                            {/* Profit text */}
                             <span className={`btn-text btn-text-profit${isFlipped ? ' show' : ''}`}>
                               <span>💰</span>
-                              <span>Profit ৳{profit > 0 ? profit.toLocaleString('bn-BD') : '—'}</span>
+                              <span>Profit ৳{profit.toLocaleString('bn-BD')}</span>
                             </span>
                           </button>
                         )}
