@@ -6,10 +6,10 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export default function BrandsSection() {
-  const [brands, setBrands]             = useState([]);
-  const [activeBrand, setActiveBrand]   = useState(null);
-  const [products, setProducts]         = useState([]);
-  const [loadingBrands, setLoadingBrands] = useState(true);
+  const [brands, setBrands]                   = useState([]);
+  const [activeBrand, setActiveBrand]         = useState(null);
+  const [products, setProducts]               = useState([]);
+  const [loadingBrands, setLoadingBrands]     = useState(true);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const router = useRouter();
 
@@ -32,13 +32,12 @@ export default function BrandsSection() {
     setLoadingProducts(true);
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/products?select=*&brand_id=eq.${brandId}&order=created_at.desc&limit=5`,
+        `${SUPABASE_URL}/rest/v1/products?select=*&brand_id=eq.${brandId}&order=created_at.desc&limit=6`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
       );
       const data = await res.json();
       setProducts(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error(e);
+    } catch {
       setProducts([]);
     } finally {
       setLoadingProducts(false);
@@ -49,210 +48,340 @@ export default function BrandsSection() {
     if (activeBrand?.id) fetchProducts(activeBrand.id);
   }, [activeBrand, fetchProducts]);
 
-  if (loadingBrands) return null;
-  if (brands.length === 0) return null;
+  if (loadingBrands || brands.length === 0) return null;
 
   return (
     <>
       <style>{`
-        .brands-section { background: #fff; border-bottom: 1px solid #f0f0f0; }
-
-        /* Sidebar */
-        .brand-sidebar { width: 90px; flex-shrink: 0; border-right: 1px solid #f0f0f0; overflow-y: auto; max-height: 380px; }
-        .brand-sidebar::-webkit-scrollbar { width: 2px; }
-        .brand-sidebar::-webkit-scrollbar-thumb { background: #eee; border-radius: 2px; }
-
-        .brand-item {
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: 5px; padding: 10px 6px; cursor: pointer;
-          border-left: 3px solid transparent;
-          border-bottom: 1px solid #f8f8f8;
-          background: transparent; width: 100%;
-          transition: all 0.2s ease;
+        /* BRAND SECTION WRAPPER */
+        .bs-wrap {
+          background: #fff;
+          border-radius: 16px;
+          margin: 12px;
+          overflow: hidden;
+          box-shadow: 0 1px 8px rgba(0,0,0,0.06);
         }
-        .brand-item.active { border-left-color: #ff6a00; background: #fff8f5; }
-        .brand-item:hover:not(.active) { background: #fafafa; }
 
-        .brand-logo-wrap {
-          width: 54px; height: 40px;
-          display: flex; align-items: center; justify-content: center;
-          background: #f5f5f5; border-radius: 8px; overflow: hidden;
+        /* HEADER */
+        .bs-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 16px 0;
         }
-        .brand-item.active .brand-logo-wrap { background: #fff0e6; }
-
-        .brand-label {
-          font-size: 9px; font-weight: 700; color: #999;
-          text-align: center; line-height: 1.2;
-          overflow: hidden; text-overflow: ellipsis;
-          white-space: nowrap; width: 72px;
+        .bs-title {
+          display: flex; align-items: center; gap: 8px;
+        }
+        .bs-title-bar {
+          width: 4px; height: 20px;
+          background: #e8a020; border-radius: 2px;
+        }
+        .bs-title-text {
+          font-size: 16px; font-weight: 800;
+          color: #1a1a1a;
           font-family: 'Hind Siliguri', sans-serif;
         }
-        .brand-item.active .brand-label { color: #ff6a00; }
+        .bs-view-all {
+          font-size: 12px; font-weight: 700;
+          color: #e8a020; cursor: pointer;
+          font-family: 'Hind Siliguri', sans-serif;
+        }
 
-        /* Content */
-        .brand-content { flex: 1; overflow: hidden; }
-
-        .view-all-banner {
-          margin: 12px 12px 10px;
-          background: #fff5ee; border-radius: 12px;
+        /* BRAND TABS — horizontal scroll */
+        .bs-tabs {
+          display: flex;
+          gap: 10px;
           padding: 12px 16px;
-          display: flex; align-items: center; justify-content: space-between;
-          cursor: pointer; border: 1px solid #ffe5cc;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+        .bs-tabs::-webkit-scrollbar { display: none; }
+
+        .bs-tab {
+          flex-shrink: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 5px;
+          cursor: pointer;
+          padding: 0;
+          background: none;
+          border: none;
+          outline: none;
+        }
+
+        .bs-tab-logo {
+          width: 64px; height: 48px;
+          border-radius: 10px;
+          border: 2px solid #f0f0f0;
+          background: #fafafa;
+          display: flex; align-items: center; justify-content: center;
+          overflow: hidden;
           transition: all 0.2s;
         }
-        .view-all-banner:hover { background: #ffe8d4; }
-        .view-all-text { font-size: 13px; font-weight: 800; color: #ff6a00; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Hind Siliguri', sans-serif; }
-
-        /* Product grid */
-        .bp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 12px 12px; }
-
-        .bp-card {
-          background: #fafafa; border-radius: 10px;
-          overflow: hidden; border: 1.5px solid #f0f0f0;
-          cursor: pointer; transition: all 0.2s ease;
+        .bs-tab.active .bs-tab-logo {
+          border-color: #e8a020;
+          background: #fff8ec;
+          box-shadow: 0 2px 8px rgba(232,160,32,0.2);
         }
-        .bp-card:hover { border-color: #ffcfaa; box-shadow: 0 4px 12px rgba(255,106,0,0.1); transform: translateY(-2px); }
-
-        .bp-img {
-          height: 70px; background: linear-gradient(135deg, #f8f8f8, #efefef);
-          display: flex; align-items: center; justify-content: center; overflow: hidden;
+        .bs-tab-logo img {
+          width: 100%; height: 100%;
+          object-fit: contain; padding: 6px;
         }
-        .bp-img img { width: 100%; height: 100%; object-fit: cover; }
-        .bp-img-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; }
+        .bs-tab-name {
+          font-size: 10px; font-weight: 600;
+          color: #999; max-width: 64px;
+          text-align: center; white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis;
+          font-family: 'Hind Siliguri', sans-serif;
+          transition: color 0.2s;
+        }
+        .bs-tab.active .bs-tab-name { color: #e8a020; }
 
-        .bp-info { padding: 6px 7px 8px; }
-        .bp-name {
-          font-size: 10px; font-weight: 600; color: #333;
-          line-height: 1.3; margin-bottom: 3px;
+        /* ACTIVE BRAND BANNER */
+        .bs-banner {
+          margin: 0 12px 12px;
+          background: linear-gradient(120deg, #fff8ec, #fff3d4);
+          border-radius: 12px;
+          padding: 10px 14px;
+          display: flex; align-items: center; justify-content: space-between;
+          cursor: pointer;
+          border: 1px solid rgba(232,160,32,0.2);
+          transition: background 0.2s;
+        }
+        .bs-banner:hover { background: linear-gradient(120deg, #fff0d0, #ffe8a8); }
+        .bs-banner-left {
+          display: flex; align-items: center; gap: 10px;
+        }
+        .bs-banner-logo {
+          width: 40px; height: 30px;
+          border-radius: 6px; overflow: hidden;
+          background: #fff;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .bs-banner-logo img { width: 100%; height: 100%; object-fit: contain; padding: 3px; }
+        .bs-banner-text {
+          font-size: 13px; font-weight: 800;
+          color: #e8a020; letter-spacing: 0.3px;
+          font-family: 'Hind Siliguri', sans-serif;
+        }
+        .bs-banner-sub {
+          font-size: 11px; color: #b87a10; font-weight: 500;
+          font-family: 'Hind Siliguri', sans-serif;
+        }
+        .bs-banner-arrow {
+          width: 28px; height: 28px;
+          background: #e8a020; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          color: #fff; font-size: 14px;
+        }
+
+        /* PRODUCTS GRID */
+        .bs-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          padding: 0 12px 14px;
+        }
+
+        .bs-card {
+          background: #fafafa;
+          border-radius: 10px;
+          overflow: hidden;
+          border: 1.5px solid #f0f0f0;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .bs-card:hover {
+          border-color: #e8a020;
+          box-shadow: 0 4px 12px rgba(232,160,32,0.12);
+          transform: translateY(-2px);
+        }
+        .bs-card-img {
+          height: 80px;
+          background: linear-gradient(135deg, #f8f8f8, #efefef);
+          display: flex; align-items: center; justify-content: center;
+          overflow: hidden; position: relative;
+        }
+        .bs-card-img img {
+          width: 100%; height: 100%; object-fit: cover;
+        }
+        .bs-card-info { padding: 7px 8px 9px; }
+        .bs-card-name {
+          font-size: 11px; font-weight: 600; color: #222;
+          line-height: 1.3; margin-bottom: 4px;
           overflow: hidden; display: -webkit-box;
           -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-          min-height: 26px; font-family: 'Hind Siliguri', sans-serif;
+          min-height: 28px;
+          font-family: 'Hind Siliguri', sans-serif;
         }
-        .bp-price { font-size: 12px; font-weight: 800; color: #ff6a00; font-family: 'Hind Siliguri', sans-serif; }
+        .bs-card-price {
+          font-size: 13px; font-weight: 800; color: #e8a020;
+          font-family: 'Hind Siliguri', sans-serif;
+        }
+        .bs-card-mrp {
+          font-size: 10px; color: #bbb;
+          text-decoration: line-through;
+          margin-left: 4px;
+          font-family: 'Hind Siliguri', sans-serif;
+        }
 
-        /* View more */
-        .bp-more {
-          background: #fafafa; border-radius: 10px;
+        /* VIEW MORE card */
+        .bs-more {
+          background: #fafafa;
+          border-radius: 10px;
           border: 1.5px dashed #e0e0e0;
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;
-          gap: 5px; cursor: pointer; min-height: 110px;
+          gap: 6px; cursor: pointer; min-height: 118px;
           transition: all 0.2s;
         }
-        .bp-more:hover { border-color: #ff6a00; background: #fff8f5; }
-        .bp-more-dots { display: flex; gap: 3px; }
-        .bp-more-dot { width: 5px; height: 5px; border-radius: 50%; background: #ccc; }
-        .bp-more-text { font-size: 10px; font-weight: 700; color: #aaa; font-family: 'Hind Siliguri', sans-serif; }
+        .bs-more:hover { border-color: #e8a020; background: #fff8ec; }
+        .bs-more-dots { display: flex; gap: 4px; }
+        .bs-more-dot { width: 5px; height: 5px; border-radius: 50%; background: #ccc; }
+        .bs-more:hover .bs-more-dot { background: #e8a020; }
+        .bs-more-text {
+          font-size: 10px; font-weight: 700; color: #aaa;
+          font-family: 'Hind Siliguri', sans-serif;
+        }
+        .bs-more:hover .bs-more-text { color: #e8a020; }
 
-        /* Skeleton */
-        .bp-skeleton { background: linear-gradient(90deg,#f5f5f5 25%,#ececec 50%,#f5f5f5 75%); background-size: 200% 100%; animation: bpShimmer 1.4s infinite; border-radius: 10px; }
-        @keyframes bpShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        /* SKELETON */
+        .bs-skeleton {
+          background: linear-gradient(90deg,#f5f5f5 25%,#ececec 50%,#f5f5f5 75%);
+          background-size: 200% 100%;
+          animation: bsShi 1.4s infinite;
+          border-radius: 6px;
+        }
+        @keyframes bsShi {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
       `}</style>
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 16px 0', background: '#fff' }}>
-        <div style={{ width: 4, height: 20, background: '#ff6a00', borderRadius: 2 }} />
-        <span style={{ fontSize: 16, fontWeight: 800, color: '#1a1a1a', fontFamily: 'Hind Siliguri, sans-serif' }}>Brands</span>
-      </div>
+      <div className="bs-wrap">
 
-      <div className="brands-section">
-        <div style={{ display: 'flex' }}>
-
-          {/* Left Sidebar */}
-          <div className="brand-sidebar">
-            {brands.map(brand => (
-              <button
-                key={brand.id}
-                className={`brand-item${activeBrand?.id === brand.id ? ' active' : ''}`}
-                onClick={() => setActiveBrand(brand)}
-              >
-                <div className="brand-logo-wrap">
-                  {brand.logo_url
-                    ? <img src={brand.logo_url} alt={brand.name} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }} onError={e => { e.currentTarget.style.display = 'none'; }} />
-                    : <span style={{ fontSize: 20 }}>🏪</span>
-                  }
-                </div>
-                <span className="brand-label">{brand.name}</span>
-              </button>
-            ))}
+        {/* HEADER */}
+        <div className="bs-header">
+          <div className="bs-title">
+            <div className="bs-title-bar" />
+            <span className="bs-title-text">Brands</span>
           </div>
-
-          {/* Right Content */}
-          <div className="brand-content">
-
-            {/* View All Banner */}
-            <div
-              className="view-all-banner"
-              onClick={() => router.push(`/products?brand=${activeBrand?.id}`)}
-            >
-              <span className="view-all-text">View all {activeBrand?.name}</span>
-              <span style={{ fontSize: 18, color: '#ff6a00' }}>→</span>
-            </div>
-
-            {/* Products */}
-            <div className="bp-grid">
-              {loadingProducts ? (
-                <>
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} style={{ borderRadius: 10, overflow: 'hidden', border: '1.5px solid #f0f0f0' }}>
-                      <div className="bp-skeleton" style={{ height: 70 }} />
-                      <div style={{ padding: '6px 7px 8px' }}>
-                        <div className="bp-skeleton" style={{ height: 10, marginBottom: 5 }} />
-                        <div className="bp-skeleton" style={{ height: 10, width: '60%' }} />
-                      </div>
-                    </div>
-                  ))}
-                  <div className="bp-more" style={{ opacity: 0.4 }}>
-                    <div className="bp-more-dots">
-                      {[0,1,2].map(i => <div key={i} className="bp-more-dot" />)}
-                    </div>
-                    <span className="bp-more-text">View More</span>
-                  </div>
-                </>
-              ) : products.length === 0 ? (
-                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px 0', color: '#bbb', fontSize: 13, fontFamily: 'Hind Siliguri, sans-serif' }}>
-                  No products found
-                </div>
-              ) : (
-                <>
-                  {products.map(p => (
-                    <div
-                      key={p.id}
-                      className="bp-card"
-                      onClick={() => router.push(`/products/${p.id}`)}
-                    >
-                      <div className="bp-img">
-                        {p.image_url
-                          ? <img src={p.image_url} alt={p.name} />
-                          : (
-                            <div className="bp-img-placeholder">
-                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                            </div>
-                          )
-                        }
-                      </div>
-                      <div className="bp-info">
-                        <p className="bp-name">{p.name}</p>
-                        <span className="bp-price">৳{p.price?.toLocaleString('bn-BD')}</span>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* View More */}
-                  <div
-                    className="bp-more"
-                    onClick={() => router.push(`/products?brand=${activeBrand?.id}`)}
-                  >
-                    <div className="bp-more-dots">
-                      {[0,1,2].map(i => <div key={i} className="bp-more-dot" />)}
-                    </div>
-                    <span className="bp-more-text">View More</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          <span className="bs-view-all" onClick={() => router.push('/products?tab=brands')}>
+            সব দেখুন →
+          </span>
         </div>
+
+        {/* BRAND TABS */}
+        <div className="bs-tabs">
+          {brands.map(brand => (
+            <button
+              key={brand.id}
+              className={`bs-tab${activeBrand?.id === brand.id ? ' active' : ''}`}
+              onClick={() => setActiveBrand(brand)}
+            >
+              <div className="bs-tab-logo">
+                {brand.logo_url
+                  ? <img src={brand.logo_url} alt={brand.name} onError={e => { e.currentTarget.style.display = 'none'; }} />
+                  : <span style={{ fontSize: 22 }}>🏪</span>
+                }
+              </div>
+              <span className="bs-tab-name">{brand.name}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* ACTIVE BRAND BANNER */}
+        {activeBrand && (
+          <div className="bs-banner" onClick={() => router.push(`/products?brand=${activeBrand.id}`)}>
+            <div className="bs-banner-left">
+              <div className="bs-banner-logo">
+                {activeBrand.logo_url
+                  ? <img src={activeBrand.logo_url} alt={activeBrand.name} />
+                  : <span style={{ fontSize: 18 }}>🏪</span>
+                }
+              </div>
+              <div>
+                <div className="bs-banner-text">সব {activeBrand.name} পণ্য দেখুন</div>
+                <div className="bs-banner-sub">সেরা পাইকারি দামে</div>
+              </div>
+            </div>
+            <div className="bs-banner-arrow">→</div>
+          </div>
+        )}
+
+        {/* PRODUCTS GRID */}
+        <div className="bs-grid">
+          {loadingProducts ? (
+            // Skeleton
+            <>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} style={{ borderRadius: 10, overflow: 'hidden', border: '1.5px solid #f0f0f0' }}>
+                  <div className="bs-skeleton" style={{ height: 80 }} />
+                  <div style={{ padding: '7px 8px 9px' }}>
+                    <div className="bs-skeleton" style={{ height: 10, marginBottom: 6 }} />
+                    <div className="bs-skeleton" style={{ height: 10, width: '55%' }} />
+                  </div>
+                </div>
+              ))}
+              <div className="bs-more" style={{ opacity: 0.4 }}>
+                <div className="bs-more-dots">
+                  {[0,1,2].map(i => <div key={i} className="bs-more-dot" />)}
+                </div>
+                <span className="bs-more-text">আরো দেখুন</span>
+              </div>
+            </>
+          ) : products.length === 0 ? (
+            <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'40px 0', color:'#bbb', fontSize:13, fontFamily:'Hind Siliguri, sans-serif' }}>
+              এই ব্র্যান্ডের কোনো পণ্য নেই
+            </div>
+          ) : (
+            <>
+              {products.slice(0, 5).map(p => (
+                <div
+                  key={p.id}
+                  className="bs-card"
+                  onClick={() => router.push(`/products/${p.id}`)}
+                >
+                  <div className="bs-card-img">
+                    {p.image_url
+                      ? <img src={p.image_url} alt={p.name} />
+                      : (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.5">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/>
+                          <circle cx="8.5" cy="8.5" r="1.5"/>
+                          <path d="m21 15-5-5L5 21"/>
+                        </svg>
+                      )
+                    }
+                  </div>
+                  <div className="bs-card-info">
+                    <p className="bs-card-name">{p.name}</p>
+                    <div style={{ display:'flex', alignItems:'baseline' }}>
+                      <span className="bs-card-price">৳{p.price?.toLocaleString('bn-BD')}</span>
+                      {p.mrp && p.mrp > p.price && (
+                        <span className="bs-card-mrp">৳{p.mrp?.toLocaleString('bn-BD')}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* View More */}
+              <div
+                className="bs-more"
+                onClick={() => router.push(`/products?brand=${activeBrand?.id}`)}
+              >
+                <div className="bs-more-dots">
+                  {[0,1,2].map(i => <div key={i} className="bs-more-dot" />)}
+                </div>
+                <span className="bs-more-text">আরো দেখুন</span>
+              </div>
+            </>
+          )}
+        </div>
+
       </div>
     </>
   );
