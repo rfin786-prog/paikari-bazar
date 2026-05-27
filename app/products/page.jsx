@@ -19,7 +19,7 @@ function SkeletonCard() {
       <div style={{ padding: 12 }}>
         <div style={{ height: 11, background: 'linear-gradient(90deg,#f5f5f5 25%,#ececec 50%,#f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6, marginBottom: 8 }} />
         <div style={{ height: 11, width: '65%', background: 'linear-gradient(90deg,#f5f5f5 25%,#ececec 50%,#f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6, marginBottom: 14 }} />
-        <div style={{ height: 36, background: 'linear-gradient(90deg,#f5f5f5 25%,#ececec 50%,#f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 9 }} />
+        <div style={{ height: 40, background: 'linear-gradient(90deg,#f5f5f5 25%,#ececec 50%,#f5f5f5 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 9 }} />
       </div>
     </div>
   );
@@ -41,7 +41,7 @@ function ProductsPageContent() {
   const [cartCount, setCartCount]         = useState(0);
   const [drawerOpen, setDrawerOpen]       = useState(false);
   const [isMobile, setIsMobile]           = useState(false);
-  const [flipCards, setFlipCards]         = useState({});
+  const [showProfit, setShowProfit]       = useState({});
   const drawerRef = useRef(null);
 
   const syncCart = useCallback(() => {
@@ -109,16 +109,30 @@ function ProductsPageContent() {
   if (sortBy === 'price_asc')  filtered = [...filtered].sort((a,b) => a.price - b.price);
   if (sortBy === 'price_desc') filtered = [...filtered].sort((a,b) => b.price - a.price);
 
+  // Staggered fade animation — প্রতিটা কার্ড আলাদা সময়ে
   useEffect(() => {
     if (filtered.length === 0) return;
-    const interval = setInterval(() => {
-      setFlipCards(prev => {
-        const next = {};
-        filtered.forEach(p => { next[p.id] = !prev[p.id]; });
-        return next;
-      });
-    }, 2000);
-    return () => clearInterval(interval);
+    const timers = [];
+    filtered.forEach((p, i) => {
+      const profit = p.mrp && p.price && p.mrp > p.price ? p.mrp - p.price : 0;
+      if (profit <= 0) return;
+      // প্রতিটা কার্ড i * 400ms delay তে শুরু হবে
+      const delay = (i % 5) * 600;
+      const cycle = () => {
+        const t1 = setTimeout(() => {
+          setShowProfit(prev => ({ ...prev, [p.id]: true }));
+          const t2 = setTimeout(() => {
+            setShowProfit(prev => ({ ...prev, [p.id]: false }));
+          }, 2000);
+          timers.push(t2);
+        }, delay);
+        timers.push(t1);
+      };
+      cycle();
+      const interval = setInterval(cycle, 4000 + delay);
+      timers.push(interval);
+    });
+    return () => timers.forEach(t => clearTimeout(t) || clearInterval(t));
   }, [filtered.length]);
 
   const handleAddToCart = (e, product) => {
@@ -205,7 +219,7 @@ function ProductsPageContent() {
         .qty-badge { animation: popIn 0.3s cubic-bezier(.4,0,.2,1) forwards; }
         .qty-btn { border: none; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; font-weight: 800; font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: none; }
         .qty-btn:active { transform: scale(0.85); }
-        .cart-btn { border: none; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; transition: background 0.5s ease, box-shadow 0.5s ease; }
+        .cart-btn { border: none; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; }
         .cart-btn:hover { filter: brightness(0.92); }
         .cart-btn:active { transform: scale(0.97); }
         .cat-chip { cursor: pointer; white-space: nowrap; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; }
@@ -217,18 +231,21 @@ function ProductsPageContent() {
         .float-cart { animation: slideUp 0.35s cubic-bezier(.4,0,.2,1) forwards; }
         .float-cart:hover { filter: brightness(0.93); transform: translateY(-2px); }
         .float-cart:active { transform: scale(0.97); }
-        .btn-text { display: flex; align-items: center; justify-content: center; gap: 5px; position: absolute; width: 100%; transition: transform 0.4s ease, opacity 0.4s ease; }
-        .btn-text-cart { transform: translateY(0%); opacity: 1; }
-        .btn-text-cart.hide { transform: translateY(-110%); opacity: 0; }
-        .btn-text-profit { transform: translateY(110%); opacity: 0; }
-        .btn-text-profit.show { transform: translateY(0%); opacity: 1; }
+
+        .btn-inner { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .btn-label { position: absolute; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; transition: opacity 0.8s ease; white-space: nowrap; }
+        .btn-label-cart { opacity: 1; }
+        .btn-label-cart.faded { opacity: 0; }
+        .btn-label-profit { opacity: 0; }
+        .btn-label-profit.visible { opacity: 1; }
+
         ::-webkit-scrollbar { height: 4px; width: 4px; }
         ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
 
         @media (max-width: 480px) {
           .product-grid { grid-template-columns: repeat(2,1fr) !important; gap: 8px !important; }
           .prod-name { font-size: 12px !important; min-height: 32px !important; }
-          .cart-btn { font-size: 11px !important; padding: 7px !important; }
+          .cart-btn { font-size: 11px !important; }
         }
         @media (min-width: 481px) and (max-width: 768px)  { .product-grid { grid-template-columns: repeat(2,1fr) !important; } }
         @media (min-width: 769px) and (max-width: 1024px) { .product-grid { grid-template-columns: repeat(3,1fr) !important; } }
@@ -317,8 +334,8 @@ function ProductsPageContent() {
                   const minQty     = p.min_order ? parseInt(p.min_order) : 1;
                   const profit     = p.mrp && p.price && p.mrp > p.price ? p.mrp - p.price : 0;
                   const discount   = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : null;
-                  const isFlipped  = (flipCards[p.id] || false) && profit > 0;
                   const hasImage   = !!p.image_url;
+                  const profitVisible = showProfit[p.id] || false;
 
                   return (
                     <div key={p.id} className="prod-card"
@@ -337,21 +354,18 @@ function ProductsPageContent() {
                           )
                         }
 
-                        {/* Out of stock overlay */}
                         {outOfStock && (
                           <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <span style={{ background: '#ef4444', color: '#fff', fontSize: 11, fontWeight: 800, padding: '5px 14px', borderRadius: 20 }}>Out of Stock</span>
                           </div>
                         )}
 
-                        {/* Quantity badge — top LEFT */}
                         {inCart && (
                           <div className="qty-badge" style={{ position: 'absolute', top: 8, left: 8, background: '#ff6a00', color: '#fff', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, boxShadow: '0 2px 8px rgba(255,106,0,0.4)', border: '2px solid #fff' }}>
                             {qty}
                           </div>
                         )}
 
-                        {/* Discount badge — top RIGHT */}
                         {discount && !outOfStock && (
                           <span style={{ position: 'absolute', top: 8, right: 8, background: 'linear-gradient(135deg,#ef4444,#f87171)', color: '#fff', fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, boxShadow: '0 2px 6px rgba(239,68,68,0.3)' }}>-{discount}%</span>
                         )}
@@ -380,7 +394,6 @@ function ProductsPageContent() {
                           </div>
                         </div>
 
-                        {/* Min order */}
                         {minQty > 1 && (
                           <p style={{ fontSize: 10, color: '#f59e0b', marginBottom: 7, fontWeight: 600 }}>Min Order: {minQty} pcs</p>
                         )}
@@ -390,9 +403,9 @@ function ProductsPageContent() {
                           <div style={{ width: '100%', background: '#f3f4f6', color: '#aaa', borderRadius: 10, padding: '9px 8px', fontSize: 12, fontWeight: 700, textAlign: 'center' }}>Out of Stock</div>
                         ) : inCart ? (
                           <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(135deg,#ff6a00,#ff8c38)', borderRadius: 10, overflow: 'hidden', boxShadow: '0 3px 10px rgba(255,106,0,0.25)' }}>
-                            <button className="qty-btn" onClick={e => handleDecrease(e, p)} style={{ width: 40, height: 36, color: '#fff', fontSize: 22 }}>−</button>
+                            <button className="qty-btn" onClick={e => handleDecrease(e, p)} style={{ width: 40, height: 40, color: '#fff', fontSize: 22 }}>−</button>
                             <span style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>{qty}</span>
-                            <button className="qty-btn" onClick={e => handleIncrease(e, p)} style={{ width: 40, height: 36, color: '#fff', fontSize: 22 }}>+</button>
+                            <button className="qty-btn" onClick={e => handleIncrease(e, p)} style={{ width: 40, height: 40, color: '#fff', fontSize: 22 }}>+</button>
                           </div>
                         ) : (
                           <button
@@ -400,29 +413,30 @@ function ProductsPageContent() {
                             onClick={e => handleAddToCart(e, p)}
                             style={{
                               width: '100%',
-                              height: 36,
-                              background: isFlipped
+                              height: 40,
+                              background: profitVisible && profit > 0
                                 ? 'linear-gradient(135deg,#16a34a,#22c55e)'
                                 : 'linear-gradient(135deg,#ff6a00,#ff8c38)',
                               color: '#fff',
                               borderRadius: 10,
                               fontSize: 12,
                               fontWeight: 700,
-                              boxShadow: isFlipped
+                              boxShadow: profitVisible && profit > 0
                                 ? '0 3px 10px rgba(22,163,74,0.25)'
                                 : '0 3px 10px rgba(255,106,0,0.2)',
                               position: 'relative',
                               overflow: 'hidden',
+                              transition: 'background 1s ease, box-shadow 1s ease',
                             }}
                           >
-                            <span className={`btn-text btn-text-cart${isFlipped ? ' hide' : ''}`}>
-                              <span>+</span>
-                              <span>Add to Cart</span>
-                            </span>
-                            <span className={`btn-text btn-text-profit${isFlipped ? ' show' : ''}`}>
-                              <span>💰</span>
-                              <span>Profit ৳{profit.toLocaleString('bn-BD')}</span>
-                            </span>
+                            <div className="btn-inner">
+                              <span className={`btn-label btn-label-cart${profitVisible && profit > 0 ? ' faded' : ''}`}>
+                                <span>+</span><span>Add to Cart</span>
+                              </span>
+                              <span className={`btn-label btn-label-profit${profitVisible && profit > 0 ? ' visible' : ''}`}>
+                                <span>💰</span><span>Profit ৳{profit.toLocaleString('bn-BD')}</span>
+                              </span>
+                            </div>
                           </button>
                         )}
                       </div>
