@@ -4,17 +4,13 @@ import { useRouter } from 'next/navigation';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const SMS_API_KEY  = process.env.NEXT_PUBLIC_SMS_API_KEY; // bulksmsbd api key
-const SMS_SENDER   = '8809617629000';
 
-// ── SMS পাঠাও ──
+// ── SMS পাঠাও (API route দিয়ে) ──
 async function sendOTPSms(phone, otp) {
   const number = '88' + phone; // 01700000000 → 8801700000000
   const message = `আড়ৎ: আপনার OTP হলো ${otp}। এটি ৫ মিনিট বৈধ। কাউকে শেয়ার করবেন না।`;
-  const url = `http://bulksmsbd.net/api/smsapi?api_key=${SMS_API_KEY}&type=text&number=${number}&senderid=${SMS_SENDER}&message=${encodeURIComponent(message)}`;
-  const res  = await fetch(url);
+  const res = await fetch(`/api/send-sms?number=${number}&message=${encodeURIComponent(message)}`);
   const text = await res.text();
-  // response parse করো
   const code = parseInt(text.trim());
   if (code === 202) return { success: true };
   const errors = {
