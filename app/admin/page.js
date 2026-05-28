@@ -12,6 +12,7 @@ import DeliveryChargesTab from './_components/DeliveryChargesTab';
 import SalesReportTab from './_components/SalesReportTab';
 import WalletTab from './_components/WalletTab';
 import PickupPointsTab from './_components/PickupPointsTab';
+import SettingsTab from './_components/SettingsTab';
 
 const TABS = [
  { key: 'dashboard',        label: 'Dashboard',  icon: '🏠' },
@@ -25,6 +26,7 @@ const TABS = [
  { key: 'delivery_charges', label: 'Charges',    icon: '💰' },
  { key: 'pickup_points',    label: 'Pickup',     icon: '📍' },
  { key: 'sales_report',     label: 'Sales',      icon: '📊' },
+ { key: 'settings',         label: 'Settings',   icon: '⚙️' },
 ];
 
 const BOTTOM_TABS = ['dashboard', 'products', 'orders', 'users', 'sales_report'];
@@ -66,7 +68,7 @@ export default function AdminPage() {
  return (
    <div style={{ minHeight: '100vh', background: '#0f0e17', fontFamily: FONT, display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
 
-     {/* ── DESKTOP SIDEBAR ── */}
+     {/* DESKTOP SIDEBAR */}
      {!isMobile && (
        <aside style={{
          width: collapsed ? '64px' : '220px',
@@ -81,7 +83,6 @@ export default function AdminPage() {
          top: 0,
          height: '100vh',
        }}>
-         {/* Logo */}
          <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(255,255,255,.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '64px' }}>
            {!collapsed && (
              <div>
@@ -94,7 +95,6 @@ export default function AdminPage() {
            </button>
          </div>
 
-         {/* Nav Items */}
          <nav style={{ flex: 1, padding: '12px 8px', overflowY: 'auto' }}>
            {TABS.map(({ key, label, icon }) => (
              <button key={key} onClick={() => setTab(key)} style={{
@@ -123,7 +123,6 @@ export default function AdminPage() {
            ))}
          </nav>
 
-         {/* Bottom: Admin + Logout */}
          <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,.06)' }}>
            {!collapsed && (
              <div style={{ padding: '8px 12px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -157,7 +156,7 @@ export default function AdminPage() {
        </aside>
      )}
 
-     {/* ── MOBILE TOPBAR ── */}
+     {/* MOBILE TOPBAR */}
      {isMobile && (
        <header style={{
          background: '#1a1828',
@@ -185,7 +184,7 @@ export default function AdminPage() {
        </header>
      )}
 
-     {/* ── MAIN CONTENT ── */}
+     {/* MAIN CONTENT */}
      <main style={{
        flex: 1,
        padding: isMobile ? '16px 12px' : '28px',
@@ -204,48 +203,28 @@ export default function AdminPage() {
        {tab === 'delivery_charges' && <DeliveryChargesTab />}
        {tab === 'pickup_points'    && <PickupPointsTab />}
        {tab === 'sales_report'     && <SalesReportTab />}
+       {tab === 'settings'         && <SettingsTab />}
      </main>
 
-     {/* ── MOBILE BOTTOM NAV ── */}
+     {/* MOBILE BOTTOM NAV */}
      {isMobile && (
        <>
-         {/* More Menu Overlay */}
          {showMoreMenu && (
-           <div
-             onClick={() => setShowMoreMenu(false)}
-             style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 90 }}
-           >
-             <div
-               onClick={e => e.stopPropagation()}
-               style={{
-                 position: 'absolute',
-                 bottom: '65px',
-                 left: '0',
-                 right: '0',
-                 background: '#1a1828',
-                 borderTop: '1px solid rgba(255,255,255,.08)',
-                 borderRadius: '16px 16px 0 0',
-                 padding: '16px 12px',
-                 display: 'grid',
-                 gridTemplateColumns: 'repeat(3, 1fr)',
-                 gap: '8px',
-               }}
-             >
-               <div style={{ gridColumn: '1/-1', fontSize: '11px', color: 'rgba(255,255,255,.35)', fontWeight: '600', marginBottom: '4px', paddingLeft: '4px' }}>আরও বিভাগ</div>
+           <div onClick={() => setShowMoreMenu(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 90 }}>
+             <div onClick={e => e.stopPropagation()} style={{
+               position: 'absolute', bottom: '65px', left: '0', right: '0',
+               background: '#1a1828', borderTop: '1px solid rgba(255,255,255,.08)',
+               borderRadius: '16px 16px 0 0', padding: '16px 12px',
+               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px',
+             }}>
+               <div style={{ gridColumn: '1/-1', fontSize: '11px', color: 'rgba(255,255,255,.35)', fontWeight: '600', marginBottom: '4px', paddingLeft: '4px' }}>More</div>
                {moreTabs.map(({ key, label, icon }) => (
                  <button key={key} onClick={() => handleTabChange(key)} style={{
-                   display: 'flex',
-                   flexDirection: 'column',
-                   alignItems: 'center',
-                   gap: '4px',
-                   padding: '12px 8px',
-                   borderRadius: '10px',
-                   border: 'none',
+                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                   padding: '12px 8px', borderRadius: '10px', border: 'none',
                    background: tab === key ? 'rgba(232,160,32,.15)' : 'rgba(255,255,255,.04)',
                    color: tab === key ? '#e8a020' : 'rgba(255,255,255,.6)',
-                   fontSize: '11px',
-                   fontFamily: FONT,
-                   cursor: 'pointer',
+                   fontSize: '11px', fontFamily: FONT, cursor: 'pointer',
                  }}>
                    <span style={{ fontSize: '20px' }}>{icon}</span>
                    {label}
@@ -255,32 +234,18 @@ export default function AdminPage() {
            </div>
          )}
 
-         {/* Bottom Nav Bar */}
          <nav style={{
-           position: 'fixed',
-           bottom: 0,
-           left: 0,
-           right: 0,
-           background: '#1a1828',
-           borderTop: '1px solid rgba(255,255,255,.08)',
-           display: 'flex',
-           zIndex: 100,
+           position: 'fixed', bottom: 0, left: 0, right: 0,
+           background: '#1a1828', borderTop: '1px solid rgba(255,255,255,.08)',
+           display: 'flex', zIndex: 100,
            paddingBottom: 'env(safe-area-inset-bottom)',
          }}>
            {bottomTabItems.map(({ key, label, icon }) => (
              <button key={key} onClick={() => handleTabChange(key)} style={{
-               flex: 1,
-               display: 'flex',
-               flexDirection: 'column',
-               alignItems: 'center',
-               gap: '3px',
-               padding: '8px 4px',
-               border: 'none',
-               background: 'transparent',
+               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+               gap: '3px', padding: '8px 4px', border: 'none', background: 'transparent',
                color: tab === key ? '#e8a020' : 'rgba(255,255,255,.4)',
-               fontSize: '10px',
-               fontFamily: FONT,
-               cursor: 'pointer',
+               fontSize: '10px', fontFamily: FONT, cursor: 'pointer',
                borderTop: tab === key ? '2px solid #e8a020' : '2px solid transparent',
                transition: 'all .15s',
              }}>
@@ -288,20 +253,11 @@ export default function AdminPage() {
                {label}
              </button>
            ))}
-           {/* More Button */}
            <button onClick={() => setShowMoreMenu(!showMoreMenu)} style={{
-             flex: 1,
-             display: 'flex',
-             flexDirection: 'column',
-             alignItems: 'center',
-             gap: '3px',
-             padding: '8px 4px',
-             border: 'none',
-             background: 'transparent',
+             flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+             gap: '3px', padding: '8px 4px', border: 'none', background: 'transparent',
              color: showMoreMenu ? '#e8a020' : 'rgba(255,255,255,.4)',
-             fontSize: '10px',
-             fontFamily: FONT,
-             cursor: 'pointer',
+             fontSize: '10px', fontFamily: FONT, cursor: 'pointer',
              borderTop: showMoreMenu ? '2px solid #e8a020' : '2px solid transparent',
            }}>
              <span style={{ fontSize: '18px' }}>☰</span>
