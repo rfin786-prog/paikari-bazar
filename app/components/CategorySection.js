@@ -18,7 +18,7 @@ const CAT_META = {
   'গৃহস্থালি':   { icon: '🏠', color: '#db2777' },
   'কৃষি':        { icon: '🌾', color: '#65a30d' },
   'সৌন্দর্য':    { icon: '🧴', color: '#9333ea' },
-  'শিশ':        { icon: '👶', color: '#d97706' },
+  'শিশ':         { icon: '👶', color: '#d97706' },
   'প্যাকেজিং':   { icon: '📦', color: '#0891b2' },
   'হার্ডওয়্যার': { icon: '🔧', color: '#dc2626' },
   'অর্গানিক':    { icon: '🌿', color: '#65a30d' },
@@ -51,7 +51,7 @@ export default function CategorySection() {
     const fetchCategories = async () => {
       try {
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/categories?select=*&order=name.asc`,
+          `${SUPABASE_URL}/rest/v1/categories?select=*&order=sort_order.asc,created_at.asc`,
           { headers }
         );
         const data = await res.json();
@@ -62,6 +62,10 @@ export default function CategorySection() {
         children.forEach(c => {
           if (!map[c.parent_id]) map[c.parent_id] = [];
           map[c.parent_id].push(c);
+        });
+        // sub-categories-ও sort_order অনুযায়ী sort করো
+        Object.keys(map).forEach(pid => {
+          map[pid].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
         });
         setCategories(parents);
         setSubMap(map);
@@ -126,8 +130,6 @@ export default function CategorySection() {
       `}</style>
 
       <div style={{ background: '#fff', borderRadius: 0, overflow: 'hidden' }}>
-
-        {/* Two-column layout */}
         <div style={{ display: 'flex', minHeight: 380, maxHeight: isMobile ? 380 : 440 }}>
 
           {/* Left: Category List */}
