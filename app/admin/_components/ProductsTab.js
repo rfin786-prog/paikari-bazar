@@ -198,17 +198,27 @@ export default function ProductsTab() {
 
   const openEdit = (p) => {
     setFormData({
-      name: p.name || '', category: p.category || '', sub_category: p.sub_category || '',
-      cost_price: p.cost_price || '', mrp: p.mrp || '', price: p.price || '',
-      trade_price: p.trade_price || '', discount_price: p.discount_price || '',
-      unit: p.unit || '', stock: p.stock || '', moq: p.moq || '1',
-      max_qty: p.max_qty || '', image_url: p.image_url || '',
-      description: p.description || '', brand: p.brand || '',
-      sku: p.sku || '', weight: p.weight || '', active: p.active !== false,
+      name: p.name || '',
+      category: p.category_id || '',
+      sub_category: p.sub_category_id || '',
+      cost_price: p.cost_price || '',
+      mrp: p.mrp || '',
+      price: p.price || '',
+      trade_price: p.trade_price || '',
+      discount_price: p.discount_price || '',
+      unit: p.unit || '',
+      stock: p.stock || '',
+      moq: p.moq || '1',
+      max_qty: p.max_qty || '',
+      image_url: p.image_url || '',
+      description: p.description || '',
+      brand: p.brand || '',
+      sku: p.sku || '',
+      weight: p.weight || '',
+      active: p.active !== false,
     });
-    // load sub-categories for this product's parent category
-    if (p.category) {
-      const subs = categories.filter(c => c.parent_id === p.category);
+    if (p.category_id) {
+      const subs = categories.filter(c => c.parent_id === p.category_id);
       setSubCategories(subs);
     } else {
       setSubCategories([]);
@@ -252,11 +262,11 @@ export default function ProductsTab() {
     } catch { toast('Update failed', 'error'); }
   };
 
-  const parentCategories = categories.filter(c => !c.parent_id);
+  const parentCategories = categories.filter(c => c.parent_id === null);
 
   const filtered = products.filter((p) => {
     const s = p.name?.toLowerCase().includes(search.toLowerCase());
-    const c = filterCat ? p.category === filterCat : true;
+    const c = filterCat ? p.category_id === filterCat : true;
     return s && c;
   });
 
@@ -311,8 +321,9 @@ export default function ProductsTab() {
             <tbody>
               {filtered.map((p) => {
                 const profit = p.price && p.cost_price ? parseFloat(p.price) - parseFloat(p.cost_price) : null;
-                const parentCat = categories.find(c => c.id === p.category);
-                const subCat = categories.find(c => c.id === p.sub_category);
+                // ✅ FIX: category_id আর sub_category_id দিয়ে match
+                const parentCat = categories.find(c => c.id === p.category_id);
+                const subCat = categories.find(c => c.id === p.sub_category_id);
                 return (
                   <tr key={p.id} style={{ borderBottom: `1px solid ${C.border}` }}
                     onMouseEnter={(e) => e.currentTarget.style.background = C.surfaceHover}
@@ -396,7 +407,6 @@ export default function ProductsTab() {
             borderRadius: 16, width: '100%', maxWidth: 680, marginTop: 24, marginBottom: 24,
             boxShadow: '0 20px 60px rgba(0,0,0,.6)',
           }}>
-            {/* Modal Header */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '18px 24px', borderBottom: `1px solid rgba(255,255,255,.08)`,
@@ -410,13 +420,10 @@ export default function ProductsTab() {
               }}>×</button>
             </div>
 
-            {/* Modal Body */}
             <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-              {/* Image Upload */}
               <Field label="Product Photo">
-                <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload}
-                  style={{ display: 'none' }} />
+                <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                 {formData.image_url ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <img src={formData.image_url} alt="preview"
@@ -447,13 +454,11 @@ export default function ProductsTab() {
                 )}
               </Field>
 
-              {/* Name */}
               <Field label="Product Name *">
                 <input name="name" value={formData.name} onChange={handleChange}
                   placeholder="e.g. Masur Dal" style={inputStyle} />
               </Field>
 
-              {/* Category + Sub Category */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <Field label="Category">
                   <select name="category" value={formData.category} onChange={handleCategoryChange} style={inputStyle}>
@@ -464,20 +469,10 @@ export default function ProductsTab() {
                   </select>
                 </Field>
                 <Field label="Sub Category">
-                  <select
-                    name="sub_category"
-                    value={formData.sub_category}
-                    onChange={handleChange}
+                  <select name="sub_category" value={formData.sub_category} onChange={handleChange}
                     disabled={subCategories.length === 0}
-                    style={{
-                      ...inputStyle,
-                      opacity: subCategories.length === 0 ? 0.5 : 1,
-                      cursor: subCategories.length === 0 ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    <option value="">
-                      {subCategories.length === 0 ? 'আগে category বেছে নিন' : 'Select sub-category'}
-                    </option>
+                    style={{ ...inputStyle, opacity: subCategories.length === 0 ? 0.5 : 1, cursor: subCategories.length === 0 ? 'not-allowed' : 'pointer' }}>
+                    <option value="">{subCategories.length === 0 ? 'আগে category বেছে নিন' : 'Select sub-category'}</option>
                     {subCategories.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -485,7 +480,6 @@ export default function ProductsTab() {
                 </Field>
               </div>
 
-              {/* Unit */}
               <Field label="Unit">
                 <select name="unit" value={formData.unit} onChange={handleChange} style={inputStyle}>
                   <option value="">Select unit</option>
@@ -493,53 +487,42 @@ export default function ProductsTab() {
                 </select>
               </Field>
 
-              {/* Price Section */}
               <div style={{ background: 'rgba(255,255,255,.03)', borderRadius: 12, padding: 16, border: `1px solid rgba(255,255,255,.06)` }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.textMuted, fontFamily: FONT, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 14 }}>
                   💰 Pricing
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                   <Field label="Cost Price">
-                    <input type="number" name="cost_price" value={formData.cost_price}
-                      onChange={handleChange} placeholder="0" style={inputStyle} />
+                    <input type="number" name="cost_price" value={formData.cost_price} onChange={handleChange} placeholder="0" style={inputStyle} />
                   </Field>
                   <Field label="MRP">
-                    <input type="number" name="mrp" value={formData.mrp}
-                      onChange={handleChange} placeholder="0" style={inputStyle} />
+                    <input type="number" name="mrp" value={formData.mrp} onChange={handleChange} placeholder="0" style={inputStyle} />
                   </Field>
                   <Field label="Selling Price *">
-                    <input type="number" name="price" value={formData.price}
-                      onChange={handleChange} placeholder="0" style={{ ...inputStyle, border: `1px solid rgba(245,158,11,.35)` }} />
+                    <input type="number" name="price" value={formData.price} onChange={handleChange} placeholder="0" style={{ ...inputStyle, border: `1px solid rgba(245,158,11,.35)` }} />
                   </Field>
                   <Field label="Trade Price">
-                    <input type="number" name="trade_price" value={formData.trade_price}
-                      onChange={handleChange} placeholder="0" style={inputStyle} />
+                    <input type="number" name="trade_price" value={formData.trade_price} onChange={handleChange} placeholder="0" style={inputStyle} />
                   </Field>
                   <Field label="Discount Price">
-                    <input type="number" name="discount_price" value={formData.discount_price}
-                      onChange={handleChange} placeholder="0" style={inputStyle} />
+                    <input type="number" name="discount_price" value={formData.discount_price} onChange={handleChange} placeholder="0" style={inputStyle} />
                   </Field>
                 </div>
                 <ProfitBadge cost={formData.cost_price} selling={formData.price} />
               </div>
 
-              {/* Stock / MOQ / MaxQty */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 <Field label="Stock">
-                  <input type="number" name="stock" value={formData.stock}
-                    onChange={handleChange} placeholder="0" style={inputStyle} />
+                  <input type="number" name="stock" value={formData.stock} onChange={handleChange} placeholder="0" style={inputStyle} />
                 </Field>
                 <Field label="Min Order (MOQ)">
-                  <input type="number" name="moq" value={formData.moq}
-                    onChange={handleChange} placeholder="1" style={inputStyle} />
+                  <input type="number" name="moq" value={formData.moq} onChange={handleChange} placeholder="1" style={inputStyle} />
                 </Field>
                 <Field label="Max Quantity">
-                  <input type="number" name="max_qty" value={formData.max_qty}
-                    onChange={handleChange} placeholder="0" style={inputStyle} />
+                  <input type="number" name="max_qty" value={formData.max_qty} onChange={handleChange} placeholder="0" style={inputStyle} />
                 </Field>
               </div>
 
-              {/* Brand / SKU / Weight */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 <Field label="Brand">
                   <select name="brand" value={formData.brand} onChange={handleChange} style={inputStyle}>
@@ -548,23 +531,19 @@ export default function ProductsTab() {
                   </select>
                 </Field>
                 <Field label="SKU">
-                  <input name="sku" value={formData.sku} onChange={handleChange}
-                    placeholder="SKU-001" style={inputStyle} />
+                  <input name="sku" value={formData.sku} onChange={handleChange} placeholder="SKU-001" style={inputStyle} />
                 </Field>
                 <Field label="Weight">
-                  <input name="weight" value={formData.weight} onChange={handleChange}
-                    placeholder="500g" style={inputStyle} />
+                  <input name="weight" value={formData.weight} onChange={handleChange} placeholder="500g" style={inputStyle} />
                 </Field>
               </div>
 
-              {/* Description */}
               <Field label="Description">
                 <textarea name="description" value={formData.description} onChange={handleChange}
                   rows={3} placeholder="Write product description..."
                   style={{ ...inputStyle, resize: 'vertical' }} />
               </Field>
 
-              {/* Active toggle */}
               <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
                 <div onClick={() => setFormData((p) => ({ ...p, active: !p.active }))} style={{
                   width: 44, height: 24, borderRadius: 12, position: 'relative',
@@ -581,11 +560,7 @@ export default function ProductsTab() {
               </label>
             </div>
 
-            {/* Modal Footer */}
-            <div style={{
-              display: 'flex', gap: 12, padding: '16px 24px',
-              borderTop: `1px solid rgba(255,255,255,.08)`,
-            }}>
+            <div style={{ display: 'flex', gap: 12, padding: '16px 24px', borderTop: `1px solid rgba(255,255,255,.08)` }}>
               <button onClick={() => { setShowForm(false); setEditId(null); }} style={{
                 flex: 1, padding: '11px 0', borderRadius: 10,
                 border: `1px solid rgba(255,255,255,.15)`, background: 'none',
