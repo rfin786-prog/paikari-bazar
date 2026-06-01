@@ -35,11 +35,11 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { category, sub_category, ...rest } = body;
+    const { category, sub_category, category_id, sub_category_id, ...rest } = body;
     const payload = clean({
       ...rest,
-      category_id: category || null,
-      sub_category_id: sub_category || null,
+      category_id: category || category_id || null,
+      sub_category_id: sub_category || sub_category_id || null,
     });
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/products`,
@@ -62,11 +62,11 @@ export async function PUT(request) {
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
 
     const body = await request.json();
-    const { id: _id, created_at, category, sub_category, ...rest } = body;
+    const { id: _id, created_at, category, sub_category, category_id, sub_category_id, ...rest } = body;
     const updateData = clean({
       ...rest,
-      category_id: category || null,
-      sub_category_id: sub_category || null,
+      category_id: category || category_id || null,
+      sub_category_id: sub_category || sub_category_id || null,
     });
 
     const res = await fetch(
