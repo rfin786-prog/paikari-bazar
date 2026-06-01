@@ -10,6 +10,15 @@ const headers = {
   'Prefer': 'return=representation',
 };
 
+function clean(obj) {
+  const result = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === '' || v === undefined) continue;
+    result[k] = v;
+  }
+  return result;
+}
+
 export async function GET() {
   try {
     const res = await fetch(
@@ -27,20 +36,20 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const { category, sub_category, ...rest } = body;
-    const payload = {
+    const payload = clean({
       ...rest,
       category_id: category || null,
       sub_category_id: sub_category || null,
-    };
+    });
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/products`,
       { method: 'POST', headers, body: JSON.stringify(payload) }
     );
-    const data = await res.json();
+    const text = await res.text();
     if (!res.ok) {
-      return NextResponse.json({ supabase_error: data }, { status: res.status });
+      return NextResponse.json({ error: text }, { status: res.status });
     }
-    return NextResponse.json(data);
+    return NextResponse.json(JSON.parse(text || '[]'));
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -54,18 +63,18 @@ export async function PUT(request) {
 
     const body = await request.json();
     const { id: _id, created_at, category, sub_category, ...rest } = body;
-    const updateData = {
+    const updateData = clean({
       ...rest,
       category_id: category || null,
       sub_category_id: sub_category || null,
-    };
+    });
 
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/products?id=eq.${id}`,
       { method: 'PATCH', headers, body: JSON.stringify(updateData) }
     );
-    const data = await res.json();
-    return NextResponse.json(data);
+    const text = await res.text();
+    return NextResponse.json(JSON.parse(text || '[]'));
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
