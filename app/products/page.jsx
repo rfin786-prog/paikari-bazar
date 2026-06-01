@@ -117,15 +117,11 @@ function ProductsPageContent() {
   const groupedProducts = useMemo(() => {
     if (!activeCategory) return {};
 
-    let list = products.filter(p =>
-      p.category?.trim().toLowerCase() === activeCategory.name?.trim().toLowerCase()
-    );
+    let list = products.filter(p => p.category_id === activeCategory.id);
 
     if (activeSubcat) {
       return {
-        [activeSubcat.name]: { items: list.filter(p =>
-          p.subcategory?.trim().toLowerCase() === activeSubcat.name?.trim().toLowerCase()
-        )}
+        [activeSubcat.name]: { items: list.filter(p => p.sub_category_id === activeSubcat.id) }
       };
     }
 
@@ -133,16 +129,12 @@ function ProductsPageContent() {
     const noSubcat = [];
 
     subcategories.forEach(sub => {
-      const items = list.filter(p =>
-        p.subcategory?.trim().toLowerCase() === sub.name?.trim().toLowerCase()
-      );
+      const items = list.filter(p => p.sub_category_id === sub.id);
       if (items.length > 0) groups[sub.name] = { items, sub };
     });
 
     list.forEach(p => {
-      const matched = subcategories.some(s =>
-        s.name?.trim().toLowerCase() === p.subcategory?.trim().toLowerCase()
-      );
+      const matched = subcategories.some(s => s.id === p.sub_category_id);
       if (!matched) noSubcat.push(p);
     });
 
@@ -219,7 +211,6 @@ function ProductsPageContent() {
           transition: 'box-shadow 0.2s, transform 0.2s',
         }}>
 
-        {/* Image */}
         <div style={{ position: 'relative', background: '#f5f5f5', aspectRatio: '1/1', overflow: 'hidden' }}>
           {p.image_url
             ? <img src={p.image_url} alt={p.name} className="prod-img" loading="lazy"
@@ -249,15 +240,11 @@ function ProductsPageContent() {
           )}
         </div>
 
-        {/* Info */}
         <div style={{ padding: '10px 10px 12px' }}>
-
-          {/* Product Name */}
           <p style={{ fontSize: 12, fontWeight: 600, color: '#333', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: 8, minHeight: 36 }}>
             {p.name}
           </p>
 
-          {/* Price Block */}
           <div style={{ marginBottom: 8 }}>
             {p.mrp && p.mrp > p.price && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
@@ -279,7 +266,6 @@ function ProductsPageContent() {
             <p style={{ fontSize: 10, color: '#bbb', marginBottom: 8, fontWeight: 600 }}>Min: {minQty} pcs</p>
           )}
 
-          {/* Cart Button */}
           {!outOfStock && (
             inCart ? (
               <div onClick={e => e.stopPropagation()}
@@ -326,7 +312,7 @@ function ProductsPageContent() {
 
       <div style={{ minHeight: '100vh', background: '#f7f7f7', paddingBottom: cartCount > 0 ? 80 : 0 }}>
 
-        {/* ── Category Tab Bar ── */}
+        {/* Category Tab Bar */}
         <div style={{ background: '#fff', borderBottom: '1px solid #ebebeb', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
             {categories.map(cat => {
@@ -350,7 +336,7 @@ function ProductsPageContent() {
             })}
           </div>
 
-          {/* ── Subcategory Chips ── */}
+          {/* Subcategory Chips */}
           {subcategories.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', overflowX: 'auto', scrollbarWidth: 'none', borderTop: '1px solid #f5f5f5' }}>
               <button className="subcat-chip" onClick={() => setActiveSubcat(null)}
@@ -374,7 +360,7 @@ function ProductsPageContent() {
           )}
         </div>
 
-        {/* ── Main Content ── */}
+        {/* Main Content */}
         <div style={{ flex: 1, padding: isMobile ? '12px 10px' : '16px 20px', maxWidth: 1200, width: '100%', margin: '0 auto' }}>
           {loading ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
@@ -407,7 +393,7 @@ function ProductsPageContent() {
           )}
         </div>
 
-        {/* ── Floating Cart ── */}
+        {/* Floating Cart */}
         {cartCount > 0 && (
           <button className="float-cart" onClick={() => router.push('/cart')}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -418,7 +404,7 @@ function ProductsPageContent() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700 }}>
-              <span>Cart দখুন</span>
+              <span>Cart দেখুন</span>
               <span>→</span>
             </div>
           </button>
