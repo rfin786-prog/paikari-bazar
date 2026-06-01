@@ -37,6 +37,9 @@ export async function POST(request) {
       { method: 'POST', headers, body: JSON.stringify(payload) }
     );
     const data = await res.json();
+    if (!res.ok) {
+      return NextResponse.json({ supabase_error: data }, { status: res.status });
+    }
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
