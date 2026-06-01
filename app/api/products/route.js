@@ -10,7 +10,6 @@ const headers = {
   'Prefer': 'return=representation',
 };
 
-// GET - সব products আনো
 export async function GET() {
   try {
     const res = await fetch(
@@ -24,13 +23,18 @@ export async function GET() {
   }
 }
 
-// POST - নতুন product যোগ
 export async function POST(request) {
   try {
     const body = await request.json();
+    const { category, sub_category, ...rest } = body;
+    const payload = {
+      ...rest,
+      category_id: category || null,
+      sub_category_id: sub_category || null,
+    };
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/products`,
-      { method: 'POST', headers, body: JSON.stringify(body) }
+      { method: 'POST', headers, body: JSON.stringify(payload) }
     );
     const data = await res.json();
     return NextResponse.json(data);
@@ -39,7 +43,6 @@ export async function POST(request) {
   }
 }
 
-// PUT - product update
 export async function PUT(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -47,8 +50,12 @@ export async function PUT(request) {
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
 
     const body = await request.json();
-    // id, created_at বাদ দিয়ে পাঠাও
-    const { id: _id, created_at, ...updateData } = body;
+    const { id: _id, created_at, category, sub_category, ...rest } = body;
+    const updateData = {
+      ...rest,
+      category_id: category || null,
+      sub_category_id: sub_category || null,
+    };
 
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/products?id=eq.${id}`,
@@ -61,7 +68,6 @@ export async function PUT(request) {
   }
 }
 
-// DELETE - product মুছো
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
