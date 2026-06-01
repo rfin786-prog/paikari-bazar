@@ -79,8 +79,10 @@ function ProductsPageContent() {
         );
         const data = await res.json();
         if (!Array.isArray(data)) return;
-        const parents = data.filter(c => !c.parent_id);
-        const children = data.filter(c => c.parent_id);
+
+        // ✅ FIX: আগে parent/child আলাদা করো, তারপর activeCategory set করো
+        const parents = data.filter(c => c.parent_id === null);
+        const children = data.filter(c => c.parent_id !== null);
         const map = {};
         children.forEach(c => {
           if (!map[c.parent_id]) map[c.parent_id] = [];
@@ -117,6 +119,7 @@ function ProductsPageContent() {
   const groupedProducts = useMemo(() => {
     if (!activeCategory) return {};
 
+    // ✅ FIX: category_id দিয়ে filter
     let list = products.filter(p => p.category_id === activeCategory.id);
 
     if (activeSubcat) {
@@ -138,7 +141,7 @@ function ProductsPageContent() {
       if (!matched) noSubcat.push(p);
     });
 
-    if (noSubcat.length > 0) groups['অন্যান্য'] = { items: noSubcat, sub: null };
+    if (noSubcat.length > 0) groups['অন্যান'] = { items: noSubcat, sub: null };
 
     return groups;
   }, [products, activeCategory, activeSubcat, subcategories]);
@@ -198,30 +201,22 @@ function ProductsPageContent() {
     const savedAmount = p.mrp && p.mrp > p.price ? p.mrp - p.price : 0;
 
     return (
-      <div
-        className="prod-card"
-        style={{
-          background: '#fff',
-          borderRadius: 12,
-          border: `1.5px solid ${inCart ? '#222' : '#efefef'}`,
-          overflow: 'hidden',
-          opacity: outOfStock ? 0.55 : 1,
-          boxShadow: inCart ? '0 4px 16px rgba(0,0,0,0.1)' : '0 1px 4px rgba(0,0,0,0.04)',
-          cursor: 'default',
-          transition: 'box-shadow 0.2s, transform 0.2s',
-        }}>
-
+      <div className="prod-card" style={{
+        background: '#fff', borderRadius: 12,
+        border: `1.5px solid ${inCart ? '#222' : '#efefef'}`,
+        overflow: 'hidden', opacity: outOfStock ? 0.55 : 1,
+        boxShadow: inCart ? '0 4px 16px rgba(0,0,0,0.1)' : '0 1px 4px rgba(0,0,0,0.04)',
+        cursor: 'default', transition: 'box-shadow 0.2s, transform 0.2s',
+      }}>
         <div style={{ position: 'relative', background: '#f5f5f5', aspectRatio: '1/1', overflow: 'hidden' }}>
           {p.image_url
             ? <img src={p.image_url} alt={p.name} className="prod-img" loading="lazy"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.35s' }} />
-            : (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.5">
                   <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
                 </svg>
               </div>
-            )
           }
           {outOfStock && (
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -244,7 +239,6 @@ function ProductsPageContent() {
           <p style={{ fontSize: 12, fontWeight: 600, color: '#333', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: 8, minHeight: 36 }}>
             {p.name}
           </p>
-
           <div style={{ marginBottom: 8 }}>
             {p.mrp && p.mrp > p.price && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
@@ -261,11 +255,9 @@ function ProductsPageContent() {
               )}
             </div>
           </div>
-
           {minQty > 1 && (
             <p style={{ fontSize: 10, color: '#bbb', marginBottom: 8, fontWeight: 600 }}>Min: {minQty} pcs</p>
           )}
-
           {!outOfStock && (
             inCart ? (
               <div onClick={e => e.stopPropagation()}
@@ -275,9 +267,7 @@ function ProductsPageContent() {
                 <button onClick={e => handleIncrease(e, p)} style={{ width: 40, height: 36, background: 'none', border: 'none', color: '#fff', fontSize: 20, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
               </div>
             ) : (
-              <button
-                onClick={e => handleAddToCart(e, p)}
-                className="add-cart-btn"
+              <button onClick={e => handleAddToCart(e, p)} className="add-cart-btn"
                 style={{ width: '100%', height: 36, borderRadius: 8, border: '1.5px solid #111', background: '#fff', color: '#111', fontSize: 12, fontWeight: 800, cursor: 'pointer', transition: 'all 0.15s' }}>
                 🛒 Add to Cart
               </button>
@@ -321,8 +311,7 @@ function ProductsPageContent() {
                 <button key={cat.id} className="cat-tab"
                   onClick={() => handleCategoryClick(cat)}
                   style={{
-                    padding: '0 18px', height: 48,
-                    fontSize: 13,
+                    padding: '0 18px', height: 48, fontSize: 13,
                     fontWeight: isActive ? 800 : 500,
                     color: isActive ? '#111' : '#999',
                     borderBottom: `2.5px solid ${isActive ? '#111' : 'transparent'}`,
@@ -336,7 +325,6 @@ function ProductsPageContent() {
             })}
           </div>
 
-          {/* Subcategory Chips */}
           {subcategories.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', overflowX: 'auto', scrollbarWidth: 'none', borderTop: '1px solid #f5f5f5' }}>
               <button className="subcat-chip" onClick={() => setActiveSubcat(null)}
@@ -369,8 +357,8 @@ function ProductsPageContent() {
           ) : Object.keys(groupedProducts).length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeUp 0.4s ease' }}>
               <div style={{ fontSize: 48, marginBottom: 14 }}>📦</div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 6 }}>কোনো পণ্য পাওয়া যায়নি</p>
-              <p style={{ fontSize: 12, color: '#bbb' }}>অন্য কটাগরি চেষ্টা করুন</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 6 }}>কনো পণ্য পাওয়া যায়নি</p>
+              <p style={{ fontSize: 12, color: '#bbb' }}>অন্য ক্যাটাগরি চষ্টা করুন</p>
             </div>
           ) : (
             Object.entries(groupedProducts).map(([subcatName, { items }]) => (
@@ -420,7 +408,7 @@ export default function ProductsPage() {
       <div style={{ minHeight: '100vh', background: '#f7f7f7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Hind Siliguri, sans-serif', color: '#bbb', fontSize: 14 }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 28, marginBottom: 10 }}>⏳</div>
-          <p>লোড হচ্ছে...</p>
+          <p>লড হচ্ছে...</p>
         </div>
       </div>
     }>
