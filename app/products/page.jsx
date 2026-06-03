@@ -19,129 +19,12 @@ const saveCart = (cart) => {
 
 function SkeletonCard() {
  return (
-   <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #f0f0f0', overflow: 'hidden' }}>
+   <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid #f0f0f0' }}>
      <div style={{ aspectRatio: '1/1', background: 'linear-gradient(90deg,#f7f7f7 25%,#efefef 50%,#f7f7f7 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
-     <div style={{ padding: '12px' }}>
+     <div style={{ padding: '10px' }}>
        <div style={{ height: 10, background: 'linear-gradient(90deg,#f7f7f7 25%,#efefef 50%,#f7f7f7 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6, marginBottom: 7 }} />
        <div style={{ height: 10, width: '60%', background: 'linear-gradient(90deg,#f7f7f7 25%,#efefef 50%,#f7f7f7 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6 }} />
      </div>
-   </div>
- );
-}
-
-// Draggable Basket Component
-function DraggableBasket({ cartCount, cartTotal, onNavigate, onShake, shaking }) {
- const [pos, setPos] = useState({ x: null, y: null });
- const dragging = useRef(false);
- const offset = useRef({ x: 0, y: 0 });
- const basketRef = useRef(null);
- const hasMoved = useRef(false);
-
- useEffect(() => {
-   // Default position: bottom right
-   setPos({
-     x: window.innerWidth - 90,
-     y: window.innerHeight - 120,
-   });
- }, []);
-
- const onPointerDown = (e) => {
-   dragging.current = true;
-   hasMoved.current = false;
-   const rect = basketRef.current.getBoundingClientRect();
-   offset.current = {
-     x: e.clientX - rect.left,
-     y: e.clientY - rect.top,
-   };
-   basketRef.current.setPointerCapture(e.pointerId);
- };
-
- const onPointerMove = (e) => {
-   if (!dragging.current) return;
-   hasMoved.current = true;
-   const newX = e.clientX - offset.current.x;
-   const newY = e.clientY - offset.current.y;
-   const maxX = window.innerWidth - 70;
-   const maxY = window.innerHeight - 70;
-   setPos({
-     x: Math.max(0, Math.min(newX, maxX)),
-     y: Math.max(0, Math.min(newY, maxY)),
-   });
- };
-
- const onPointerUp = (e) => {
-   dragging.current = false;
-   if (!hasMoved.current) {
-     onNavigate();
-   }
- };
-
- if (pos.x === null) return null;
-
- return (
-   <div
-     ref={basketRef}
-     id="draggable-basket"
-     onPointerDown={onPointerDown}
-     onPointerMove={onPointerMove}
-     onPointerUp={onPointerUp}
-     style={{
-       position: 'fixed',
-       left: pos.x,
-       top: pos.y,
-       zIndex: 200,
-       width: 64,
-       height: 64,
-       cursor: 'grab',
-       userSelect: 'none',
-       touchAction: 'none',
-       animation: shaking ? 'basketShake 0.45s ease' : 'none',
-       filter: shaking ? 'drop-shadow(0 0 10px rgba(245,158,11,0.9))' : 'drop-shadow(0 4px 8px rgba(0,0,0,0.25))',
-       transition: 'filter 0.3s',
-     }}
-   >
-     {/* Basket SVG */}
-     <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" width="64" height="64">
-       {/* Handle */}
-       <path d="M20 26 Q20 14 32 14 Q44 14 44 26" stroke="#92400e" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-       {/* Body */}
-       <rect x="10" y="26" width="44" height="28" rx="5" fill="#f59e0b"/>
-       {/* Stripes */}
-       <line x1="22" y1="26" x2="22" y2="54" stroke="#d97706" strokeWidth="2.5"/>
-       <line x1="32" y1="26" x2="32" y2="54" stroke="#d97706" strokeWidth="2.5"/>
-       <line x1="42" y1="26" x2="42" y2="54" stroke="#d97706" strokeWidth="2.5"/>
-       {/* Top rim */}
-       <rect x="8" y="24" width="48" height="7" rx="3.5" fill="#d97706"/>
-     </svg>
-
-     {/* Count badge */}
-     {cartCount > 0 && (
-       <div style={{
-         position: 'absolute', top: -4, right: -4,
-         background: '#ef4444', color: '#fff',
-         borderRadius: '50%', width: 22, height: 22,
-         fontSize: 11, fontWeight: 800,
-         display: 'flex', alignItems: 'center', justifyContent: 'center',
-         border: '2px solid #fff',
-         fontFamily: 'Hind Siliguri, sans-serif',
-         animation: shaking ? 'popIn 0.3s ease' : 'none',
-       }}>
-         {cartCount}
-       </div>
-     )}
-
-     {/* Total label */}
-     {cartCount > 0 && (
-       <div style={{
-         position: 'absolute', bottom: -22, left: '50%', transform: 'translateX(-50%)',
-         background: '#111', color: '#fff',
-         borderRadius: 8, padding: '2px 7px',
-         fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap',
-         fontFamily: 'Hind Siliguri, sans-serif',
-       }}>
-         ৳{cartTotal.toLocaleString('bn-BD')}
-       </div>
-     )}
    </div>
  );
 }
@@ -158,7 +41,6 @@ function ProductsPageContent() {
  const [cartTotal, setCartTotal] = useState(0);
  const [cartCount, setCartCount] = useState(0);
  const [isMobile, setIsMobile] = useState(false);
- const [basketShaking, setBasketShaking] = useState(false);
  const [flyingItems, setFlyingItems] = useState([]);
  const subcatRefs = useRef({});
 
@@ -274,29 +156,18 @@ function ProductsPageContent() {
  };
 
  const triggerFly = (e, product) => {
-   // Get click position
    const startX = e.clientX;
    const startY = e.clientY;
-
-   // Get basket position
-   const basket = document.getElementById('draggable-basket');
-   if (!basket) return;
-   const rect = basket.getBoundingClientRect();
+   const cartBar = document.getElementById('view-cart-bar');
+   if (!cartBar) return;
+   const rect = cartBar.getBoundingClientRect();
    const endX = rect.left + rect.width / 2;
    const endY = rect.top + rect.height / 2;
-
    const id = Date.now() + Math.random();
-   const imageUrl = product.image_url;
-
-   setFlyingItems(prev => [...prev, { id, startX, startY, endX, endY, imageUrl }]);
-
-   // Remove after animation
+   setFlyingItems(prev => [...prev, { id, startX, startY, endX, endY, imageUrl: product.image_url }]);
    setTimeout(() => {
      setFlyingItems(prev => prev.filter(f => f.id !== id));
-     // Shake basket
-     setBasketShaking(true);
-     setTimeout(() => setBasketShaking(false), 500);
-   }, 600);
+   }, 650);
  };
 
  const handleAddToCart = (e, product) => {
@@ -315,6 +186,7 @@ function ProductsPageContent() {
    const cart = getCart();
    const idx = cart.findIndex(i => i.id === product.id);
    if (idx !== -1) { cart[idx].quantity += 1; saveCart(cart); }
+   triggerFly(e, product);
  };
 
  const handleDecrease = (e, product) => {
@@ -334,16 +206,18 @@ function ProductsPageContent() {
    const outOfStock = p.stock !== undefined && p.stock !== null && p.stock <= 0;
    const minQty = p.min_order ? parseInt(p.min_order) : 1;
    const discount = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : null;
-   const savedAmount = p.mrp && p.mrp > p.price ? p.mrp - p.price : 0;
 
    return (
      <div className="prod-card" style={{
-       background: '#fff', borderRadius: 12,
-       border: `1.5px solid ${inCart ? '#222' : '#efefef'}`,
-       overflow: 'hidden', opacity: outOfStock ? 0.55 : 1,
-       boxShadow: inCart ? '0 4px 16px rgba(0,0,0,0.1)' : '0 1px 4px rgba(0,0,0,0.04)',
-       cursor: 'default', transition: 'box-shadow 0.2s, transform 0.2s',
+       background: '#fff',
+       borderRadius: 16,
+       overflow: 'hidden',
+       border: '1px solid #f0f0f0',
+       boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+       opacity: outOfStock ? 0.55 : 1,
+       transition: 'box-shadow 0.2s, transform 0.2s',
      }}>
+       {/* Image area */}
        <div style={{ position: 'relative', background: '#f5f5f5', aspectRatio: '1/1', overflow: 'hidden' }}>
          {p.image_url
            ? <img src={p.image_url} alt={p.name} className="prod-img" loading="lazy"
@@ -354,60 +228,66 @@ function ProductsPageContent() {
                </svg>
              </div>
          }
+
+         {/* Out of stock overlay */}
          {outOfStock && (
            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
              <span style={{ background: '#333', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 12px', borderRadius: 20 }}>Stock নেই</span>
            </div>
          )}
-         {discount && !outOfStock && (
-           <span style={{ position: 'absolute', top: 8, left: 8, background: '#111', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
-             {discount}% ছড়
-           </span>
-         )}
-         {inCart && (
-           <div style={{ position: 'absolute', top: 8, right: 8, background: '#111', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, border: '2px solid #fff', animation: 'popIn 0.25s ease' }}>
-             {qty}
+
+         {/* Add / stepper button — bottom right of image */}
+         {!outOfStock && (
+           <div style={{ position: 'absolute', bottom: 8, right: 8 }}>
+             {inCart ? (
+               <div onClick={e => e.stopPropagation()}
+                 style={{ display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 24, border: '1.5px solid #e0e0e0', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', overflow: 'hidden', height: 32 }}>
+                 <button onClick={e => handleDecrease(e, p)}
+                   style={{ width: 32, height: 32, background: 'none', border: 'none', color: '#111', fontSize: 18, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                 <span style={{ color: '#111', fontWeight: 800, fontSize: 13, minWidth: 20, textAlign: 'center' }}>{qty}</span>
+                 <button onClick={e => handleIncrease(e, p)}
+                   style={{ width: 32, height: 32, background: '#111', border: 'none', color: '#fff', fontSize: 18, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+               </div>
+             ) : (
+               <button onClick={e => handleAddToCart(e, p)} className="add-btn"
+                 style={{ width: 34, height: 34, borderRadius: '50%', border: '1.5px solid #e0e0e0', background: '#fff', color: '#111', fontSize: 22, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', lineHeight: 1 }}>
+                 +
+               </button>
+             )}
            </div>
          )}
        </div>
 
+       {/* Info area */}
        <div style={{ padding: '10px 10px 12px' }}>
-         <p style={{ fontSize: 12, fontWeight: 600, color: '#333', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: 8, minHeight: 36 }}>
-           {p.name}
-         </p>
-         <div style={{ marginBottom: 8 }}>
-           {p.mrp && p.mrp > p.price && (
-             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-               <span style={{ fontSize: 10, color: '#aaa', fontWeight: 500 }}>MRP</span>
-               <span style={{ fontSize: 11, color: '#bbb', textDecoration: 'line-through', fontWeight: 500 }}>৳{p.mrp?.toLocaleString('bn-BD')}</span>
-             </div>
-           )}
-           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-             <span style={{ fontSize: 16, fontWeight: 800, color: '#111' }}>৳{p.price?.toLocaleString('bn-BD')}</span>
-             {savedAmount > 0 && (
-               <span style={{ fontSize: 10, background: '#e8f5e9', color: '#2e7d32', fontWeight: 700, padding: '2px 7px', borderRadius: 12 }}>
-                 Save ৳{savedAmount.toLocaleString('bn-BD')}
+         {/* Price row */}
+         <div style={{ marginBottom: 5 }}>
+           <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+             <span style={{ fontSize: 16, fontWeight: 800, color: '#e8192c' }}>
+               ৳{p.price?.toLocaleString('bn-BD')}
+             </span>
+             {p.mrp && p.mrp > p.price && (
+               <span style={{ fontSize: 12, color: '#aaa', textDecoration: 'line-through', fontWeight: 500 }}>
+                 ৳{p.mrp?.toLocaleString('bn-BD')}
                </span>
              )}
            </div>
-         </div>
-         {minQty > 1 && (
-           <p style={{ fontSize: 10, color: '#bbb', marginBottom: 8, fontWeight: 600 }}>Min: {minQty} pcs</p>
-         )}
-         {!outOfStock && (
-           inCart ? (
-             <div onClick={e => e.stopPropagation()}
-               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#111', borderRadius: 8, overflow: 'hidden', height: 36 }}>
-               <button onClick={e => handleDecrease(e, p)} style={{ width: 40, height: 36, background: 'none', border: 'none', color: '#fff', fontSize: 20, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-               <span style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>{qty}</span>
-               <button onClick={e => handleIncrease(e, p)} style={{ width: 40, height: 36, background: 'none', border: 'none', color: '#fff', fontSize: 20, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+           {discount && (
+             <div style={{ marginTop: 4 }}>
+               <span style={{ fontSize: 11, background: '#ffe4e6', color: '#e8192c', fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>
+                 {discount}% off
+               </span>
              </div>
-           ) : (
-             <button onClick={e => handleAddToCart(e, p)} className="add-cart-btn"
-               style={{ width: '100%', height: 36, borderRadius: 8, border: '1.5px solid #111', background: '#fff', color: '#111', fontSize: 12, fontWeight: 800, cursor: 'pointer', transition: 'all 0.15s' }}>
-               🛒 Add to Cart
-             </button>
-           )
+           )}
+         </div>
+
+         {/* Name */}
+         <p style={{ fontSize: 12, fontWeight: 500, color: '#444', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: 36 }}>
+           {p.name}
+         </p>
+
+         {minQty > 1 && (
+           <p style={{ fontSize: 10, color: '#bbb', marginTop: 4, fontWeight: 600 }}>Min: {minQty} pcs</p>
          )}
        </div>
      </div>
@@ -422,65 +302,84 @@ function ProductsPageContent() {
 
        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-       @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
-
-       @keyframes basketShake {
-         0%   { transform: rotate(0deg) scale(1); }
-         15%  { transform: rotate(-12deg) scale(1.12); }
-         30%  { transform: rotate(10deg) scale(1.08); }
-         45%  { transform: rotate(-8deg) scale(1.05); }
-         60%  { transform: rotate(6deg) scale(1.03); }
-         75%  { transform: rotate(-4deg) scale(1.01); }
-         100% { transform: rotate(0deg) scale(1); }
+       @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
+       @keyframes slideUp { from { transform: translateY(80px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+       @keyframes cartBounce {
+         0%   { transform: translateY(0); }
+         30%  { transform: translateY(-6px); }
+         60%  { transform: translateY(-3px); }
+         100% { transform: translateY(0); }
+       }
+       @keyframes flyToCart {
+         0%   { transform: translate(0,0) scale(1); opacity: 1; }
+         70%  { opacity: 0.8; }
+         100% { transform: translate(var(--fly-x), var(--fly-y)) scale(0.12); opacity: 0; }
        }
 
-       @keyframes flyToBasket {
-         0%   { transform: translate(0, 0) scale(1); opacity: 1; }
-         60%  { opacity: 1; }
-         100% { transform: translate(var(--fly-x), var(--fly-y)) scale(0.15); opacity: 0; }
-       }
-
-       .prod-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.09) !important; }
+       .prod-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08) !important; }
        .prod-card:hover .prod-img { transform: scale(1.04); }
-       .add-cart-btn:hover { background: #111 !important; color: #fff !important; }
+       .add-btn:hover { background: #111 !important; color: #fff !important; border-color: #111 !important; }
+       .add-btn:active { transform: scale(0.88); }
 
        .cat-tab { cursor: pointer; white-space: nowrap; border: none; background: transparent; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
        .subcat-chip { cursor: pointer; white-space: nowrap; border: none; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; }
        .subcat-chip:hover { background: #111 !important; color: #fff !important; }
+
+       .view-cart-bar {
+         position: fixed;
+         bottom: 16px;
+         left: 50%;
+         transform: translateX(-50%);
+         z-index: 150;
+         width: calc(100% - 32px);
+         max-width: 480px;
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         background: #e8192c;
+         color: #fff;
+         border: none;
+         border-radius: 16px;
+         padding: 13px 16px;
+         cursor: pointer;
+         box-shadow: 0 8px 32px rgba(232,25,44,0.35);
+         font-family: 'Hind Siliguri', sans-serif;
+         animation: slideUp 0.3s ease forwards;
+         transition: background 0.2s, transform 0.15s;
+       }
+       .view-cart-bar:hover { background: #c8001e; transform: translateX(-50%) translateY(-2px); }
+       .view-cart-bar:active { transform: translateX(-50%) scale(0.98); }
+       .view-cart-bar.bounce { animation: slideUp 0.3s ease forwards, cartBounce 0.4s ease; }
 
        ::-webkit-scrollbar { height: 3px; width: 3px; }
        ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
        .section-fade { animation: fadeUp 0.3s ease forwards; }
      `}</style>
 
-     {/* Flying items layer */}
+     {/* Flying items */}
      {flyingItems.map(fly => (
-       <div
-         key={fly.id}
-         style={{
-           position: 'fixed',
-           left: fly.startX - 24,
-           top: fly.startY - 24,
-           width: 48,
-           height: 48,
-           borderRadius: 10,
-           overflow: 'hidden',
-           zIndex: 999,
-           pointerEvents: 'none',
-           '--fly-x': `${fly.endX - fly.startX}px`,
-           '--fly-y': `${fly.endY - fly.startY}px`,
-           animation: 'flyToBasket 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
-           boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-         }}
-       >
+       <div key={fly.id} style={{
+         position: 'fixed',
+         left: fly.startX - 24,
+         top: fly.startY - 24,
+         width: 48, height: 48,
+         borderRadius: 10,
+         overflow: 'hidden',
+         zIndex: 999,
+         pointerEvents: 'none',
+         '--fly-x': `${fly.endX - fly.startX}px`,
+         '--fly-y': `${fly.endY - fly.startY}px`,
+         animation: 'flyToCart 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
+         boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+       }}>
          {fly.imageUrl
            ? <img src={fly.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-           : <div style={{ width: '100%', height: '100%', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🛒</div>
+           : <div style={{ width: '100%', height: '100%', background: '#e8192c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🛒</div>
          }
        </div>
      ))}
 
-     <div style={{ minHeight: '100vh', background: '#f7f7f7', paddingBottom: 20 }}>
+     <div style={{ minHeight: '100vh', background: '#f7f7f7', paddingBottom: cartCount > 0 ? 90 : 16 }}>
 
        {/* Category Tab Bar */}
        <div style={{ background: '#fff', borderBottom: '1px solid #ebebeb', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
@@ -537,8 +436,8 @@ function ProductsPageContent() {
          ) : Object.keys(groupedProducts).length === 0 ? (
            <div style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeUp 0.4s ease' }}>
              <div style={{ fontSize: 48, marginBottom: 14 }}>📦</div>
-             <p style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 6 }}>কোনো পণ্য পাওয়া যায়নি</p>
-             <p style={{ fontSize: 12, color: '#bbb' }}>অন্য ক্যাটাগরি চেষ্টা করুন</p>
+             <p style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 6 }}>কোন পণ্য পাওয়া যায়নি</p>
+             <p style={{ fontSize: 12, color: '#bbb' }}>অন্য ক্যাটাগরি চেষ্টা করন</p>
            </div>
          ) : (
            Object.entries(groupedProducts).map(([subcatName, { items }]) => (
@@ -562,14 +461,29 @@ function ProductsPageContent() {
        </div>
      </div>
 
-     {/* Draggable Basket */}
-     <DraggableBasket
-       cartCount={cartCount}
-       cartTotal={cartTotal}
-       onNavigate={() => router.push('/cart')}
-       shaking={basketShaking}
-       onShake={() => {}}
-     />
+     {/* View Cart Bar */}
+     {cartCount > 0 && (
+       <button id="view-cart-bar" className="view-cart-bar" onClick={() => router.push('/cart')}>
+         {/* Left: count badge */}
+         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+           <div style={{
+             width: 32, height: 32, borderRadius: '50%',
+             background: 'rgba(255,255,255,0.22)',
+             display: 'flex', alignItems: 'center', justifyContent: 'center',
+             fontSize: 13, fontWeight: 800, border: '2px solid rgba(255,255,255,0.4)',
+             animation: 'popIn 0.3s ease',
+           }}>
+             {cartCount}
+           </div>
+           <span style={{ fontSize: 14, fontWeight: 700 }}>View cart</span>
+         </div>
+
+         {/* Right: total */}
+         <div style={{ fontSize: 15, fontWeight: 800 }}>
+           ৳{cartTotal.toLocaleString('bn-BD')}
+         </div>
+       </button>
+     )}
    </>
  );
 }
