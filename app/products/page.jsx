@@ -29,6 +29,123 @@ function SkeletonCard() {
  );
 }
 
+// Draggable Basket Component
+function DraggableBasket({ cartCount, cartTotal, onNavigate, onShake, shaking }) {
+ const [pos, setPos] = useState({ x: null, y: null });
+ const dragging = useRef(false);
+ const offset = useRef({ x: 0, y: 0 });
+ const basketRef = useRef(null);
+ const hasMoved = useRef(false);
+
+ useEffect(() => {
+   // Default position: bottom right
+   setPos({
+     x: window.innerWidth - 90,
+     y: window.innerHeight - 120,
+   });
+ }, []);
+
+ const onPointerDown = (e) => {
+   dragging.current = true;
+   hasMoved.current = false;
+   const rect = basketRef.current.getBoundingClientRect();
+   offset.current = {
+     x: e.clientX - rect.left,
+     y: e.clientY - rect.top,
+   };
+   basketRef.current.setPointerCapture(e.pointerId);
+ };
+
+ const onPointerMove = (e) => {
+   if (!dragging.current) return;
+   hasMoved.current = true;
+   const newX = e.clientX - offset.current.x;
+   const newY = e.clientY - offset.current.y;
+   const maxX = window.innerWidth - 70;
+   const maxY = window.innerHeight - 70;
+   setPos({
+     x: Math.max(0, Math.min(newX, maxX)),
+     y: Math.max(0, Math.min(newY, maxY)),
+   });
+ };
+
+ const onPointerUp = (e) => {
+   dragging.current = false;
+   if (!hasMoved.current) {
+     onNavigate();
+   }
+ };
+
+ if (pos.x === null) return null;
+
+ return (
+   <div
+     ref={basketRef}
+     id="draggable-basket"
+     onPointerDown={onPointerDown}
+     onPointerMove={onPointerMove}
+     onPointerUp={onPointerUp}
+     style={{
+       position: 'fixed',
+       left: pos.x,
+       top: pos.y,
+       zIndex: 200,
+       width: 64,
+       height: 64,
+       cursor: 'grab',
+       userSelect: 'none',
+       touchAction: 'none',
+       animation: shaking ? 'basketShake 0.45s ease' : 'none',
+       filter: shaking ? 'drop-shadow(0 0 10px rgba(245,158,11,0.9))' : 'drop-shadow(0 4px 8px rgba(0,0,0,0.25))',
+       transition: 'filter 0.3s',
+     }}
+   >
+     {/* Basket SVG */}
+     <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+       {/* Handle */}
+       <path d="M20 26 Q20 14 32 14 Q44 14 44 26" stroke="#92400e" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+       {/* Body */}
+       <rect x="10" y="26" width="44" height="28" rx="5" fill="#f59e0b"/>
+       {/* Stripes */}
+       <line x1="22" y1="26" x2="22" y2="54" stroke="#d97706" strokeWidth="2.5"/>
+       <line x1="32" y1="26" x2="32" y2="54" stroke="#d97706" strokeWidth="2.5"/>
+       <line x1="42" y1="26" x2="42" y2="54" stroke="#d97706" strokeWidth="2.5"/>
+       {/* Top rim */}
+       <rect x="8" y="24" width="48" height="7" rx="3.5" fill="#d97706"/>
+     </svg>
+
+     {/* Count badge */}
+     {cartCount > 0 && (
+       <div style={{
+         position: 'absolute', top: -4, right: -4,
+         background: '#ef4444', color: '#fff',
+         borderRadius: '50%', width: 22, height: 22,
+         fontSize: 11, fontWeight: 800,
+         display: 'flex', alignItems: 'center', justifyContent: 'center',
+         border: '2px solid #fff',
+         fontFamily: 'Hind Siliguri, sans-serif',
+         animation: shaking ? 'popIn 0.3s ease' : 'none',
+       }}>
+         {cartCount}
+       </div>
+     )}
+
+     {/* Total label */}
+     {cartCount > 0 && (
+       <div style={{
+         position: 'absolute', bottom: -22, left: '50%', transform: 'translateX(-50%)',
+         background: '#111', color: '#fff',
+         borderRadius: 8, padding: '2px 7px',
+         fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap',
+         fontFamily: 'Hind Siliguri, sans-serif',
+       }}>
+         ৳{cartTotal.toLocaleString('bn-BD')}
+       </div>
+     )}
+   </div>
+ );
+}
+
 function ProductsPageContent() {
  const router = useRouter();
  const [products, setProducts] = useState([]);
@@ -41,6 +158,8 @@ function ProductsPageContent() {
  const [cartTotal, setCartTotal] = useState(0);
  const [cartCount, setCartCount] = useState(0);
  const [isMobile, setIsMobile] = useState(false);
+ const [basketShaking, setBasketShaking] = useState(false);
+ const [flyingItems, setFlyingItems] = useState([]);
  const subcatRefs = useRef({});
 
  const syncCart = useCallback(() => {
@@ -154,6 +273,32 @@ function ProductsPageContent() {
    }, 50);
  };
 
+ const triggerFly = (e, product) => {
+   // Get click position
+   const startX = e.clientX;
+   const startY = e.clientY;
+
+   // Get basket position
+   const basket = document.getElementById('draggable-basket');
+   if (!basket) return;
+   const rect = basket.getBoundingClientRect();
+   const endX = rect.left + rect.width / 2;
+   const endY = rect.top + rect.height / 2;
+
+   const id = Date.now() + Math.random();
+   const imageUrl = product.image_url;
+
+   setFlyingItems(prev => [...prev, { id, startX, startY, endX, endY, imageUrl }]);
+
+   // Remove after animation
+   setTimeout(() => {
+     setFlyingItems(prev => prev.filter(f => f.id !== id));
+     // Shake basket
+     setBasketShaking(true);
+     setTimeout(() => setBasketShaking(false), 500);
+   }, 600);
+ };
+
  const handleAddToCart = (e, product) => {
    e.stopPropagation();
    const minQty = product.min_order ? parseInt(product.min_order) : 1;
@@ -162,6 +307,7 @@ function ProductsPageContent() {
    if (idx === -1) cart.push({ ...product, quantity: minQty });
    else cart[idx].quantity += 1;
    saveCart(cart);
+   triggerFly(e, product);
  };
 
  const handleIncrease = (e, product) => {
@@ -215,7 +361,7 @@ function ProductsPageContent() {
          )}
          {discount && !outOfStock && (
            <span style={{ position: 'absolute', top: 8, left: 8, background: '#111', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
-             {discount}% ছাড়
+             {discount}% ছড়
            </span>
          )}
          {inCart && (
@@ -277,78 +423,64 @@ function ProductsPageContent() {
        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
-       @keyframes slideUp { from { transform: translateY(80px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-       /* Add to Cart button — amber glow pulse */
-       @keyframes amberGlow {
-         0%, 100% {
-           box-shadow: 0 0 5px 1px rgba(245, 158, 11, 0.4), 0 0 0px 0px rgba(245, 158, 11, 0.0);
-         }
-         50% {
-           box-shadow: 0 0 12px 3px rgba(245, 158, 11, 0.75), 0 0 22px 6px rgba(245, 158, 11, 0.2);
-         }
+       @keyframes basketShake {
+         0%   { transform: rotate(0deg) scale(1); }
+         15%  { transform: rotate(-12deg) scale(1.12); }
+         30%  { transform: rotate(10deg) scale(1.08); }
+         45%  { transform: rotate(-8deg) scale(1.05); }
+         60%  { transform: rotate(6deg) scale(1.03); }
+         75%  { transform: rotate(-4deg) scale(1.01); }
+         100% { transform: rotate(0deg) scale(1); }
        }
 
-       /* Floating cart bar — green glow pulse */
-       @keyframes cartGlow {
-         0%, 100% {
-           box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 0 8px 2px rgba(34, 197, 94, 0.35);
-         }
-         50% {
-           box-shadow: 0 4px 28px rgba(0,0,0,0.3), 0 0 22px 7px rgba(34, 197, 94, 0.65);
-         }
+       @keyframes flyToBasket {
+         0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+         60%  { opacity: 1; }
+         100% { transform: translate(var(--fly-x), var(--fly-y)) scale(0.15); opacity: 0; }
        }
 
        .prod-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.09) !important; }
        .prod-card:hover .prod-img { transform: scale(1.04); }
-
-       .add-cart-btn {
-         animation: amberGlow 2s ease-in-out infinite;
-       }
-       .add-cart-btn:hover {
-         background: #111 !important;
-         color: #fff !important;
-         animation: none;
-         box-shadow: 0 4px 14px rgba(0,0,0,0.18) !important;
-       }
+       .add-cart-btn:hover { background: #111 !important; color: #fff !important; }
 
        .cat-tab { cursor: pointer; white-space: nowrap; border: none; background: transparent; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
        .subcat-chip { cursor: pointer; white-space: nowrap; border: none; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; }
        .subcat-chip:hover { background: #111 !important; color: #fff !important; }
-
-       .float-cart {
-         position: fixed;
-         bottom: 16px;
-         left: 50%;
-         transform: translateX(-50%);
-         z-index: 150;
-         width: calc(100% - 32px);
-         max-width: 440px;
-         display: flex;
-         align-items: center;
-         justify-content: space-between;
-         background: #111;
-         color: #fff;
-         border: none;
-         border-radius: 14px;
-         padding: 12px 18px;
-         cursor: pointer;
-         font-family: 'Hind Siliguri', sans-serif;
-         animation: slideUp 0.3s ease forwards, cartGlow 2.2s ease-in-out infinite;
-         transition: background 0.2s;
-       }
-       .float-cart:hover {
-         background: #1a1a1a;
-         animation: none;
-         box-shadow: 0 8px 40px rgba(0,0,0,0.35);
-       }
 
        ::-webkit-scrollbar { height: 3px; width: 3px; }
        ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
        .section-fade { animation: fadeUp 0.3s ease forwards; }
      `}</style>
 
-     <div style={{ minHeight: '100vh', background: '#f7f7f7', paddingBottom: cartCount > 0 ? 80 : 0 }}>
+     {/* Flying items layer */}
+     {flyingItems.map(fly => (
+       <div
+         key={fly.id}
+         style={{
+           position: 'fixed',
+           left: fly.startX - 24,
+           top: fly.startY - 24,
+           width: 48,
+           height: 48,
+           borderRadius: 10,
+           overflow: 'hidden',
+           zIndex: 999,
+           pointerEvents: 'none',
+           '--fly-x': `${fly.endX - fly.startX}px`,
+           '--fly-y': `${fly.endY - fly.startY}px`,
+           animation: 'flyToBasket 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
+           boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+         }}
+       >
+         {fly.imageUrl
+           ? <img src={fly.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+           : <div style={{ width: '100%', height: '100%', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🛒</div>
+         }
+       </div>
+     ))}
+
+     <div style={{ minHeight: '100vh', background: '#f7f7f7', paddingBottom: 20 }}>
 
        {/* Category Tab Bar */}
        <div style={{ background: '#fff', borderBottom: '1px solid #ebebeb', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
@@ -405,8 +537,8 @@ function ProductsPageContent() {
          ) : Object.keys(groupedProducts).length === 0 ? (
            <div style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeUp 0.4s ease' }}>
              <div style={{ fontSize: 48, marginBottom: 14 }}>📦</div>
-             <p style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 6 }}>কোন পণ্য পাওয়া যায়নি</p>
-             <p style={{ fontSize: 12, color: '#bbb' }}>অন ক্যাটাগরি চেষ্টা করুন</p>
+             <p style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 6 }}>কোনো পণ্য পাওয়া যায়নি</p>
+             <p style={{ fontSize: 12, color: '#bbb' }}>অন্য ক্যাটাগরি চেষ্টা করুন</p>
            </div>
          ) : (
            Object.entries(groupedProducts).map(([subcatName, { items }]) => (
@@ -428,24 +560,16 @@ function ProductsPageContent() {
            ))
          )}
        </div>
-
-       {/* Floating Cart */}
-       {cartCount > 0 && (
-         <button className="float-cart" onClick={() => router.push('/cart')}>
-           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-             <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛒</div>
-             <div style={{ textAlign: 'left' }}>
-               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{cartCount}টি পণ্য</div>
-               <div style={{ fontSize: 15, fontWeight: 800 }}>৳{cartTotal.toLocaleString('bn-BD')}</div>
-             </div>
-           </div>
-           <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700 }}>
-             <span>Cart দখুন</span>
-             <span>→</span>
-           </div>
-         </button>
-       )}
      </div>
+
+     {/* Draggable Basket */}
+     <DraggableBasket
+       cartCount={cartCount}
+       cartTotal={cartTotal}
+       onNavigate={() => router.push('/cart')}
+       shaking={basketShaking}
+       onShake={() => {}}
+     />
    </>
  );
 }
