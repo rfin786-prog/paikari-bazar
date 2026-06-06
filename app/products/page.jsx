@@ -150,7 +150,6 @@ function ProductsPageContent() {
    }, 50);
  };
 
- // ✅ Touch + mouse উভয়ের জন্য কাজ করে
  const getCoords = (e) => {
    if (e.touches && e.touches.length > 0) {
      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -356,7 +355,7 @@ function ProductsPageContent() {
        .section-fade { animation: fadeUp 0.3s ease forwards; }
      `}</style>
 
-     {/* ✅ Flying items layer — fixed, pointerEvents none */}
+     {/* Flying items layer */}
      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999, overflow: 'hidden' }}>
        {flyingItems.map(fly => {
          const dx = fly.endX - fly.startX;
@@ -466,21 +465,24 @@ function ProductsPageContent() {
        </div>
      </div>
 
-     {/* View Cart Bar */}
+     {/* ✅ View Cart Bar — 🛒 icon with red badge */}
      {cartCount > 0 && (
        <button id="view-cart-bar" className="view-cart-bar" onClick={() => router.push('/cart')}>
          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+           {/* 🛒 Cart icon */}
+           <span style={{ fontSize: 22, lineHeight: 1 }}>🛒</span>
+           <span style={{ fontSize: 14, fontWeight: 700 }}>Cart দেখুন</span>
+           {/* Red badge with count */}
            <div style={{
-             width: 30, height: 30, borderRadius: '50%',
-             background: 'rgba(255,255,255,0.15)',
+             width: 22, height: 22, borderRadius: '50%',
+             background: '#e8192c',
              display: 'flex', alignItems: 'center', justifyContent: 'center',
-             fontSize: 12, fontWeight: 800,
-             border: '1.5px solid rgba(255,255,255,0.3)',
+             fontSize: 11, fontWeight: 800,
              animation: 'popIn 0.3s ease',
+             flexShrink: 0,
            }}>
              {cartCount}
            </div>
-           <span style={{ fontSize: 14, fontWeight: 700 }}>Cart দেখুন</span>
          </div>
          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
            <span style={{ fontSize: 15, fontWeight: 800 }}>৳{cartTotal.toLocaleString('bn-BD')}</span>
