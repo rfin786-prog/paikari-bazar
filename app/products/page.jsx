@@ -7,504 +7,593 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const headers = {
- apikey: SUPABASE_KEY,
- Authorization: `Bearer ${SUPABASE_KEY}`,
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
 };
 
 const getCart = () => JSON.parse(localStorage.getItem('cart') || '[]');
 const saveCart = (cart) => {
- localStorage.setItem('cart', JSON.stringify(cart));
- window.dispatchEvent(new Event('cartUpdated'));
+  localStorage.setItem('cart', JSON.stringify(cart));
+  window.dispatchEvent(new Event('cartUpdated'));
 };
 
 function SkeletonCard() {
- return (
-   <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid #f0f0f0' }}>
-     <div style={{ aspectRatio: '1/1', background: 'linear-gradient(90deg,#f7f7f7 25%,#efefef 50%,#f7f7f7 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
-     <div style={{ padding: '10px' }}>
-       <div style={{ height: 10, background: 'linear-gradient(90deg,#f7f7f7 25%,#efefef 50%,#f7f7f7 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6, marginBottom: 7 }} />
-       <div style={{ height: 10, width: '60%', background: 'linear-gradient(90deg,#f7f7f7 25%,#efefef 50%,#f7f7f7 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6 }} />
-     </div>
-   </div>
- );
+  return (
+    <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid #f0f0f0' }}>
+      <div style={{ aspectRatio: '1/1', background: 'linear-gradient(90deg,#f7f7f7 25%,#efefef 50%,#f7f7f7 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+      <div style={{ padding: '10px' }}>
+        <div style={{ height: 10, background: 'linear-gradient(90deg,#f7f7f7 25%,#efefef 50%,#f7f7f7 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6, marginBottom: 7 }} />
+        <div style={{ height: 10, width: '60%', background: 'linear-gradient(90deg,#f7f7f7 25%,#efefef 50%,#f7f7f7 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: 6 }} />
+      </div>
+    </div>
+  );
 }
 
 function ProductsPageContent() {
- const router = useRouter();
- const [products, setProducts] = useState([]);
- const [categories, setCategories] = useState([]);
- const [subMap, setSubMap] = useState({});
- const [activeCategory, setActiveCategory] = useState(null);
- const [activeSubcat, setActiveSubcat] = useState(null);
- const [loading, setLoading] = useState(true);
- const [cartQty, setCartQty] = useState({});
- const [cartTotal, setCartTotal] = useState(0);
- const [cartCount, setCartCount] = useState(0);
- const [isMobile, setIsMobile] = useState(false);
- const [flyingItems, setFlyingItems] = useState([]);
- const subcatRefs = useRef({});
+  const router = useRouter();
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [subMap, setSubMap] = useState({});
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [activeSubcat, setActiveSubcat] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [cartQty, setCartQty] = useState({});
+  const [cartTotal, setCartTotal] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [flyingItems, setFlyingItems] = useState([]);
+  const [cartShake, setCartShake] = useState(false);
+  const subcatRefs = useRef({});
 
- const syncCart = useCallback(() => {
-   const cart = getCart();
-   const map = {};
-   let total = 0, count = 0;
-   cart.forEach(i => {
-     map[i.id] = i.quantity;
-     total += (i.price || 0) * i.quantity;
-     count += i.quantity;
-   });
-   setCartQty(map);
-   setCartTotal(total);
-   setCartCount(count);
- }, []);
+  // Draggable cart state
+  const [cartPos, setCartPos] = useState({ x: null, y: null });
+  const cartDragRef = useRef({ dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 });
+  const cartBtnRef = useRef(null);
 
- useEffect(() => {
-   syncCart();
-   window.addEventListener('cartUpdated', syncCart);
-   return () => window.removeEventListener('cartUpdated', syncCart);
- }, [syncCart]);
+  const syncCart = useCallback(() => {
+    const cart = getCart();
+    const map = {};
+    let total = 0, count = 0;
+    cart.forEach(i => {
+      map[i.id] = i.quantity;
+      total += (i.price || 0) * i.quantity;
+      count += i.quantity;
+    });
+    setCartQty(map);
+    setCartTotal(total);
+    setCartCount(count);
+  }, []);
 
- useEffect(() => {
-   const check = () => setIsMobile(window.innerWidth < 768);
-   check();
-   window.addEventListener('resize', check);
-   return () => window.removeEventListener('resize', check);
- }, []);
+  useEffect(() => {
+    syncCart();
+    window.addEventListener('cartUpdated', syncCart);
+    return () => window.removeEventListener('cartUpdated', syncCart);
+  }, [syncCart]);
 
- useEffect(() => {
-   const fetchCategories = async () => {
-     try {
-       const res = await fetch(
-         `${SUPABASE_URL}/rest/v1/categories?select=*&order=sort_order.asc,created_at.asc`,
-         { headers }
-       );
-       const data = await res.json();
-       if (!Array.isArray(data)) return;
-       const parents = data.filter(c => c.parent_id === null);
-       const children = data.filter(c => c.parent_id !== null);
-       const map = {};
-       children.forEach(c => {
-         if (!map[c.parent_id]) map[c.parent_id] = [];
-         map[c.parent_id].push(c);
-       });
-       setCategories(parents);
-       setSubMap(map);
-       if (parents.length > 0) setActiveCategory(parents[0]);
-     } catch (e) { console.error(e); }
-   };
-   fetchCategories();
- }, []);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
- useEffect(() => {
-   const fetchProducts = async () => {
-     try {
-       const res = await fetch(
-         `${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`,
-         { headers }
-       );
-       const data = await res.json();
-       if (Array.isArray(data)) setProducts(data);
-     } catch (e) { console.error(e); }
-     finally { setLoading(false); }
-   };
-   fetchProducts();
- }, []);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/categories?select=*&order=sort_order.asc,created_at.asc`,
+          { headers }
+        );
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        const parents = data.filter(c => c.parent_id === null);
+        const children = data.filter(c => c.parent_id !== null);
+        const map = {};
+        children.forEach(c => {
+          if (!map[c.parent_id]) map[c.parent_id] = [];
+          map[c.parent_id].push(c);
+        });
+        setCategories(parents);
+        setSubMap(map);
+        if (parents.length > 0) setActiveCategory(parents[0]);
+      } catch (e) { console.error(e); }
+    };
+    fetchCategories();
+  }, []);
 
- const subcategories = useMemo(() => {
-   if (!activeCategory) return [];
-   return subMap[activeCategory.id] || [];
- }, [activeCategory, subMap]);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`,
+          { headers }
+        );
+        const data = await res.json();
+        if (Array.isArray(data)) setProducts(data);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    };
+    fetchProducts();
+  }, []);
 
- const groupedProducts = useMemo(() => {
-   if (!activeCategory) return {};
-   let list = products.filter(p => p.category_id === activeCategory.id);
-   if (activeSubcat) {
-     return { [activeSubcat.name]: { items: list.filter(p => p.sub_category_id === activeSubcat.id) } };
-   }
-   const groups = {};
-   const noSubcat = [];
-   subcategories.forEach(sub => {
-     const items = list.filter(p => p.sub_category_id === sub.id);
-     if (items.length > 0) groups[sub.name] = { items, sub };
-   });
-   list.forEach(p => {
-     const matched = subcategories.some(s => s.id === p.sub_category_id);
-     if (!matched) noSubcat.push(p);
-   });
-   if (noSubcat.length > 0) groups['অন্যান্য'] = { items: noSubcat, sub: null };
-   return groups;
- }, [products, activeCategory, activeSubcat, subcategories]);
+  const subcategories = useMemo(() => {
+    if (!activeCategory) return [];
+    return subMap[activeCategory.id] || [];
+  }, [activeCategory, subMap]);
 
- const handleCategoryClick = (cat) => {
-   setActiveCategory(cat);
-   setActiveSubcat(null);
-   window.scrollTo({ top: 0, behavior: 'smooth' });
- };
+  const groupedProducts = useMemo(() => {
+    if (!activeCategory) return {};
+    let list = products.filter(p => p.category_id === activeCategory.id);
+    if (activeSubcat) {
+      return { [activeSubcat.name]: { items: list.filter(p => p.sub_category_id === activeSubcat.id) } };
+    }
+    const groups = {};
+    const noSubcat = [];
+    subcategories.forEach(sub => {
+      const items = list.filter(p => p.sub_category_id === sub.id);
+      if (items.length > 0) groups[sub.name] = { items, sub };
+    });
+    list.forEach(p => {
+      const matched = subcategories.some(s => s.id === p.sub_category_id);
+      if (!matched) noSubcat.push(p);
+    });
+    if (noSubcat.length > 0) groups['অন্যান্য'] = { items: noSubcat, sub: null };
+    return groups;
+  }, [products, activeCategory, activeSubcat, subcategories]);
 
- const handleSubcatClick = (sub) => {
-   if (activeSubcat?.id === sub.id) { setActiveSubcat(null); return; }
-   setActiveSubcat(sub);
-   setTimeout(() => {
-     const el = subcatRefs.current[sub.name];
-     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-   }, 50);
- };
+  const handleCategoryClick = (cat) => {
+    setActiveCategory(cat);
+    setActiveSubcat(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
- const getCoords = (e) => {
-   if (e.touches && e.touches.length > 0) {
-     return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-   }
-   if (e.changedTouches && e.changedTouches.length > 0) {
-     return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-   }
-   return { x: e.clientX, y: e.clientY };
- };
+  const handleSubcatClick = (sub) => {
+    if (activeSubcat?.id === sub.id) { setActiveSubcat(null); return; }
+    setActiveSubcat(sub);
+    setTimeout(() => {
+      const el = subcatRefs.current[sub.name];
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
 
- const triggerFly = useCallback((x, y, imageUrl) => {
-   const cartBar = document.getElementById('view-cart-bar');
-   if (!cartBar) return;
-   const rect = cartBar.getBoundingClientRect();
-   const endX = rect.left + rect.width / 2;
-   const endY = rect.top + rect.height / 2;
-   const id = Date.now() + Math.random();
-   setFlyingItems(prev => [...prev, { id, startX: x, startY: y, endX, endY, imageUrl }]);
-   setTimeout(() => setFlyingItems(prev => prev.filter(f => f.id !== id)), 750);
- }, []);
+  const getCoords = (e) => {
+    if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    if (e.changedTouches && e.changedTouches.length > 0) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
+  };
 
- const handleAddToCart = useCallback((e, product) => {
-   e.stopPropagation();
-   e.preventDefault();
-   const { x, y } = getCoords(e);
-   const minQty = product.min_order ? parseInt(product.min_order) : 1;
-   const cart = getCart();
-   const idx = cart.findIndex(i => i.id === product.id);
-   if (idx === -1) cart.push({ ...product, quantity: minQty });
-   else cart[idx].quantity += 1;
-   saveCart(cart);
-   triggerFly(x, y, product.image_url);
- }, [triggerFly]);
+  // Cart shake trigger
+  const triggerShake = useCallback(() => {
+    setCartShake(false);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setCartShake(true));
+    });
+    setTimeout(() => setCartShake(false), 600);
+  }, []);
 
- const handleIncrease = useCallback((e, product) => {
-   e.stopPropagation();
-   e.preventDefault();
-   const { x, y } = getCoords(e);
-   const cart = getCart();
-   const idx = cart.findIndex(i => i.id === product.id);
-   if (idx !== -1) { cart[idx].quantity += 1; saveCart(cart); }
-   triggerFly(x, y, product.image_url);
- }, [triggerFly]);
+  // Fly animation
+  const triggerFly = useCallback((x, y, imageUrl) => {
+    const cartBtn = cartBtnRef.current;
+    if (!cartBtn) return;
+    const rect = cartBtn.getBoundingClientRect();
+    const endX = rect.left + rect.width / 2;
+    const endY = rect.top + rect.height / 2;
+    const id = Date.now() + Math.random();
+    setFlyingItems(prev => [...prev, { id, startX: x, startY: y, endX, endY, imageUrl }]);
+    setTimeout(() => {
+      setFlyingItems(prev => prev.filter(f => f.id !== id));
+      triggerShake();
+    }, 650);
+  }, [triggerShake]);
 
- const handleDecrease = useCallback((e, product) => {
-   e.stopPropagation();
-   e.preventDefault();
-   const minQty = product.min_order ? parseInt(product.min_order) : 1;
-   const cart = getCart();
-   const idx = cart.findIndex(i => i.id === product.id);
-   if (idx === -1) return;
-   if (cart[idx].quantity <= minQty) cart.splice(idx, 1);
-   else cart[idx].quantity -= 1;
-   saveCart(cart);
- }, []);
+  const handleAddToCart = useCallback((e, product) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const { x, y } = getCoords(e);
+    const minQty = product.min_order ? parseInt(product.min_order) : 1;
+    const cart = getCart();
+    const idx = cart.findIndex(i => i.id === product.id);
+    if (idx === -1) cart.push({ ...product, quantity: minQty });
+    else cart[idx].quantity += 1;
+    saveCart(cart);
+    triggerFly(x, y, product.image_url);
+  }, [triggerFly]);
 
- const ProductCard = useCallback(({ p }) => {
-   const qty = cartQty[p.id] || 0;
-   const inCart = qty > 0;
-   const outOfStock = p.stock !== undefined && p.stock !== null && p.stock <= 0;
-   const minQty = p.min_order ? parseInt(p.min_order) : 1;
-   const discount = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : null;
+  const handleIncrease = useCallback((e, product) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const { x, y } = getCoords(e);
+    const cart = getCart();
+    const idx = cart.findIndex(i => i.id === product.id);
+    if (idx !== -1) { cart[idx].quantity += 1; saveCart(cart); }
+    triggerFly(x, y, product.image_url);
+  }, [triggerFly]);
 
-   return (
-     <div className="prod-card" style={{
-       background: '#fff', borderRadius: 16, overflow: 'hidden',
-       border: '1px solid #f0f0f0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-       opacity: outOfStock ? 0.55 : 1,
-     }}>
-       <div style={{ position: 'relative', background: '#f5f5f5', aspectRatio: '1/1', overflow: 'hidden' }}>
-         {p.image_url
-           ? <img src={p.image_url} alt={p.name} className="prod-img" loading="lazy"
-               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.35s' }} />
-           : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.5">
-                 <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
-               </svg>
-             </div>
-         }
-         {outOfStock && (
-           <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-             <span style={{ background: '#333', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 12px', borderRadius: 20 }}>Stock নই</span>
-           </div>
-         )}
+  const handleDecrease = useCallback((e, product) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const minQty = product.min_order ? parseInt(product.min_order) : 1;
+    const cart = getCart();
+    const idx = cart.findIndex(i => i.id === product.id);
+    if (idx === -1) return;
+    if (cart[idx].quantity <= minQty) cart.splice(idx, 1);
+    else cart[idx].quantity -= 1;
+    saveCart(cart);
+  }, []);
 
-         {/* + button / stepper */}
-         {!outOfStock && (
-           <div style={{ position: 'absolute', bottom: 8, right: 8 }}>
-             {inCart ? (
-               <div style={{
-                 display: 'flex', alignItems: 'center',
-                 background: '#fff', borderRadius: 24,
-                 border: '1.5px solid #e0e0e0',
-                 boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                 overflow: 'hidden', height: 32,
-               }}>
-                 <button
-                   onTouchStart={e => { e.stopPropagation(); }}
-                   onClick={e => handleDecrease(e, p)}
-                   style={{ width: 32, height: 32, background: 'none', border: 'none', color: '#111', fontSize: 18, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}>−</button>
-                 <span style={{ color: '#111', fontWeight: 800, fontSize: 13, minWidth: 22, textAlign: 'center' }}>{qty}</span>
-                 <button
-                   onTouchStart={e => { e.stopPropagation(); }}
-                   onClick={e => handleIncrease(e, p)}
-                   style={{ width: 32, height: 32, background: '#111', border: 'none', color: '#fff', fontSize: 18, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}>+</button>
-               </div>
-             ) : (
-               <button
-                 onTouchStart={e => { e.stopPropagation(); }}
-                 onClick={e => handleAddToCart(e, p)}
-                 className="add-btn"
-                 style={{ width: 36, height: 36, borderRadius: '50%', border: '1.5px solid #e0e0e0', background: '#fff', color: '#111', fontSize: 22, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', lineHeight: 1, WebkitTapHighlightColor: 'transparent' }}>
-                 +
-               </button>
-             )}
-           </div>
-         )}
-       </div>
+  // Draggable cart handlers
+  const onCartDragStart = useCallback((e) => {
+    const { x, y } = getCoords(e);
+    const btn = cartBtnRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    cartDragRef.current = {
+      dragging: true,
+      startX: x,
+      startY: y,
+      originX: cartPos.x ?? rect.left,
+      originY: cartPos.y ?? rect.top,
+      moved: false,
+    };
+  }, [cartPos]);
 
-       <div style={{ padding: '10px 10px 12px' }}>
-         <div style={{ marginBottom: 5 }}>
-           <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-             <span style={{ fontSize: 16, fontWeight: 800, color: '#e8192c' }}>
-               ৳{p.price?.toLocaleString('bn-BD')}
-             </span>
-             {p.mrp && p.mrp > p.price && (
-               <span style={{ fontSize: 12, color: '#aaa', textDecoration: 'line-through', fontWeight: 500 }}>
-                 ৳{p.mrp?.toLocaleString('bn-BD')}
-               </span>
-             )}
-           </div>
-           {discount && (
-             <div style={{ marginTop: 4 }}>
-               <span style={{ fontSize: 11, background: '#ffe4e6', color: '#e8192c', fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>
-                 {discount}% off
-               </span>
-             </div>
-           )}
-         </div>
-         <p style={{ fontSize: 12, fontWeight: 500, color: '#444', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: 36 }}>
-           {p.name}
-         </p>
-         {minQty > 1 && (
-           <p style={{ fontSize: 10, color: '#bbb', marginTop: 4, fontWeight: 600 }}>Min: {minQty} pcs</p>
-         )}
-       </div>
-     </div>
-   );
- }, [cartQty, handleAddToCart, handleIncrease, handleDecrease]);
+  const onCartDragMove = useCallback((e) => {
+    if (!cartDragRef.current.dragging) return;
+    const { x, y } = getCoords(e);
+    const dx = x - cartDragRef.current.startX;
+    const dy = y - cartDragRef.current.startY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      cartDragRef.current.moved = true;
+    }
+    const newX = cartDragRef.current.originX + dx;
+    const newY = cartDragRef.current.originY + dy;
+    const btn = cartBtnRef.current;
+    if (!btn) return;
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const bw = btn.offsetWidth;
+    const bh = btn.offsetHeight;
+    setCartPos({
+      x: Math.max(8, Math.min(W - bw - 8, newX)),
+      y: Math.max(8, Math.min(H - bh - 8, newY)),
+    });
+  }, []);
 
- return (
-   <>
-     <style>{`
-       @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&display=swap');
-       *, *::before, *::after { font-family: 'Hind Siliguri', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+  const onCartDragEnd = useCallback((e) => {
+    if (!cartDragRef.current.dragging) return;
+    cartDragRef.current.dragging = false;
+    if (!cartDragRef.current.moved) {
+      router.push('/cart');
+    }
+  }, [router]);
 
-       @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-       @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-       @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
-       @keyframes slideUp { from { transform: translateX(-50%) translateY(80px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+  useEffect(() => {
+    window.addEventListener('mousemove', onCartDragMove);
+    window.addEventListener('mouseup', onCartDragEnd);
+    window.addEventListener('touchmove', onCartDragMove, { passive: true });
+    window.addEventListener('touchend', onCartDragEnd);
+    return () => {
+      window.removeEventListener('mousemove', onCartDragMove);
+      window.removeEventListener('mouseup', onCartDragEnd);
+      window.removeEventListener('touchmove', onCartDragMove);
+      window.removeEventListener('touchend', onCartDragEnd);
+    };
+  }, [onCartDragMove, onCartDragEnd]);
 
-       @keyframes flyToCart {
-         0%   { opacity: 1; transform: translate(0, 0) scale(1); }
-         100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.08); }
-       }
+  const ProductCard = useCallback(({ p }) => {
+    const qty = cartQty[p.id] || 0;
+    const inCart = qty > 0;
+    const outOfStock = p.stock !== undefined && p.stock !== null && p.stock <= 0;
+    const minQty = p.min_order ? parseInt(p.min_order) : 1;
+    const discount = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : null;
 
-       .prod-card { transition: box-shadow 0.2s; }
-       .prod-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08) !important; }
-       .prod-card:hover .prod-img { transform: scale(1.04); }
-       .add-btn:active { transform: scale(0.85); }
+    return (
+      <div className="prod-card" style={{
+        background: '#fff', borderRadius: 16, overflow: 'hidden',
+        border: '1px solid #f0f0f0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+        opacity: outOfStock ? 0.55 : 1,
+      }}>
+        <div style={{ position: 'relative', background: '#f5f5f5', aspectRatio: '1/1', overflow: 'hidden' }}>
+          {p.image_url
+            ? <img src={p.image_url} alt={p.name} className="prod-img" loading="lazy"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.35s' }} />
+            : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+                </svg>
+              </div>
+          }
+          {outOfStock && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ background: '#333', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 12px', borderRadius: 20 }}>Stock নই</span>
+            </div>
+          )}
+          {!outOfStock && (
+            <div style={{ position: 'absolute', bottom: 8, right: 8 }}>
+              {inCart ? (
+                <div style={{
+                  display: 'flex', alignItems: 'center',
+                  background: '#fff', borderRadius: 24,
+                  border: '1.5px solid #e0e0e0',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  overflow: 'hidden', height: 32,
+                }}>
+                  <button onTouchStart={e => e.stopPropagation()} onClick={e => handleDecrease(e, p)}
+                    style={{ width: 32, height: 32, background: 'none', border: 'none', color: '#111', fontSize: 18, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}>−</button>
+                  <span style={{ color: '#111', fontWeight: 800, fontSize: 13, minWidth: 22, textAlign: 'center' }}>{qty}</span>
+                  <button onTouchStart={e => e.stopPropagation()} onClick={e => handleIncrease(e, p)}
+                    style={{ width: 32, height: 32, background: '#111', border: 'none', color: '#fff', fontSize: 18, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}>+</button>
+                </div>
+              ) : (
+                <button onTouchStart={e => e.stopPropagation()} onClick={e => handleAddToCart(e, p)}
+                  className="add-btn"
+                  style={{ width: 36, height: 36, borderRadius: '50%', border: '1.5px solid #e0e0e0', background: '#fff', color: '#111', fontSize: 22, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', lineHeight: 1, WebkitTapHighlightColor: 'transparent' }}>
+                  +
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
-       .cat-tab { cursor: pointer; white-space: nowrap; border: none; background: transparent; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
-       .subcat-chip { cursor: pointer; white-space: nowrap; border: none; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; }
-       .subcat-chip:hover { background: #111 !important; color: #fff !important; }
+        <div style={{ padding: '10px 10px 12px' }}>
+          <div style={{ marginBottom: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#e8192c' }}>৳{p.price?.toLocaleString('bn-BD')}</span>
+              {p.mrp && p.mrp > p.price && (
+                <span style={{ fontSize: 12, color: '#aaa', textDecoration: 'line-through', fontWeight: 500 }}>৳{p.mrp?.toLocaleString('bn-BD')}</span>
+              )}
+            </div>
+            {discount && (
+              <div style={{ marginTop: 4 }}>
+                <span style={{ fontSize: 11, background: '#ffe4e6', color: '#e8192c', fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>{discount}% off</span>
+              </div>
+            )}
+          </div>
+          <p style={{ fontSize: 12, fontWeight: 500, color: '#444', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: 36 }}>
+            {p.name}
+          </p>
+          {minQty > 1 && <p style={{ fontSize: 10, color: '#bbb', marginTop: 4, fontWeight: 600 }}>Min: {minQty} pcs</p>}
+        </div>
+      </div>
+    );
+  }, [cartQty, handleAddToCart, handleIncrease, handleDecrease]);
 
-       .view-cart-bar {
-         position: fixed;
-         bottom: 16px;
-         left: 50%;
-         transform: translateX(-50%);
-         z-index: 150;
-         width: calc(100% - 32px);
-         max-width: 480px;
-         display: flex;
-         align-items: center;
-         justify-content: space-between;
-         background: #111;
-         color: #fff;
-         border: none;
-         border-radius: 16px;
-         padding: 13px 16px;
-         cursor: pointer;
-         box-shadow: 0 8px 32px rgba(0,0,0,0.22);
-         font-family: 'Hind Siliguri', sans-serif;
-         animation: slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
-         WebkitTapHighlightColor: transparent;
-       }
-       .view-cart-bar:hover { background: #222; }
-       .view-cart-bar:active { transform: translateX(-50%) scale(0.98); }
+  // Cart button position style
+  const cartStyle = cartPos.x !== null ? {
+    position: 'fixed',
+    left: cartPos.x,
+    top: cartPos.y,
+    bottom: 'auto',
+    right: 'auto',
+    transform: 'none',
+  } : {
+    position: 'fixed',
+    bottom: 20,
+    right: 20,
+    left: 'auto',
+    transform: 'none',
+  };
 
-       ::-webkit-scrollbar { height: 3px; width: 3px; }
-       ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
-       .section-fade { animation: fadeUp 0.3s ease forwards; }
-     `}</style>
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&display=swap');
+        *, *::before, *::after { font-family: 'Hind Siliguri', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
 
-     {/* Flying items layer */}
-     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999, overflow: 'hidden' }}>
-       {flyingItems.map(fly => {
-         const dx = fly.endX - fly.startX;
-         const dy = fly.endY - fly.startY;
-         return (
-           <div key={fly.id} style={{
-             position: 'absolute',
-             left: fly.startX - 24,
-             top: fly.startY - 24,
-             width: 48, height: 48,
-             borderRadius: 12,
-             overflow: 'hidden',
-             '--dx': `${dx}px`,
-             '--dy': `${dy}px`,
-             animation: 'flyToCart 0.7s cubic-bezier(0.4, 0, 0.8, 0.6) forwards',
-             boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
-             willChange: 'transform, opacity',
-           }}>
-             {fly.imageUrl
-               ? <img src={fly.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-               : <div style={{ width: '100%', height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🛒</div>
-             }
-           </div>
-         );
-       })}
-     </div>
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.3); } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.8); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-     <div style={{ minHeight: '100vh', background: '#f7f7f7', paddingBottom: cartCount > 0 ? 90 : 16 }}>
+        @keyframes flyToCart {
+          0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+          30%  { opacity: 1; transform: translate(calc(var(--dx)*0.3), calc(var(--dy)*0.3)) scale(0.75); }
+          100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.08); }
+        }
 
-       {/* Category Tab Bar */}
-       <div style={{ background: '#fff', borderBottom: '1px solid #ebebeb', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
-         <div style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
-           {categories.map(cat => {
-             const isActive = activeCategory?.id === cat.id;
-             return (
-               <button key={cat.id} className="cat-tab"
-                 onClick={() => handleCategoryClick(cat)}
-                 style={{
-                   padding: '0 18px', height: 48, fontSize: 13,
-                   fontWeight: isActive ? 800 : 500,
-                   color: isActive ? '#111' : '#999',
-                   borderBottom: `2.5px solid ${isActive ? '#111' : 'transparent'}`,
-                 }}>
-                 {cat.image_url && (
-                   <img src={cat.image_url} alt={cat.name} style={{ width: 20, height: 20, objectFit: 'cover', borderRadius: 4 }} />
-                 )}
-                 {cat.name}
-               </button>
-             );
-           })}
-         </div>
+        @keyframes cartShake {
+          0%   { transform: rotate(0deg) scale(1); }
+          15%  { transform: rotate(-18deg) scale(1.2); }
+          30%  { transform: rotate(18deg) scale(1.2); }
+          45%  { transform: rotate(-12deg) scale(1.1); }
+          60%  { transform: rotate(12deg) scale(1.1); }
+          75%  { transform: rotate(-6deg) scale(1.05); }
+          90%  { transform: rotate(6deg) scale(1.05); }
+          100% { transform: rotate(0deg) scale(1); }
+        }
 
-         {subcategories.length > 0 && (
-           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', overflowX: 'auto', scrollbarWidth: 'none', borderTop: '1px solid #f5f5f5' }}>
-             <button className="subcat-chip" onClick={() => setActiveSubcat(null)}
-               style={{ flexShrink: 0, width: 34, height: 34, borderRadius: '50%', border: `1.5px solid ${!activeSubcat ? '#111' : '#e0e0e0'}`, background: !activeSubcat ? '#111' : '#fff', color: !activeSubcat ? '#fff' : '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
-               ↕
-             </button>
-             {subcategories.map(sub => (
-               <button key={sub.id} className="subcat-chip"
-                 onClick={() => handleSubcatClick(sub)}
-                 style={{
-                   flexShrink: 0, padding: '6px 16px', borderRadius: 24,
-                   fontSize: 12, fontWeight: 700,
-                   border: `1.5px solid ${activeSubcat?.id === sub.id ? '#111' : '#e0e0e0'}`,
-                   background: activeSubcat?.id === sub.id ? '#111' : '#fff',
-                   color: activeSubcat?.id === sub.id ? '#fff' : '#555',
-                 }}>
-                 {sub.name}
-               </button>
-             ))}
-           </div>
-         )}
-       </div>
+        .prod-card { transition: box-shadow 0.2s; }
+        .prod-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08) !important; }
+        .prod-card:hover .prod-img { transform: scale(1.04); }
+        .add-btn:active { transform: scale(0.85); }
 
-       {/* Main Content */}
-       <div style={{ flex: 1, padding: isMobile ? '12px 10px' : '16px 20px', maxWidth: 1200, width: '100%', margin: '0 auto' }}>
-         {loading ? (
-           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-             {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
-           </div>
-         ) : Object.keys(groupedProducts).length === 0 ? (
-           <div style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeUp 0.4s ease' }}>
-             <div style={{ fontSize: 48, marginBottom: 14 }}>📦</div>
-             <p style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 6 }}>কোনো পণ্য পাওয়া যায়নি</p>
-             <p style={{ fontSize: 12, color: '#bbb' }}>অন্য ক্যাটাগরি চেষ্টা করুন</p>
-           </div>
-         ) : (
-           Object.entries(groupedProducts).map(([subcatName, { items }]) => (
-             <div key={subcatName} className="section-fade"
-               ref={el => subcatRefs.current[subcatName] = el}
-               style={{ marginBottom: 28 }}>
-               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                 <h2 style={{ fontSize: 16, fontWeight: 800, color: '#111', letterSpacing: -0.3 }}>{subcatName}</h2>
-                 <span style={{ fontSize: 11, color: '#bbb', fontWeight: 600 }}>{items.length}টি পণ্য</span>
-               </div>
-               <div style={{
-                 display: 'grid',
-                 gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))',
-                 gap: isMobile ? 10 : 14,
-               }}>
-                 {items.map(p => <ProductCard key={p.id} p={p} />)}
-               </div>
-             </div>
-           ))
-         )}
-       </div>
-     </div>
+        .cat-tab { cursor: pointer; white-space: nowrap; border: none; background: transparent; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
+        .subcat-chip { cursor: pointer; white-space: nowrap; border: none; font-family: 'Hind Siliguri', sans-serif; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+        .subcat-chip:hover { background: #111 !important; color: #fff !important; }
 
-     {/* ✅ View Cart Bar — 🛒 icon with red badge */}
-     {cartCount > 0 && (
-       <button id="view-cart-bar" className="view-cart-bar" onClick={() => router.push('/cart')}>
-         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-           {/* 🛒 Cart icon */}
-           <span style={{ fontSize: 22, lineHeight: 1 }}>🛒</span>
-           <span style={{ fontSize: 14, fontWeight: 700 }}>Cart দেখুন</span>
-           {/* Red badge with count */}
-           <div style={{
-             width: 22, height: 22, borderRadius: '50%',
-             background: '#e8192c',
-             display: 'flex', alignItems: 'center', justifyContent: 'center',
-             fontSize: 11, fontWeight: 800,
-             animation: 'popIn 0.3s ease',
-             flexShrink: 0,
-           }}>
-             {cartCount}
-           </div>
-         </div>
-         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-           <span style={{ fontSize: 15, fontWeight: 800 }}>৳{cartTotal.toLocaleString('bn-BD')}</span>
-           <span style={{ fontSize: 14 }}>→</span>
-         </div>
-       </button>
-     )}
-   </>
- );
+        .cart-float-btn {
+          width: 58px; height: 58px;
+          border-radius: 50%;
+          background: #111;
+          border: none;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 6px 24px rgba(0,0,0,0.28);
+          cursor: pointer;
+          z-index: 150;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: none;
+          user-select: none;
+        }
+        .cart-float-btn:active { opacity: 0.85; }
+
+        .cart-shake { animation: cartShake 0.55s cubic-bezier(0.36,0.07,0.19,0.97) both; }
+
+        ::-webkit-scrollbar { height: 3px; width: 3px; }
+        ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
+        .section-fade { animation: fadeUp 0.3s ease forwards; }
+      `}</style>
+
+      {/* Flying items layer */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999, overflow: 'hidden' }}>
+        {flyingItems.map(fly => {
+          const dx = fly.endX - fly.startX;
+          const dy = fly.endY - fly.startY;
+          return (
+            <div key={fly.id} style={{
+              position: 'absolute',
+              left: fly.startX - 30,
+              top: fly.startY - 30,
+              width: 60, height: 60,
+              borderRadius: 14,
+              overflow: 'hidden',
+              '--dx': `${dx}px`,
+              '--dy': `${dy}px`,
+              animation: 'flyToCart 0.68s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+              willChange: 'transform, opacity',
+            }}>
+              {fly.imageUrl
+                ? <img src={fly.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                : <div style={{ width: '100%', height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🛒</div>
+              }
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ minHeight: '100vh', background: '#f7f7f7', paddingBottom: 16 }}>
+
+        {/* Category Tab Bar */}
+        <div style={{ background: '#fff', borderBottom: '1px solid #ebebeb', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {categories.map(cat => {
+              const isActive = activeCategory?.id === cat.id;
+              return (
+                <button key={cat.id} className="cat-tab"
+                  onClick={() => handleCategoryClick(cat)}
+                  style={{
+                    padding: '0 18px', height: 48, fontSize: 13,
+                    fontWeight: isActive ? 800 : 500,
+                    color: isActive ? '#111' : '#999',
+                    borderBottom: `2.5px solid ${isActive ? '#111' : 'transparent'}`,
+                  }}>
+                  {cat.image_url && (
+                    <img src={cat.image_url} alt={cat.name} style={{ width: 20, height: 20, objectFit: 'cover', borderRadius: 4 }} />
+                  )}
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
+
+          {subcategories.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', overflowX: 'auto', scrollbarWidth: 'none', borderTop: '1px solid #f5f5f5' }}>
+              {/* All button */}
+              <button className="subcat-chip" onClick={() => setActiveSubcat(null)}
+                style={{ flexShrink: 0, width: 34, height: 34, borderRadius: '50%', border: `1.5px solid ${!activeSubcat ? '#111' : '#e0e0e0'}`, background: !activeSubcat ? '#111' : '#fff', color: !activeSubcat ? '#fff' : '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
+                ↕
+              </button>
+              {subcategories.map(sub => (
+                <button key={sub.id} className="subcat-chip"
+                  onClick={() => handleSubcatClick(sub)}
+                  style={{
+                    flexShrink: 0, padding: '5px 14px 5px 6px', borderRadius: 24,
+                    fontSize: 12, fontWeight: 700,
+                    border: `1.5px solid ${activeSubcat?.id === sub.id ? '#111' : '#e0e0e0'}`,
+                    background: activeSubcat?.id === sub.id ? '#111' : '#fff',
+                    color: activeSubcat?.id === sub.id ? '#fff' : '#555',
+                  }}>
+                  {/* Subcategory image in chip */}
+                  {sub.image_url && (
+                    <img src={sub.image_url} alt={sub.name}
+                      style={{ width: 24, height: 24, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+                  )}
+                  {sub.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Main Content */}
+        <div style={{ flex: 1, padding: isMobile ? '12px 10px' : '16px 20px', maxWidth: 1200, width: '100%', margin: '0 auto' }}>
+          {loading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : Object.keys(groupedProducts).length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeUp 0.4s ease' }}>
+              <div style={{ fontSize: 48, marginBottom: 14 }}>📦</div>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 6 }}>কোনো পণ্য পাওয়া যায়নি</p>
+              <p style={{ fontSize: 12, color: '#bbb' }}>অন্য ক্যাটাগরি চেষ্টা করুন</p>
+            </div>
+          ) : (
+            Object.entries(groupedProducts).map(([subcatName, { items }]) => (
+              <div key={subcatName} className="section-fade"
+                ref={el => subcatRefs.current[subcatName] = el}
+                style={{ marginBottom: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <h2 style={{ fontSize: 16, fontWeight: 800, color: '#111', letterSpacing: -0.3 }}>{subcatName}</h2>
+                  <span style={{ fontSize: 11, color: '#bbb', fontWeight: 600 }}>{items.length}টি পণ্য</span>
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))',
+                  gap: isMobile ? 10 : 14,
+                }}>
+                  {items.map(p => <ProductCard key={p.id} p={p} />)}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Floating Draggable Cart Button */}
+      {cartCount > 0 && (
+        <div
+          ref={cartBtnRef}
+          className={`cart-float-btn${cartShake ? ' cart-shake' : ''}`}
+          style={{ ...cartStyle, animation: cartPos.x === null ? 'slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards' : 'none' }}
+          onMouseDown={onCartDragStart}
+          onTouchStart={onCartDragStart}
+        >
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 26, lineHeight: 1 }}>🛒</span>
+            {/* Badge */}
+            <div style={{
+              position: 'absolute',
+              top: -10, right: -12,
+              minWidth: 20, height: 20,
+              borderRadius: 10,
+              background: '#e8192c',
+              color: '#fff',
+              fontSize: 11, fontWeight: 800,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '0 4px',
+              animation: 'popIn 0.3s ease',
+              border: '2px solid #111',
+            }}>
+              {cartCount}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 export default function ProductsPage() {
- return (
-   <Suspense fallback={
-     <div style={{ minHeight: '100vh', background: '#f7f7f7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Hind Siliguri, sans-serif', color: '#bbb', fontSize: 14 }}>
-       <div style={{ textAlign: 'center' }}>
-         <div style={{ fontSize: 28, marginBottom: 10 }}>⏳</div>
-         <p>লোড হচ্ছে...</p>
-       </div>
-     </div>
-   }>
-     <ProductsPageContent />
-   </Suspense>
- );
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', background: '#f7f7f7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Hind Siliguri, sans-serif', color: '#bbb', fontSize: 14 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 28, marginBottom: 10 }}>⏳</div>
+          <p>লোড হচ্ছে...</p>
+        </div>
+      </div>
+    }>
+      <ProductsPageContent />
+    </Suspense>
+  );
 }
