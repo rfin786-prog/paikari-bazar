@@ -19,7 +19,6 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(null);
-  const [walletBalance, setWalletBalance] = useState(0);
   const [platformFee, setPlatformFee] = useState(0);
 
   const [deliveryMethod, setDeliveryMethod] = useState('standard');
@@ -39,10 +38,7 @@ export default function CheckoutPage() {
 
   const paymentOptions = [
     { id: 'cod',    icon: '💵', name: 'Cash on Delivery' },
-    { id: 'wallet', icon: '💳', name: 'Wallet', balance: walletBalance },
-    { id: 'mobile', icon: '📱', name: 'bKash / Nagad' },
-    { id: 'bank',   icon: '🏦', name: 'Bank Transfer' },
-    { id: 'credit', icon: '📒', name: 'Credit' },
+    { id: 'bkash',  icon: '📱', name: 'bKash' },
   ];
 
   useEffect(() => {
@@ -57,9 +53,8 @@ export default function CheckoutPage() {
     Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.delivery_charges&select=value`, { headers: SB_HEADERS }).then(r => r.json()),
       fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.platform_fee&select=value`, { headers: SB_HEADERS }).then(r => r.json()),
-      fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${u.id}&select=wallet`, { headers: SB_HEADERS }).then(r => r.json()),
       fetch(`${SUPABASE_URL}/rest/v1/pickup_points?active=eq.true&order=name`, { headers: SB_HEADERS }).then(r => r.json()),
-    ]).then(([chargesData, feeData, userData, pickupData]) => {
+    ]).then(([chargesData, feeData, pickupData]) => {
       if (chargesData[0]?.value) {
         const c = chargesData[0].value;
         setDeliveryOptions(prev => prev.map(opt => ({ ...opt, price: c[opt.id] ?? opt.price })));
@@ -67,7 +62,6 @@ export default function CheckoutPage() {
       if (feeData[0]?.value) {
         setPlatformFee(parseFloat(feeData[0].value) || 0);
       }
-      if (userData[0]) setWalletBalance(userData[0].wallet || 0);
       if (Array.isArray(pickupData)) setPickupPoints(pickupData);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -96,16 +90,11 @@ export default function CheckoutPage() {
   const deliveryCost = deliveryOptions.find(d => d.id === deliveryMethod)?.price || 0;
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * (item.qty || item.quantity || 1), 0);
   const grandTotal = Math.max(0, subtotal + deliveryCost + platformFee);
-  const walletInsufficient = paymentMethod === 'wallet' && walletBalance < grandTotal;
 
   async function placeOrder() {
     if (cartItems.length === 0) { alert('Cart is empty.'); return; }
     if (deliveryMethod === 'scheduled' && !deliveryDate) { alert('Please select a delivery date.'); return; }
     if (deliveryMethod === 'pickup' && !selectedPickup) { alert('Please select a pickup point.'); return; }
-    if (walletInsufficient) {
-      alert(`Insufficient wallet balance.\nRequired: ৳${grandTotal.toLocaleString()}\nYour balance: ৳${walletBalance.toLocaleString()}`);
-      return;
-    }
 
     setPlacing(true);
     try {
@@ -142,21 +131,6 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || JSON.stringify(data));
 
-      if (paymentMethod === 'wallet') {
-        const newBalance = walletBalance - grandTotal;
-        await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
-          method: 'PATCH', headers: SB_HEADERS,
-          body: JSON.stringify({ wallet: newBalance }),
-        });
-        await fetch(`${SUPABASE_URL}/rest/v1/wallet_transactions`, {
-          method: 'POST', headers: SB_HEADERS,
-          body: JSON.stringify({
-            user_id: user.id, amount: grandTotal, type: 'debit',
-            note: `Order #${String((Array.isArray(data) ? data[0] : data).id).slice(0, 8).toUpperCase()} payment`,
-          }),
-        });
-      }
-
       localStorage.removeItem('cart');
       window.dispatchEvent(new Event('cartUpdated'));
       setOrderSuccess(Array.isArray(data) ? data[0] : data);
@@ -177,7 +151,6 @@ export default function CheckoutPage() {
   };
 
   if (orderSuccess) {
-    const selectedPickupPoint = pickupPoints.find(p => p.id === selectedPickup);
     return (
       <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '20px', padding: '2.5rem 2rem', maxWidth: '380px', width: '100%', textAlign: 'center' }}>
@@ -242,7 +215,7 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Cart Items with Quantity Adjust */}
+        {/* Cart Items */}
         <div style={s.card}>
           <span style={s.label}>Cart Items</span>
           {cartItems.length === 0 ? (
@@ -339,31 +312,19 @@ export default function CheckoutPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
             {paymentOptions.map(opt => {
               const active = paymentMethod === opt.id;
-              const isWallet = opt.id === 'wallet';
-              const insufficient = isWallet && walletBalance < grandTotal;
               return (
-                <div key={opt.id} onClick={() => setPaymentMethod(opt.id)} style={{ border: `${active ? '2px solid #111' : '1px solid #e5e7eb'}`, borderRadius: '10px', padding: '12px', textAlign: 'center', cursor: 'pointer', background: active ? '#f3f4f6' : '#fff', transition: 'all 0.15s', opacity: insufficient ? 0.6 : 1 }}>
+                <div key={opt.id} onClick={() => setPaymentMethod(opt.id)} style={{ border: `${active ? '2px solid #111' : '1px solid #e5e7eb'}`, borderRadius: '10px', padding: '12px', textAlign: 'center', cursor: 'pointer', background: active ? '#f3f4f6' : '#fff', transition: 'all 0.15s' }}>
                   <div style={{ fontSize: '22px', marginBottom: '6px' }}>{opt.icon}</div>
                   <div style={{ color: active ? '#111' : '#666', fontSize: '12px', fontWeight: '700' }}>{opt.name}</div>
-                  {isWallet && (
-                    <div style={{ marginTop: '4px', fontSize: '11px', fontWeight: '700', color: insufficient ? '#ef4444' : '#22c55e' }}>
-                      Balance: ৳{walletBalance.toLocaleString()}
-                    </div>
-                  )}
                 </div>
               );
             })}
           </div>
 
-          {walletInsufficient && (
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: '#dc2626', fontWeight: '600' }}>
-              ⚠️ Insufficient balance. You need ৳{(grandTotal - walletBalance).toLocaleString()} more.
-            </div>
-          )}
-
-          {paymentMethod === 'wallet' && !walletInsufficient && (
-            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: '#059669', fontWeight: '600' }}>
-              ✅ Balance after payment: ৳{(walletBalance - grandTotal).toLocaleString()}
+          {paymentMethod === 'bkash' && (
+            <div style={{ background: '#fdf2f8', border: '1px solid #f0abcc', borderRadius: '10px', padding: '12px 14px', marginBottom: '12px', fontSize: '13px', color: '#9d174d' }}>
+              📱 bKash নম্বরে পাঠান: <strong>01XXXXXXXXX</strong><br />
+              <span style={{ fontSize: '11px', color: '#be185d', marginTop: '4px', display: 'block' }}>Order confirm হলে আমরা আপনাকে কল করব।</span>
             </div>
           )}
 
@@ -377,12 +338,12 @@ export default function CheckoutPage() {
 
           <button
             onClick={placeOrder}
-            disabled={placing || walletInsufficient}
+            disabled={placing}
             style={{
               width: '100%', padding: '14px',
-              background: placing || walletInsufficient ? '#9ca3af' : '#111',
+              background: placing ? '#9ca3af' : '#111',
               border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700',
-              color: '#fff', cursor: placing || walletInsufficient ? 'not-allowed' : 'pointer',
+              color: '#fff', cursor: placing ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
             }}
           >
