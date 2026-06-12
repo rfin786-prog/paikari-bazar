@@ -323,7 +323,7 @@ export default function CheckoutPage() {
 
           {paymentMethod === 'bkash' && (
             <div style={{ background: '#fdf2f8', border: '1px solid #f0abcc', borderRadius: '10px', padding: '12px 14px', marginBottom: '12px', fontSize: '13px', color: '#9d174d' }}>
-              📱 bKash নম্বরে পাঠান: <strong>01813888860</strong><br />
+              📱 bKash Payment: <strong>01813888860</strong><br />
               <span style={{ fontSize: '11px', color: '#be185d', marginTop: '4px', display: 'block' }}>Order confirm হলে আমরা আপনাকে কল করব।</span>
             </div>
           )}
