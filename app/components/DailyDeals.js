@@ -70,11 +70,29 @@ function DealCardSkeleton({ isDesktop }) {
   );
 }
 
+const getCart = () => JSON.parse(localStorage.getItem('cart') || '[]');
+const saveCart = (cart) => {
+  localStorage.setItem('cart', JSON.stringify(cart));
+  window.dispatchEvent(new Event('cartUpdated'));
+};
+
 export default function DailyDeals() {
   const [isDesktop, setIsDesktop] = useState(false);
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [addedIds, setAddedIds] = useState({});
+
+  const addToCart = (e, product) => {
+    e.stopPropagation();
+    const cart = getCart();
+    const exists = cart.find(i => i.id === product.id);
+    if (!exists) {
+      saveCart([...cart, { ...product, quantity: product.moq ? parseInt(product.moq) : 1 }]);
+    }
+    setAddedIds(prev => ({ ...prev, [product.id]: true }));
+    setTimeout(() => setAddedIds(prev => ({ ...prev, [product.id]: false })), 1800);
+  };
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024);
@@ -177,15 +195,39 @@ export default function DailyDeals() {
                   {deal.name}
                 </div>
 
-                <div style={{ color: '#111111', fontWeight: 'bold', fontSize: '1.1rem' }}>
-                  ৳{parseFloat(deal.price).toLocaleString('bn-BD')}
-                  <span style={{ fontSize: '0.75rem', color: '#666666' }}>/{unitLabel(deal.unit)}</span>
-                </div>
-                <div style={{ color: '#999999', fontSize: '0.8rem', textDecoration: 'line-through' }}>
-                  ৳{parseFloat(deal.mrp).toLocaleString('bn-BD')}
+                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '6px' }}>
+                  <div>
+                    <div style={{ color: '#111111', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                      ৳{parseFloat(deal.price).toLocaleString('bn-BD')}
+                      <span style={{ fontSize: '0.75rem', color: '#666666' }}>/{unitLabel(deal.unit)}</span>
+                    </div>
+                    <div style={{ color: '#999999', fontSize: '0.8rem', textDecoration: 'line-through' }}>
+                      ৳{parseFloat(deal.mrp).toLocaleString('bn-BD')}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => addToCart(e, deal)}
+                    aria-label={addedIds[deal.id] ? 'যোগ হয়েছে' : 'কার্টে যোগ করুন'}
+                    style={{
+                      width: isDesktop ? '34px' : '30px',
+                      height: isDesktop ? '34px' : '30px',
+                      background: addedIds[deal.id] ? '#22c55e' : '#111111',
+                      color: '#ffffff', border: 'none',
+                      borderRadius: '8px', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, transition: 'background 0.15s ease',
+                    }}
+                  >
+                    {addedIds[deal.id]
+                      ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    }
+                  </button>
                 </div>
               </div>
             ))}
+
       </div>
     </section>
   );
