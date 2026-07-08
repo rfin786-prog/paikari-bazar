@@ -227,14 +227,32 @@ export default function CheckoutPage() {
                 <div style={{ color: '#999', fontSize: '11px' }}>৳{item.price} each</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '0 12px' }}>
-                <button onClick={() => updateQty(item.id, -1)} style={{ width: '26px', height: '26px', borderRadius: '6px', border: '1.5px solid #e5e7eb', background: '#f9fafb', cursor: 'pointer', fontSize: '15px', fontWeight: '700' }}>−</button>
+                <button
+                  onClick={() => updateQty(item.id, -1)}
+                  style={{
+                    width: '28px', height: '28px', borderRadius: '6px',
+                    border: '1px solid #e5e7eb', background: '#f9fafb', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
                 <input
                   type="number"
                   value={item.qty || item.quantity || 1}
                   onChange={e => setQty(item.id, e.target.value)}
-                  style={{ width: '40px', textAlign: 'center', border: '1.5px solid #e5e7eb', borderRadius: '6px', padding: '3px', fontSize: '13px', fontWeight: '700' }}
+                  style={{ width: '40px', textAlign: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '3px', fontSize: '13px', fontWeight: '700' }}
                 />
-                <button onClick={() => updateQty(item.id, 1)} style={{ width: '26px', height: '26px', borderRadius: '6px', border: 'none', background: '#111', color: '#fff', cursor: 'pointer', fontSize: '15px', fontWeight: '700' }}>+</button>
+                <button
+                  onClick={() => updateQty(item.id, 1)}
+                  style={{
+                    width: '28px', height: '28px', borderRadius: '6px',
+                    border: 'none', background: '#111', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
               </div>
               <div style={{ color: '#111', fontSize: '13px', fontWeight: '700', minWidth: '60px', textAlign: 'right' }}>
                 ৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}
