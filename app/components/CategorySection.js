@@ -38,10 +38,14 @@ export default function CategorySection() {
  const [activeId, setActiveId] = useState(null);
  const [loading, setLoading] = useState(true);
  const [isMobile, setIsMobile] = useState(false);
+ const [isDesktop, setIsDesktop] = useState(false);
  const rightPanelRef = useRef(null);
 
  useEffect(() => {
-   const check = () => setIsMobile(window.innerWidth < 768);
+   const check = () => {
+     setIsMobile(window.innerWidth < 768);
+     setIsDesktop(window.innerWidth >= 1024);
+   };
    check();
    window.addEventListener('resize', check);
    return () => window.removeEventListener('resize', check);
@@ -97,9 +101,13 @@ export default function CategorySection() {
    }
  };
 
- const subGridCols = isMobile ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)';
- const leftPanelWidth = isMobile ? 88 : 100;
- const LIMIT = isMobile ? 5 : 7;
+ const subGridCols = isDesktop ? 'repeat(7, 1fr)' : isMobile ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)';
+ const leftPanelWidth = isDesktop ? 130 : isMobile ? 88 : 100;
+ const iconSize = isDesktop ? 52 : isMobile ? 40 : 44;
+ const iconFontSize = isDesktop ? 24 : isMobile ? 18 : 20;
+ const subIconFontSize = isDesktop ? 30 : isMobile ? 24 : 28;
+ const LIMIT = isDesktop ? 14 : isMobile ? 5 : 7;
+ const panelHeight = isDesktop ? 480 : 380;
 
  return (
    <>
@@ -114,6 +122,7 @@ export default function CategorySection() {
          position: relative;
        }
        .cat-left-item:active { opacity: 0.7; }
+       .cat-left-item:hover { background: #fff; }
        .sub-grid-item {
          cursor: pointer;
          transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -130,7 +139,7 @@ export default function CategorySection() {
      `}</style>
 
      <div style={{ background: '#fff', borderRadius: 0, overflow: 'hidden' }}>
-       <div style={{ display: 'flex', minHeight: 380, maxHeight: isMobile ? 380 : 440 }}>
+       <div style={{ display: 'flex', minHeight: panelHeight, maxHeight: isDesktop ? 520 : isMobile ? 380 : 440 }}>
 
          {/* Left: Category List */}
          <div
@@ -153,7 +162,7 @@ export default function CategorySection() {
                      className="cat-left-item"
                      onClick={() => setActiveId(cat.id)}
                      style={{
-                       padding: '12px 6px',
+                       padding: isDesktop ? '16px 8px' : '12px 6px',
                        textAlign: 'center',
                        background: isActive ? '#fff' : 'transparent',
                        borderLeft: isActive ? '3px solid #f97316' : '3px solid transparent',
@@ -161,12 +170,12 @@ export default function CategorySection() {
                      }}
                    >
                      <div style={{
-                       width: isMobile ? 40 : 44, height: isMobile ? 40 : 44, borderRadius: 12,
+                       width: iconSize, height: iconSize, borderRadius: 12,
                        background: isActive ? `${meta.color}18` : '#f0f0f0',
                        margin: '0 auto 6px',
                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                        overflow: 'hidden', transition: 'background 0.2s',
-                       fontSize: isMobile ? 18 : 20,
+                       fontSize: iconFontSize,
                      }}>
                        {cat.image_url
                          ? <img src={cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -174,7 +183,7 @@ export default function CategorySection() {
                        }
                      </div>
                      <p style={{
-                       fontSize: 10, fontWeight: isActive ? 700 : 500,
+                       fontSize: isDesktop ? 12 : 10, fontWeight: isActive ? 700 : 500,
                        color: isActive ? '#f97316' : '#666',
                        lineHeight: 1.3, margin: 0,
                        overflow: 'hidden', display: '-webkit-box',
@@ -193,12 +202,12 @@ export default function CategorySection() {
          <div
            className="right-panel"
            ref={rightPanelRef}
-           style={{ flex: 1, overflowY: 'auto', padding: '12px 10px', background: '#fff' }}
+           style={{ flex: 1, overflowY: 'auto', padding: isDesktop ? '18px 20px' : '12px 10px', background: '#fff' }}
          >
            {loading ? (
              <div style={{ display: 'grid', gridTemplateColumns: subGridCols, gap: 8 }}>
-               {[...Array(6)].map((_, i) => (
-                 <div key={i} style={{ borderRadius: 12, background: '#f5f5f5', height: 100 }} />
+               {[...Array(isDesktop ? 14 : 6)].map((_, i) => (
+                 <div key={i} style={{ borderRadius: 12, background: '#f5f5f5', height: isDesktop ? 120 : 100 }} />
                ))}
              </div>
            ) : (
@@ -206,10 +215,10 @@ export default function CategorySection() {
                {activeCategory && (
                  <div
                    onClick={handleViewAll}
-                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: '#fff3eb', borderRadius: 10, marginBottom: 10, cursor: 'pointer', border: '1px solid #ffe0cc' }}
+                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isDesktop ? '10px 14px' : '8px 10px', background: '#fff3eb', borderRadius: 10, marginBottom: isDesktop ? 16 : 10, cursor: 'pointer', border: '1px solid #ffe0cc' }}
                  >
-                   <span style={{ fontSize: 12, fontWeight: 700, color: '#f97316' }}>View all {activeCategory.name}</span>
-                   <span style={{ fontSize: 13, color: '#f97316' }}>→</span>
+                   <span style={{ fontSize: isDesktop ? 14 : 12, fontWeight: 700, color: '#f97316' }}>View all {activeCategory.name}</span>
+                   <span style={{ fontSize: isDesktop ? 15 : 13, color: '#f97316' }}>→</span>
                  </div>
                )}
 
@@ -219,7 +228,7 @@ export default function CategorySection() {
                    const visibleSubs = hasMore ? activeSubs.slice(0, LIMIT) : activeSubs;
 
                    return (
-                     <div style={{ display: 'grid', gridTemplateColumns: subGridCols, gap: isMobile ? 7 : 10 }}>
+                     <div style={{ display: 'grid', gridTemplateColumns: subGridCols, gap: isDesktop ? 14 : isMobile ? 7 : 10 }}>
                        {visibleSubs.map((sub, i) => {
                          const meta = getMeta(sub.name);
                          return (
@@ -235,7 +244,7 @@ export default function CategorySection() {
                                overflow: 'hidden', marginBottom: 5,
                                display: 'flex', alignItems: 'center', justifyContent: 'center',
                                border: '1px solid #f0f0f0',
-                               fontSize: isMobile ? 24 : 28,
+                               fontSize: subIconFontSize,
                              }}>
                                {sub.image_url
                                  ? <img src={sub.image_url} alt={sub.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -243,7 +252,7 @@ export default function CategorySection() {
                                }
                              </div>
                              <p style={{
-                               fontSize: 10, fontWeight: 600, color: '#333',
+                               fontSize: isDesktop ? 12 : 10, fontWeight: 600, color: '#333',
                                textAlign: 'center', lineHeight: 1.3, margin: 0,
                                overflow: 'hidden', display: '-webkit-box',
                                WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
@@ -269,7 +278,7 @@ export default function CategorySection() {
                            }}>
                              <span style={{ fontSize: 20, color: '#bbb' }}>•••</span>
                            </div>
-                           <p style={{ fontSize: 10, fontWeight: 600, color: '#aaa', textAlign: 'center', margin: 0 }}>View More</p>
+                           <p style={{ fontSize: isDesktop ? 12 : 10, fontWeight: 600, color: '#aaa', textAlign: 'center', margin: 0 }}>View More</p>
                          </div>
                        )}
                      </div>
