@@ -43,8 +43,17 @@ function Countdown() {
 }
 
 export default function DailyDeals() {
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   return (
-    <section style={{ padding: '24px 16px', background: '#ffffff' }}>
+    <section style={{ padding: isDesktop ? '24px' : '24px 16px', background: '#ffffff' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
         <h2 style={{ color: '#111111', fontFamily: 'Hind Siliguri', fontSize: '1.3rem', margin: 0 }}>
           🔥 আজকের অফার
@@ -55,11 +64,11 @@ export default function DailyDeals() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? 'repeat(4, 1fr)' : 'repeat(2, 1fr)', gap: isDesktop ? '16px' : '12px' }}>
         {deals.map(deal => (
           <div key={deal.id} style={{
             background: '#f5f5f5', border: '1px solid #e0e0e0',
-            borderRadius: '12px', padding: '14px', position: 'relative'
+            borderRadius: '12px', padding: isDesktop ? '18px' : '14px', position: 'relative'
           }}>
             <span style={{
               position: 'absolute', top: '8px', right: '8px',
@@ -68,7 +77,7 @@ export default function DailyDeals() {
             }}>
               {Math.round((1 - deal.price / deal.originalPrice) * 100)}% ছাড়
             </span>
-            <div style={{ fontSize: '2rem', marginBottom: '8px' }}>{deal.emoji}</div>
+            <div style={{ fontSize: isDesktop ? '2.4rem' : '2rem', marginBottom: '8px' }}>{deal.emoji}</div>
             <div style={{ color: '#111111', fontFamily: 'Hind Siliguri', fontWeight: 600, marginBottom: '4px' }}>
               {deal.name}
             </div>
