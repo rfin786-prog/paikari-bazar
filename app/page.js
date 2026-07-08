@@ -16,14 +16,16 @@ export default function Home() {
       gap: '8px'
     }}>
       <HeroSection />
-      <div style={{ background: '#fff' }}>
-        <CategorySection />
-      </div>
-      <div style={{ background: '#fff' }}>
-        <DailyDeals />
-      </div>
-      <div style={{ background: '#fff' }}>
-        <BrandsSection />
+      <div style={{ width: '100%', maxWidth: '1280px', margin: '0 auto', padding: '0 16px', boxSizing: 'border-box' }}>
+        <div style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', marginTop: '12px', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+          <CategorySection />
+        </div>
+        <div style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', marginTop: '12px', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+          <DailyDeals />
+        </div>
+        <div style={{ marginTop: '12px' }}>
+          <BrandsSection />
+        </div>
       </div>
       <Footer />
     </main>
