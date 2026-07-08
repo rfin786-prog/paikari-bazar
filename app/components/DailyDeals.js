@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 // products.unit ইংরেজিতে সেভ থাকে (admin ফর্মের UNITS লিস্ট অনুযায়ী) — এখানে বাংলায় দেখানোর জন্য ম্যাপিং
 const UNIT_LABELS = {
@@ -21,27 +22,39 @@ function unitLabel(unit) {
   return UNIT_LABELS[unit] || unit;
 }
 
+// আসল বর্তমান সময় থেকে আজ রাত ১২টা (মধ্যরাত) পর্যন্ত বাকি সময় বের করে —
+// ডাটাবেসে deal-এর নির্দিষ্ট শেষ সময় যোগ না করা পর্যন্ত এটাই সবচেয়ে কাছের "real" countdown
+function getMsUntilMidnight() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  return midnight.getTime() - now.getTime();
+}
+
+function msToHMS(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return { h, m, s };
+}
+
 function Countdown() {
-  const [time, setTime] = useState({ h: 23, m: 59, s: 59 });
+  const [remaining, setRemaining] = useState(() => getMsUntilMidnight());
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTime(prev => {
-        let { h, m, s } = prev;
-        if (s > 0) return { h, m, s: s - 1 };
-        if (m > 0) return { h, m: m - 1, s: 59 };
-        if (h > 0) return { h: h - 1, m: 59, s: 59 };
-        return { h: 23, m: 59, s: 59 };
-      });
+      setRemaining(getMsUntilMidnight());
     }, 1000);
     return () => clearInterval(timer);
   }, []);
 
+  const { h, m, s } = msToHMS(remaining);
   const pad = n => String(n).padStart(2, '0');
 
   return (
     <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-      {[pad(time.h), pad(time.m), pad(time.s)].map((val, i) => (
+      {[pad(h), pad(m), pad(s)].map((val, i) => (
         <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{
             background: '#111111', color: '#ffffff', fontWeight: 'bold',
@@ -70,6 +83,27 @@ function DealCardSkeleton({ isDesktop }) {
   );
 }
 
+function Toast({ toasts }) {
+  return (
+    <div style={{
+      position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
+      zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center',
+    }}>
+      {toasts.map(t => (
+        <div key={t.id} style={{
+          background: '#111111', color: '#ffffff', fontFamily: 'Hind Siliguri',
+          fontSize: '0.9rem', fontWeight: 600, padding: '10px 18px',
+          borderRadius: '999px', boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+          display: 'flex', alignItems: 'center', gap: '8px',
+        }}>
+          <span style={{ color: '#22c55e' }}>✓</span>
+          {t.msg}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const getCart = () => JSON.parse(localStorage.getItem('cart') || '[]');
 const saveCart = (cart) => {
   localStorage.setItem('cart', JSON.stringify(cart));
@@ -77,11 +111,19 @@ const saveCart = (cart) => {
 };
 
 export default function DailyDeals() {
+  const router = useRouter();
   const [isDesktop, setIsDesktop] = useState(false);
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [addedIds, setAddedIds] = useState({});
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (msg) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, msg }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 2200);
+  };
 
   const addToCart = (e, product) => {
     e.stopPropagation();
@@ -89,6 +131,9 @@ export default function DailyDeals() {
     const exists = cart.find(i => i.id === product.id);
     if (!exists) {
       saveCart([...cart, { ...product, quantity: product.moq ? parseInt(product.moq) : 1 }]);
+      showToast(`${product.name} কার্টে যোগ হয়েছে`);
+    } else {
+      showToast(`${product.name} আগে থেকেই কার্টে আছে`);
     }
     setAddedIds(prev => ({ ...prev, [product.id]: true }));
     setTimeout(() => setAddedIds(prev => ({ ...prev, [product.id]: false })), 1800);
@@ -145,13 +190,28 @@ export default function DailyDeals() {
 
   return (
     <section style={{ padding: isDesktop ? '24px' : '24px 16px', background: '#ffffff' }}>
+      <Toast toasts={toasts} />
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
         <h2 style={{ color: '#111111', fontFamily: 'Hind Siliguri', fontSize: '1.3rem', margin: 0 }}>
           🔥 আজকের অফার
         </h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: '#666666', fontSize: '0.85rem' }}>শেষ হবে:</span>
-          <Countdown />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ color: '#666666', fontSize: '0.85rem' }}>শেষ হবে:</span>
+            <Countdown />
+          </div>
+          <button
+            onClick={() => router.push('/products')}
+            style={{
+              background: '#111111', color: '#ffffff', border: 'none',
+              fontSize: '0.8rem', fontWeight: 500, padding: '6px 14px',
+              borderRadius: '20px', cursor: 'pointer', fontFamily: 'Hind Siliguri',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            সব দেখুন →
+          </button>
         </div>
       </div>
 
@@ -161,10 +221,15 @@ export default function DailyDeals() {
               <DealCardSkeleton key={i} isDesktop={isDesktop} />
             ))
           : deals.map(deal => (
-              <div key={deal.id} style={{
-                background: '#f5f5f5', border: '1px solid #e0e0e0',
-                borderRadius: '12px', padding: isDesktop ? '18px' : '14px', position: 'relative'
-              }}>
+              <div
+                key={deal.id}
+                onClick={() => router.push(`/products/${deal.id}`)}
+                style={{
+                  background: '#f5f5f5', border: '1px solid #e0e0e0',
+                  borderRadius: '12px', padding: isDesktop ? '18px' : '14px', position: 'relative',
+                  cursor: 'pointer',
+                }}
+              >
                 <span style={{
                   position: 'absolute', top: '8px', right: '8px',
                   background: '#111111', color: '#ffffff', fontSize: '0.7rem',
@@ -195,6 +260,29 @@ export default function DailyDeals() {
                   {deal.name}
                 </div>
 
+                {(deal.stock !== undefined && deal.stock !== null) || deal.moq ? (
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                    {deal.stock !== undefined && deal.stock !== null && (
+                      <span style={{
+                        fontSize: '0.7rem', fontWeight: 600,
+                        color: parseInt(deal.stock) > 0 ? '#16a34a' : '#ef4444',
+                        background: parseInt(deal.stock) > 0 ? '#dcfce7' : '#fee2e2',
+                        padding: '2px 6px', borderRadius: '4px',
+                      }}>
+                        {parseInt(deal.stock) > 0 ? `স্টকে আছে ${deal.stock}` : 'স্টক শেষ'}
+                      </span>
+                    )}
+                    {deal.moq && (
+                      <span style={{
+                        fontSize: '0.7rem', fontWeight: 600, color: '#666666',
+                        background: '#ececec', padding: '2px 6px', borderRadius: '4px',
+                      }}>
+                        MOQ: {deal.moq}
+                      </span>
+                    )}
+                  </div>
+                ) : null}
+
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '6px' }}>
                   <div>
                     <div style={{ color: '#111111', fontWeight: 'bold', fontSize: '1.1rem' }}>
@@ -209,12 +297,15 @@ export default function DailyDeals() {
                   <button
                     onClick={(e) => addToCart(e, deal)}
                     aria-label={addedIds[deal.id] ? 'যোগ হয়েছে' : 'কার্টে যোগ করুন'}
+                    disabled={deal.stock !== undefined && deal.stock !== null && parseInt(deal.stock) <= 0}
                     style={{
                       width: isDesktop ? '34px' : '30px',
                       height: isDesktop ? '34px' : '30px',
                       background: addedIds[deal.id] ? '#22c55e' : '#111111',
                       color: '#ffffff', border: 'none',
-                      borderRadius: '8px', cursor: 'pointer',
+                      borderRadius: '8px',
+                      cursor: (deal.stock !== undefined && deal.stock !== null && parseInt(deal.stock) <= 0) ? 'not-allowed' : 'pointer',
+                      opacity: (deal.stock !== undefined && deal.stock !== null && parseInt(deal.stock) <= 0) ? 0.4 : 1,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0, transition: 'background 0.15s ease',
                     }}
@@ -227,7 +318,6 @@ export default function DailyDeals() {
                 </div>
               </div>
             ))}
-
       </div>
     </section>
   );
