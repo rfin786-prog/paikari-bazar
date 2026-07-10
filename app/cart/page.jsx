@@ -30,12 +30,11 @@ export default function CartPage() {
     if (idx !== -1) { cart[idx].quantity += 1; saveCart(cart); }
   };
 
-  const handleDecrease = (id, minOrder) => {
-    const minQty = minOrder ? parseInt(minOrder) : 1;
+  const handleDecrease = (id) => {
     const cart = getCart();
     const idx = cart.findIndex(i => i.id === id);
     if (idx === -1) return;
-    if (cart[idx].quantity <= minQty) cart.splice(idx, 1);
+    if (cart[idx].quantity <= 1) cart.splice(idx, 1);
     else cart[idx].quantity -= 1;
     saveCart(cart);
   };
@@ -163,7 +162,6 @@ export default function CartPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                 {cartItems.map((item, i) => {
                   const qty = item.quantity || 1;
-                  const minQty = item.min_order ? parseInt(item.min_order) : 1;
                   const itemTotal = item.price * qty;
 
                   return (
@@ -206,15 +204,11 @@ export default function CartPage() {
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', background: '#111', borderRadius: 10, overflow: 'hidden' }}>
-                              <button className="qty-btn" onClick={() => handleDecrease(item.id, item.min_order)}>−</button>
+                              <button className="qty-btn" onClick={() => handleDecrease(item.id)}>−</button>
                               <span style={{ color: '#fff', fontWeight: 800, fontSize: 13, minWidth: 26, textAlign: 'center' }}>{qty}</span>
                               <button className="qty-btn" onClick={() => handleIncrease(item.id)}>+</button>
                             </div>
                           </div>
-
-                          {minQty > 1 && (
-                            <p style={{ fontSize: 10, color: '#bbb', fontWeight: 600 }}>সর্বনিম্ন অর্ডার: {minQty}টি</p>
-                          )}
                         </div>
                       </div>
                     </div>
