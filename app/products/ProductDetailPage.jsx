@@ -79,10 +79,9 @@ export default function ProductDetailPage() {
 
   const handleAdd = () => {
     if (!product) return;
-    const minQty = product.moq ? parseInt(product.moq) : (product.min_order ? parseInt(product.min_order) : 1);
     const cart = getCart();
     const idx = cart.findIndex(i => i.id === product.id);
-    if (idx === -1) cart.push({ ...product, quantity: minQty });
+    if (idx === -1) cart.push({ ...product, quantity: 1 });
     else cart[idx].quantity += 1;
     saveCart(cart);
   };
@@ -96,11 +95,10 @@ export default function ProductDetailPage() {
 
   const handleDecrease = () => {
     if (!product) return;
-    const minQty = product.moq ? parseInt(product.moq) : (product.min_order ? parseInt(product.min_order) : 1);
     const cart = getCart();
     const idx = cart.findIndex(i => i.id === product.id);
     if (idx === -1) return;
-    if (cart[idx].quantity <= minQty) cart.splice(idx, 1);
+    if (cart[idx].quantity <= 1) cart.splice(idx, 1);
     else cart[idx].quantity -= 1;
     saveCart(cart);
   };
@@ -108,7 +106,6 @@ export default function ProductDetailPage() {
   const discount = product?.mrp && product.mrp > product.price
     ? Math.round((1 - product.price / product.mrp) * 100) : null;
   const outOfStock = product?.stock !== undefined && product?.stock !== null && product.stock <= 0;
-  const minQty = product?.moq ? parseInt(product.moq) : (product?.min_order ? parseInt(product.min_order) : 1);
   const inCart = cartQty > 0;
 
   // Build image list
@@ -247,14 +244,6 @@ export default function ProductDetailPage() {
                 {discount && <span style={{ fontSize: 13, color: '#22c55e', fontWeight: 700 }}>{discount}% ছাড়</span>}
               </div>
 
-              {/* MOQ notice */}
-              {minQty > 1 && (
-                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '8px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>⚠️</span>
-                  <span style={{ fontSize: 12, color: '#92400e', fontWeight: 600 }}>সর্বনিম্ন অর্ডার: {minQty}টি</span>
-                </div>
-              )}
-
               {/* Cart Action */}
               {outOfStock ? (
                 <div style={{ background: '#f3f4f6', borderRadius: 14, padding: 14, textAlign: 'center', color: '#aaa', fontWeight: 700, fontSize: 14 }}>
@@ -297,7 +286,6 @@ export default function ProductDetailPage() {
                   product.sku      && ['SKU', product.sku],
                   product.weight   && ['ওজন', product.weight],
                   product.unit     && ['ইউনিট', product.unit],
-                  minQty > 1       && ['সর্বনিম্ন অর্ডার', `${minQty}টি`],
                 ].filter(Boolean).map(([label, value]) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
                     <span style={{ fontSize: 13, color: '#888' }}>{label}</span>
