@@ -79,7 +79,7 @@ export default function ProductsSection() {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const exists = cart.find(i => i.id === product.id);
     if (!exists) {
-      cart.push({ ...product, quantity: product.moq || 1 });
+      cart.push({ ...product, quantity: 1 });
       localStorage.setItem('cart', JSON.stringify(cart));
       window.dispatchEvent(new Event('cartUpdated'));
     }
@@ -214,16 +214,6 @@ export default function ProductsSection() {
                     </div>
                   )}
 
-                  {(p.moq || p.min_order) && (
-                    <div style={{
-                      position: 'absolute', bottom: 8, right: 8,
-                      background: 'rgba(255,255,255,0.92)',
-                      borderRadius: '7px', padding: '3px 8px',
-                      fontSize: '10px', fontWeight: '500', color: catColor,
-                    }}>
-                      MOQ: {p.moq || p.min_order}
-                    </div>
-                  )}
                 </div>
 
                 {/* Info */}
