@@ -130,7 +130,7 @@ export default function DailyDeals() {
     const cart = getCart();
     const exists = cart.find(i => i.id === product.id);
     if (!exists) {
-      saveCart([...cart, { ...product, quantity: product.moq ? parseInt(product.moq) : 1 }]);
+      saveCart([...cart, { ...product, quantity: 1 }]);
       showToast(`${product.name} কার্টে যোগ হয়েছে`);
     } else {
       showToast(`${product.name} আগে থেকেই কার্টে আছে`);
@@ -260,26 +260,16 @@ export default function DailyDeals() {
                   {deal.name}
                 </div>
 
-                {(deal.stock !== undefined && deal.stock !== null) || deal.moq ? (
+                {deal.stock !== undefined && deal.stock !== null ? (
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
-                    {deal.stock !== undefined && deal.stock !== null && (
-                      <span style={{
-                        fontSize: '0.7rem', fontWeight: 600,
-                        color: parseInt(deal.stock) > 0 ? '#16a34a' : '#ef4444',
-                        background: parseInt(deal.stock) > 0 ? '#dcfce7' : '#fee2e2',
-                        padding: '2px 6px', borderRadius: '4px',
-                      }}>
-                        {parseInt(deal.stock) > 0 ? `স্টকে আছে ${deal.stock}` : 'স্টক শেষ'}
-                      </span>
-                    )}
-                    {deal.moq && (
-                      <span style={{
-                        fontSize: '0.7rem', fontWeight: 600, color: '#666666',
-                        background: '#ececec', padding: '2px 6px', borderRadius: '4px',
-                      }}>
-                        MOQ: {deal.moq}
-                      </span>
-                    )}
+                    <span style={{
+                      fontSize: '0.7rem', fontWeight: 600,
+                      color: parseInt(deal.stock) > 0 ? '#16a34a' : '#ef4444',
+                      background: parseInt(deal.stock) > 0 ? '#dcfce7' : '#fee2e2',
+                      padding: '2px 6px', borderRadius: '4px',
+                    }}>
+                      {parseInt(deal.stock) > 0 ? `স্টকে আছে ${deal.stock}` : 'স্টক শেষ'}
+                    </span>
                   </div>
                 ) : null}
 
