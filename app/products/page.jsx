@@ -190,10 +190,9 @@ function ProductsPageContent() {
     e.stopPropagation();
     e.preventDefault();
     const { x, y } = getCoords(e);
-    const minQty = product.min_order ? parseInt(product.min_order) : 1;
     const cart = getCart();
     const idx = cart.findIndex(i => i.id === product.id);
-    if (idx === -1) cart.push({ ...product, quantity: minQty });
+    if (idx === -1) cart.push({ ...product, quantity: 1 });
     else cart[idx].quantity += 1;
     saveCart(cart);
     triggerFly(x, y, product.image_url);
@@ -212,11 +211,10 @@ function ProductsPageContent() {
   const handleDecrease = useCallback((e, product) => {
     e.stopPropagation();
     e.preventDefault();
-    const minQty = product.min_order ? parseInt(product.min_order) : 1;
     const cart = getCart();
     const idx = cart.findIndex(i => i.id === product.id);
     if (idx === -1) return;
-    if (cart[idx].quantity <= minQty) cart.splice(idx, 1);
+    if (cart[idx].quantity <= 1) cart.splice(idx, 1);
     else cart[idx].quantity -= 1;
     saveCart(cart);
   }, []);
@@ -284,7 +282,6 @@ function ProductsPageContent() {
     const qty = cartQty[p.id] || 0;
     const inCart = qty > 0;
     const outOfStock = p.stock !== undefined && p.stock !== null && p.stock <= 0;
-    const minQty = p.min_order ? parseInt(p.min_order) : 1;
     const discount = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : null;
 
     return (
@@ -352,7 +349,6 @@ function ProductsPageContent() {
           <p style={{ fontSize: 12, fontWeight: 500, color: '#444', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: 36 }}>
             {p.name}
           </p>
-          {minQty > 1 && <p style={{ fontSize: 10, color: '#bbb', marginTop: 4, fontWeight: 600 }}>Min: {minQty} pcs</p>}
         </div>
       </div>
     );
