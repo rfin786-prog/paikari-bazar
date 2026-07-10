@@ -11,7 +11,7 @@ const UNITS = ['Piece', 'Dozen', 'KG', 'Gram', 'Litre', 'ML', 'Sack', 'Packet', 
 const EMPTY_FORM = {
   name: '', category: '', sub_category: '', cost_price: '', mrp: '', price: '',
   trade_price: '', discount_price: '',
-  unit: '', stock: '', moq: '1', max_qty: '',
+  unit: '', stock: '', max_qty: '',
   image_url: '', description: '', brand: '', sku: '', weight: '', active: true,
 };
 
@@ -208,7 +208,6 @@ export default function ProductsTab() {
       discount_price: p.discount_price || '',
       unit: p.unit || '',
       stock: p.stock || '',
-      moq: p.moq || '1',
       max_qty: p.max_qty || '',
       image_url: p.image_url || '',
       description: p.description || '',
@@ -511,12 +510,9 @@ export default function ProductsTab() {
                 <ProfitBadge cost={formData.cost_price} selling={formData.price} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
                 <Field label="Stock">
                   <input type="number" name="stock" value={formData.stock} onChange={handleChange} placeholder="0" style={inputStyle} />
-                </Field>
-                <Field label="Min Order (MOQ)">
-                  <input type="number" name="moq" value={formData.moq} onChange={handleChange} placeholder="1" style={inputStyle} />
                 </Field>
                 <Field label="Max Quantity">
                   <input type="number" name="max_qty" value={formData.max_qty} onChange={handleChange} placeholder="0" style={inputStyle} />
