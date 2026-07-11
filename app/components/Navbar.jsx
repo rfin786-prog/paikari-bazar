@@ -11,25 +11,9 @@ const supaHeaders = {
   'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
 };
 
-const CAT_META = {
-  'পোশাক':       { icon: '👕' },
-  'মুদি':        { icon: '🛒' },
-  'খাদ্য':       { icon: '🍚' },
-  'ইলেকট্রনিক':  { icon: '📱' },
-  'গৃহস্থালি':   { icon: '🏠' },
-  'কৃষি':        { icon: '🌾' },
-  'সৌন্দর্য':    { icon: '🧴' },
-  'শিশু':        { icon: '👶' },
-  'প্যাকেজিং':   { icon: '📦' },
-  'হার্ডওয়্যার': { icon: '🔧' },
-  'অর্গানিক':    { icon: '🌿' },
-  'পানীয়':      { icon: '🥤' },
-  'default':     { icon: '🏷️' },
-};
-
-function getCatIcon(name) {
-  const key = Object.keys(CAT_META).find(k => name?.includes(k));
-  return key ? CAT_META[key].icon : CAT_META['default'].icon;
+// Fallback monogram used when a category has no image_url
+function monogram(name) {
+  return name ? name.trim().charAt(0) : '—';
 }
 
 export default function Navbar() {
@@ -40,7 +24,6 @@ export default function Navbar() {
   const [categories, setCategories] = useState([]);
   const [subMap, setSubMap] = useState({});
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hoveredCatId, setHoveredCatId] = useState(null);
   const [expandedCatId, setExpandedCatId] = useState(null);
   const menuRef = useRef(null);
   const closeTimer = useRef(null);
@@ -70,7 +53,6 @@ export default function Navbar() {
         });
         setCategories(parents);
         setSubMap(map);
-        if (parents.length > 0) setHoveredCatId(parents[0].id);
       })
       .catch(console.error);
   }, []);
@@ -89,37 +71,43 @@ export default function Navbar() {
     clearTimeout(closeTimer.current);
     setMenuOpen(true);
   };
-
   const handleMenuLeave = () => {
     closeTimer.current = setTimeout(() => setMenuOpen(false), 180);
   };
 
-  const hoveredCategory = categories.find(c => c.id === hoveredCatId);
-  const hoveredSubs = subMap[hoveredCatId] || [];
+  const goTo = (name) => {
+    router.push(`/products?cat=${encodeURIComponent(name)}`);
+    setMenuOpen(false);
+  };
 
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@400;500;600&display=swap');
+
+        :root {
+          --ink: #0d0d0d;
+          --white: #ffffff;
+          --gold: #c9a961;
+          --gold-soft: #e3d3ab;
+          --ivory: #f8f6f2;
+          --line: #e7e2d8;
+          --gray: #8f8b83;
+        }
+
+        @keyframes dropdownFade {
+          from { opacity: 0; transform: translateY(-8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
         @keyframes slideInLeft {
           from { transform: translateX(-100%); }
           to   { transform: translateX(0); }
         }
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-        @keyframes dropdownFade {
-          from { opacity: 0; transform: translateY(-6px); }
+        @keyframes subSlide {
+          from { opacity: 0; transform: translateY(-4px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        @keyframes glow-pulse {
-          0%, 100% { box-shadow: 0 0 6px 1px rgba(255,106,0,0.5); }
-          50%       { box-shadow: 0 0 14px 4px rgba(255,106,0,0.9); }
-        }
+
         .nav-icon-btn {
           background: none !important;
           border: none !important;
@@ -139,222 +127,332 @@ export default function Navbar() {
           box-shadow: none !important;
         }
 
+        /* Wordmark */
+        .wordmark {
+          font-family: 'Cormorant Garamond', serif;
+          font-weight: 600;
+          letter-spacing: 0.14em;
+          color: var(--ink);
+          text-transform: uppercase;
+          line-height: 1;
+        }
+
         /* Sign in button */
         .signin-btn {
           display: flex;
           align-items: center;
-          gap: 7px;
-          padding: 7px 14px;
-          border-radius: 20px;
-          border: none;
+          gap: 8px;
+          padding: 9px 18px;
+          border-radius: 0;
+          border: 1px solid var(--ink);
           cursor: pointer;
-          font-family: inherit;
-          font-size: 13px;
-          font-weight: 700;
-          color: #fff;
-          background: linear-gradient(90deg, #ff6a00, #ff9a3c, #ff6a00);
-          background-size: 200% auto;
-          animation: shimmer 2.4s linear infinite, glow-pulse 2s ease-in-out infinite;
-          letter-spacing: 0.02em;
-          transition: transform 0.15s;
+          font-family: 'Jost', sans-serif;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--ink);
+          background: transparent;
+          transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
         }
         .signin-btn:hover {
-          transform: scale(1.05);
+          background: var(--ink);
+          color: var(--white);
         }
         .signin-btn-mobile {
-          padding: 5px 10px;
-          font-size: 11px;
+          padding: 6px 12px;
+          font-size: 10px;
           gap: 5px;
         }
+
+        /* Utility top bar */
+        .util-bar a, .util-link {
+          font-family: 'Jost', sans-serif;
+          font-size: 11px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #cfcfcf;
+          cursor: pointer;
+          position: relative;
+          padding-bottom: 2px;
+        }
+        .util-link::after {
+          content: '';
+          position: absolute;
+          left: 0; right: 100%;
+          bottom: 0;
+          height: 1px;
+          background: var(--gold);
+          transition: right 0.2s ease;
+        }
+        .util-link:hover::after { right: 0; }
 
         /* Category bar */
         .cat-bar-btn {
           background: none;
           border: none;
-          color: #fff;
-          padding: 9px 14px;
-          font-size: 12px;
-          font-weight: 600;
+          color: var(--white);
+          padding: 15px 16px;
+          font-family: 'Jost', sans-serif;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
           cursor: pointer;
           white-space: nowrap;
-          font-family: inherit;
-          border-bottom: 3px solid transparent;
-          transition: border-color 0.15s, background 0.15s;
-          letter-spacing: 0.01em;
+          position: relative;
         }
-        .cat-bar-btn:hover {
-          border-bottom-color: #fff;
-          background: rgba(255,255,255,0.1);
+        .cat-bar-btn::after {
+          content: '';
+          position: absolute;
+          left: 50%; right: 50%;
+          bottom: 8px;
+          height: 1px;
+          background: var(--gold);
+          transition: left 0.22s ease, right 0.22s ease;
         }
+        .cat-bar-btn:hover::after { left: 16px; right: 16px; }
+
         .all-cat-btn {
-          background: rgba(0,0,0,0.18) !important;
-          border-radius: 0 !important;
-          border-bottom: 3px solid transparent !important;
           display: flex;
           align-items: center;
-          gap: 6px;
-          font-size: 13px;
-          font-weight: 700;
-          padding: 9px 18px !important;
+          gap: 8px;
+          font-weight: 600;
+          border-right: 1px solid rgba(255,255,255,0.15);
         }
-        .all-cat-btn:hover, .all-cat-btn.open {
-          background: rgba(0,0,0,0.32) !important;
-          border-bottom-color: #fff !important;
+        .all-cat-btn::after { display: none; }
+        .all-cat-btn .plus-icon {
+          font-size: 14px;
+          font-weight: 300;
+          transition: transform 0.25s ease;
         }
+        .all-cat-btn.open .plus-icon { transform: rotate(135deg); }
 
-        /* Mega dropdown */
+        /* Mega dropdown — image card grid */
         .mega-dropdown {
           position: absolute;
           top: 100%;
           left: 0;
+          right: 0;
           z-index: 999;
-          background: #fff;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.16);
-          border-radius: 0 0 10px 10px;
-          border-top: 3px solid #ff6a00;
-          display: flex;
-          min-width: 560px;
-          max-height: 420px;
-          animation: dropdownFade 0.18s ease forwards;
-          overflow: hidden;
+          background: var(--white);
+          box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+          border-top: 1px solid var(--gold);
+          animation: dropdownFade 0.2s ease forwards;
+          padding: 36px 40px 30px;
         }
-        .mega-left {
-          width: 210px;
-          flex-shrink: 0;
-          background: #f9f9f9;
-          border-right: 1px solid #f0f0f0;
-          overflow-y: auto;
-          scrollbar-width: none;
-        }
-        .mega-left::-webkit-scrollbar { display: none; }
-        .mega-left-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 11px 16px;
-          cursor: pointer;
-          border-left: 3px solid transparent;
-          border-bottom: 1px solid #f5f5f5;
-          transition: background 0.12s, border-color 0.12s;
-          font-size: 13px;
-          font-weight: 500;
-          color: #333;
-        }
-        .mega-left-item:hover, .mega-left-item.active {
-          background: #fff;
-          border-left-color: #ff6a00;
-          color: #ff6a00;
-          font-weight: 700;
-        }
-        .mega-right {
-          flex: 1;
-          padding: 14px 16px;
-          overflow-y: auto;
-          scrollbar-width: none;
-        }
-        .mega-right::-webkit-scrollbar { display: none; }
-        .mega-right-title {
+        .mega-heading {
+          font-family: 'Jost', sans-serif;
           font-size: 11px;
-          font-weight: 800;
-          color: #ff6a00;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.16em;
           text-transform: uppercase;
-          margin-bottom: 10px;
-          padding-bottom: 8px;
-          border-bottom: 1px solid #f0f0f0;
+          color: var(--gray);
+          margin-bottom: 20px;
         }
-        .mega-sub-grid {
+        .mega-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 6px;
+          grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+          gap: 22px;
         }
-        .mega-sub-item {
-          padding: 8px 6px;
-          border-radius: 8px;
+        .cat-card {
+          position: relative;
           cursor: pointer;
-          text-align: center;
-          font-size: 11px;
+        }
+        .cat-card-image {
+          position: relative;
+          aspect-ratio: 3 / 4;
+          overflow: hidden;
+          background: linear-gradient(135deg, #1a1a1a, #3a3a3a);
+        }
+        .cat-card-image img {
+          width: 100%; height: 100%;
+          object-fit: cover;
+          transition: transform 0.5s ease;
+        }
+        .cat-card:hover .cat-card-image img { transform: scale(1.07); }
+        .cat-card-mono {
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 44px;
+          color: var(--gold-soft);
+        }
+        .cat-card-overlay {
+          position: absolute; inset: 0;
+          background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 55%);
+        }
+        .cat-card-name {
+          position: absolute;
+          left: 12px; bottom: 12px; right: 12px;
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 17px;
           font-weight: 600;
-          color: #444;
-          transition: background 0.12s, color 0.12s;
-          line-height: 1.4;
+          color: var(--white);
+          letter-spacing: 0.02em;
         }
-        .mega-sub-item:hover {
-          background: #fff3eb;
-          color: #ff6a00;
+        /* corner brackets — signature detail */
+        .cat-card-image::before, .cat-card-image::after,
+        .bracket-tl, .bracket-br {
+          content: '';
+          position: absolute;
+          width: 18px; height: 18px;
+          border-color: var(--gold);
+          opacity: 0;
+          transition: opacity 0.25s ease, width 0.25s ease, height 0.25s ease;
+          z-index: 2;
         }
-        .mega-sub-item .sub-icon {
-          font-size: 20px;
-          display: block;
-          margin-bottom: 4px;
+        .cat-card-image::before {
+          top: 8px; left: 8px;
+          border-top: 1.5px solid var(--gold);
+          border-left: 1.5px solid var(--gold);
+        }
+        .cat-card-image::after {
+          bottom: 8px; right: 8px;
+          border-bottom: 1.5px solid var(--gold);
+          border-right: 1.5px solid var(--gold);
+        }
+        .cat-card:hover .cat-card-image::before,
+        .cat-card:hover .cat-card-image::after {
+          opacity: 1;
+          width: 26px; height: 26px;
+        }
+        .cat-card-subs {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-top: 10px;
+        }
+        .cat-card-sub-tag {
+          font-family: 'Jost', sans-serif;
+          font-size: 10.5px;
+          letter-spacing: 0.03em;
+          color: var(--gray);
+          cursor: pointer;
+          padding: 2px 0;
+          border-bottom: 1px solid transparent;
+          transition: color 0.15s ease, border-color 0.15s ease;
+        }
+        .cat-card-sub-tag:hover {
+          color: var(--ink);
+          border-color: var(--gold);
+        }
+        .mega-footer {
+          margin-top: 26px;
+          padding-top: 18px;
+          border-top: 1px solid var(--line);
+          display: flex;
+          justify-content: flex-end;
         }
         .mega-view-all {
-          display: block;
-          width: 100%;
-          margin-top: 12px;
-          padding: 8px;
-          background: #ff6a00;
-          color: #fff;
+          font-family: 'Jost', sans-serif;
+          font-size: 11px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--ink);
+          background: none;
           border: none;
-          border-radius: 6px;
-          font-size: 12px;
-          font-weight: 700;
           cursor: pointer;
-          font-family: inherit;
-          text-align: center;
-          transition: background 0.15s;
+          padding-bottom: 3px;
+          border-bottom: 1px solid var(--gold);
         }
-        .mega-view-all:hover { background: #e85d00; }
 
-        /* Accordion subcategory slide */
-        @keyframes subSlide {
-          from { opacity: 0; transform: translateY(-4px); }
-          to   { opacity: 1; transform: translateY(0); }
+        /* Mobile drawer */
+        .drawer-cat-row {
+          display: flex; align-items: center; gap: 14px;
+          padding: 15px 18px;
+          border-bottom: 1px solid var(--line);
+          cursor: pointer;
         }
+        .drawer-thumb {
+          width: 42px; height: 42px;
+          flex-shrink: 0;
+          overflow: hidden;
+          background: linear-gradient(135deg, #1a1a1a, #3a3a3a);
+          display: flex; align-items: center; justify-content: center;
+        }
+        .drawer-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .drawer-thumb-mono {
+          font-family: 'Cormorant Garamond', serif;
+          color: var(--gold-soft);
+          font-size: 18px;
+        }
+        .drawer-cat-name {
+          flex: 1;
+          font-family: 'Jost', sans-serif;
+          font-size: 13.5px;
+          font-weight: 500;
+          letter-spacing: 0.03em;
+          color: var(--ink);
+        }
+        .drawer-toggle {
+          width: 24px; height: 24px;
+          border: 1px solid var(--ink);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 15px;
+          flex-shrink: 0;
+          transition: background 0.15s ease, color 0.15s ease;
+        }
+        .drawer-toggle.open { background: var(--ink); color: var(--white); }
         .sub-slide {
           animation: subSlide 0.18s ease forwards;
+          background: var(--ivory);
+        }
+        .drawer-sub-row {
+          padding: 11px 18px 11px 74px;
+          font-family: 'Jost', sans-serif;
+          font-size: 12.5px;
+          color: #555;
+          border-bottom: 1px solid #efece5;
+          cursor: pointer;
+        }
+        .drawer-sub-view-all {
+          padding: 11px 18px 11px 74px;
+          font-family: 'Jost', sans-serif;
+          font-size: 11.5px;
+          font-weight: 600;
+          letter-spacing: 0.05em;
+          color: var(--gold);
+          border-bottom: 2px solid var(--line);
+          cursor: pointer;
         }
       `}</style>
 
-      {/* Top bar — desktop only */}
+      {/* Top utility bar — desktop only */}
       {!isMobile && (
-        <div style={{ background: '#222', color: '#ccc', fontSize: '11px', padding: '4px 20px', display: 'flex', justifyContent: 'space-between' }}>
-          <span>Bangladesh B2B Wholesale Platform</span>
-          <span style={{ display: 'flex', gap: '12px' }}>
-            <span style={{ cursor: 'pointer' }} onClick={() => router.push('/about')}>Help</span>
-            <span style={{ cursor: 'pointer' }} onClick={() => router.push('/contact')}>Contact</span>
+        <div className="util-bar" style={{
+          background: '#0d0d0d', display: 'flex', justifyContent: 'space-between',
+          alignItems: 'center', padding: '7px 24px',
+        }}>
+          <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, letterSpacing: '0.1em', color: '#cfcfcf', textTransform: 'uppercase' }}>
+            Bangladesh's Fashion Marketplace
+          </span>
+          <span style={{ display: 'flex', gap: 22 }}>
+            <span className="util-link" onClick={() => router.push('/about')}>Help</span>
+            <span className="util-link" onClick={() => router.push('/contact')}>Contact</span>
           </span>
         </div>
       )}
 
       {/* Main nav */}
       <nav style={{
-        background: '#1a1a2e',
-        padding: isMobile ? '10px 16px' : '10px 20px',
+        background: 'var(--white)',
+        padding: isMobile ? '14px 16px' : '18px 24px',
         display: 'flex',
-        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '2px solid #ff6a00',
-        position: 'sticky', top: 0, zIndex: 100
+        borderBottom: '1px solid var(--line)',
+        position: 'sticky', top: 0, zIndex: 100,
       }}>
-
-        {/* Left: Hamburger (mobile) + Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 0 }}>
           {isMobile && (
-            <button
-              className="nav-icon-btn"
-              onClick={() => setMenuOpen(prev => !prev)}
-              style={{ padding: '4px' }}
-            >
-              <HamburgerIcon color="#fff" />
+            <button className="nav-icon-btn" onClick={() => setMenuOpen(prev => !prev)} style={{ padding: '4px' }}>
+              <HamburgerIcon color="#0d0d0d" />
             </button>
           )}
-          <LogoMark router={router} size={isMobile ? 'small' : 'large'} />
+          <LogoMark router={router} isMobile={isMobile} />
         </div>
 
-        {/* Right: Sign in + Cart */}
-        <div style={{ display: 'flex', gap: isMobile ? 16 : 20, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: isMobile ? 14 : 22, alignItems: 'center' }}>
           <button
             className={`signin-btn${isMobile ? ' signin-btn-mobile' : ''}`}
             onClick={() => router.push(user ? '/dashboard' : '/login')}
@@ -372,15 +470,14 @@ export default function Navbar() {
       {/* Category bar — desktop only */}
       {!isMobile && (
         <div style={{
-          background: '#ff6a00',
+          background: 'var(--ink)',
           display: 'flex',
           alignItems: 'center',
           overflowX: 'auto',
           scrollbarWidth: 'none',
           position: 'sticky',
-          top: 54,
+          top: 64,
           zIndex: 99,
-          boxShadow: '0 2px 8px rgba(255,106,0,0.18)',
         }}>
           <div
             ref={menuRef}
@@ -389,101 +486,64 @@ export default function Navbar() {
             onMouseLeave={handleMenuLeave}
           >
             <button className={`cat-bar-btn all-cat-btn${menuOpen ? ' open' : ''}`}>
-              <HamburgerIcon />
               All Categories
+              <span className="plus-icon">+</span>
             </button>
 
             {menuOpen && categories.length > 0 && (
               <div className="mega-dropdown" onMouseEnter={handleMenuEnter} onMouseLeave={handleMenuLeave}>
-                <div className="mega-left">
-                  {categories.map(cat => (
-                    <div
-                      key={cat.id}
-                      className={`mega-left-item${hoveredCatId === cat.id ? ' active' : ''}`}
-                      onMouseEnter={() => setHoveredCatId(cat.id)}
-                      onClick={() => {
-                        router.push(`/products?cat=${encodeURIComponent(cat.name)}`);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      <span style={{ fontSize: 16 }}>
-                        {cat.image_url
-                          ? <img src={cat.image_url} alt={cat.name} style={{ width: 20, height: 20, objectFit: 'cover', borderRadius: 4 }} />
-                          : getCatIcon(cat.name)
-                        }
-                      </span>
-                      <span>{cat.name}</span>
-                      {subMap[cat.id]?.length > 0 && (
-                        <span style={{ marginLeft: 'auto', color: '#bbb', fontSize: 11 }}>›</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="mega-right">
-                  {hoveredCategory && (
-                    <div className="mega-right-title">{hoveredCategory.name}</div>
-                  )}
-                  {hoveredSubs.length > 0 ? (
-                    <>
-                      <div className="mega-sub-grid">
-                        {hoveredSubs.map(sub => (
-                          <div
-                            key={sub.id}
-                            className="mega-sub-item"
-                            onClick={() => {
-                              router.push(`/products?cat=${encodeURIComponent(sub.name)}`);
-                              setMenuOpen(false);
-                            }}
-                          >
-                            <span className="sub-icon">
-                              {sub.image_url
-                                ? <img src={sub.image_url} alt={sub.name} style={{ width: 28, height: 28, objectFit: 'cover', borderRadius: 6 }} />
-                                : getCatIcon(sub.name)
-                              }
-                            </span>
-                            {sub.name}
+                <div className="mega-heading">Shop by Category</div>
+                <div className="mega-grid">
+                  {categories.map(cat => {
+                    const subs = (subMap[cat.id] || []).slice(0, 4);
+                    const extra = (subMap[cat.id] || []).length - subs.length;
+                    return (
+                      <div key={cat.id} className="cat-card">
+                        <div className="cat-card-image" onClick={() => goTo(cat.name)}>
+                          {cat.image_url ? (
+                            <img src={cat.image_url} alt={cat.name} />
+                          ) : (
+                            <div className="cat-card-mono">{monogram(cat.name)}</div>
+                          )}
+                          <div className="cat-card-overlay" />
+                          <div className="cat-card-name">{cat.name}</div>
+                        </div>
+                        {subs.length > 0 && (
+                          <div className="cat-card-subs">
+                            {subs.map(s => (
+                              <span key={s.id} className="cat-card-sub-tag" onClick={() => goTo(s.name)}>
+                                {s.name}
+                              </span>
+                            ))}
+                            {extra > 0 && (
+                              <span className="cat-card-sub-tag" onClick={() => goTo(cat.name)}>
+                                +{extra} more
+                              </span>
+                            )}
                           </div>
-                        ))}
+                        )}
                       </div>
-                      <button
-                        className="mega-view-all"
-                        onClick={() => {
-                          router.push(`/products?cat=${encodeURIComponent(hoveredCategory?.name)}`);
-                          setMenuOpen(false);
-                        }}
-                      >
-                        View all in {hoveredCategory?.name} →
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      className="mega-view-all"
-                      onClick={() => {
-                        router.push(`/products?cat=${encodeURIComponent(hoveredCategory?.name)}`);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      View all products →
-                    </button>
-                  )}
+                    );
+                  })}
+                </div>
+                <div className="mega-footer">
+                  <button className="mega-view-all" onClick={() => goTo('')}>
+                    Shop All Products →
+                  </button>
                 </div>
               </div>
             )}
           </div>
 
           {categories.slice(0, 8).map(cat => (
-            <button
-              key={cat.id}
-              className="cat-bar-btn"
-              onClick={() => router.push(`/products?cat=${encodeURIComponent(cat.name)}`)}
-            >
+            <button key={cat.id} className="cat-bar-btn" onClick={() => goTo(cat.name)}>
               {cat.name}
             </button>
           ))}
 
           <button
             className="cat-bar-btn"
-            style={{ marginLeft: 'auto', opacity: 0.85 }}
+            style={{ marginLeft: 'auto', color: 'var(--gold)' }}
             onClick={() => router.push('/products')}
           >
             View All →
@@ -491,109 +551,67 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Mobile: slide-out category drawer with accordion */}
+      {/* Mobile: slide-out category drawer */}
       {isMobile && menuOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex' }}>
-          <div
-            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }}
-            onClick={() => setMenuOpen(false)}
-          />
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} onClick={() => setMenuOpen(false)} />
           <div style={{
-            position: 'relative', width: 300, background: '#fff',
+            position: 'relative', width: 300, background: 'var(--white)',
             height: '100%', overflowY: 'auto', zIndex: 1,
             animation: 'slideInLeft 0.22s ease forwards',
           }}>
-            {/* Drawer header */}
             <div style={{
-              background: '#1a1a2e', padding: '16px',
+              background: 'var(--ink)', padding: '18px',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               position: 'sticky', top: 0, zIndex: 2,
             }}>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>All Categories</span>
+              <span style={{ fontFamily: 'Cormorant Garamond, serif', color: '#fff', fontWeight: 600, fontSize: 18, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                Categories
+              </span>
               <button className="nav-icon-btn" onClick={() => setMenuOpen(false)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
               </button>
             </div>
 
-            {/* Accordion categories */}
             {categories.map(cat => {
               const subs = subMap[cat.id] || [];
               const isOpen = expandedCatId === cat.id;
               return (
                 <div key={cat.id}>
-                  {/* Parent row */}
                   <div
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '13px 16px', borderBottom: '1px solid #f0f0f0',
-                      cursor: 'pointer', fontSize: 14, fontWeight: 700,
-                      color: isOpen ? '#ff6a00' : '#222',
-                      background: isOpen ? '#fff8f3' : '#fff',
-                      transition: 'background 0.15s, color 0.15s',
-                    }}
+                    className="drawer-cat-row"
+                    style={{ background: isOpen ? 'var(--ivory)' : '#fff' }}
                     onClick={() => {
                       if (subs.length > 0) {
                         setExpandedCatId(isOpen ? null : cat.id);
                       } else {
-                        router.push(`/products?cat=${encodeURIComponent(cat.name)}`);
-                        setMenuOpen(false);
+                        goTo(cat.name);
                       }
                     }}
                   >
-                    <span style={{ fontSize: 20 }}>{getCatIcon(cat.name)}</span>
-                    <span style={{ flex: 1 }}>{cat.name}</span>
+                    <div className="drawer-thumb">
+                      {cat.image_url ? (
+                        <img src={cat.image_url} alt={cat.name} />
+                      ) : (
+                        <span className="drawer-thumb-mono">{monogram(cat.name)}</span>
+                      )}
+                    </div>
+                    <span className="drawer-cat-name">{cat.name}</span>
                     {subs.length > 0 && (
-                      <span style={{
-                        width: 24, height: 24, borderRadius: '50%',
-                        background: isOpen ? '#ff6a00' : '#f0f0f0',
-                        color: isOpen ? '#fff' : '#555',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 18, fontWeight: 700, flexShrink: 0,
-                        transition: 'background 0.15s, color 0.15s',
-                      }}>
-                        {isOpen ? '−' : '+'}
-                      </span>
+                      <span className={`drawer-toggle${isOpen ? ' open' : ''}`}>{isOpen ? '−' : '+'}</span>
                     )}
                   </div>
 
-                  {/* Subcategories (accordion) */}
                   {isOpen && subs.length > 0 && (
                     <div className="sub-slide">
                       {subs.map(sub => (
-                        <div
-                          key={sub.id}
-                          style={{
-                            padding: '10px 16px 10px 52px',
-                            borderBottom: '1px solid #f8f8f8',
-                            fontSize: 13, color: '#555', cursor: 'pointer',
-                            background: '#fafafa',
-                            transition: 'background 0.12s',
-                          }}
-                          onClick={() => {
-                            router.push(`/products?cat=${encodeURIComponent(sub.name)}`);
-                            setMenuOpen(false);
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#fff3eb'}
-                          onMouseLeave={e => e.currentTarget.style.background = '#fafafa'}
-                        >
+                        <div key={sub.id} className="drawer-sub-row" onClick={() => goTo(sub.name)}>
                           {sub.name}
                         </div>
                       ))}
-                      {/* View all in category */}
-                      <div
-                        style={{
-                          padding: '10px 16px 10px 52px',
-                          borderBottom: '2px solid #f0f0f0',
-                          fontSize: 12, color: '#ff6a00', cursor: 'pointer',
-                          fontWeight: 700, background: '#fafafa',
-                        }}
-                        onClick={() => {
-                          router.push(`/products?cat=${encodeURIComponent(cat.name)}`);
-                          setMenuOpen(false);
-                        }}
-                      >
+                      <div className="drawer-sub-view-all" onClick={() => goTo(cat.name)}>
                         সব দেখুন →
                       </div>
                     </div>
@@ -610,28 +628,22 @@ export default function Navbar() {
 
 /* ── Sub-components ── */
 
-function LogoMark({ router, size }) {
-  const w = size === 'large' ? 80 : 70;
-  const h = size === 'large' ? 32 : 28;
-  const dot = size === 'large' ? 7 : 6;
+function LogoMark({ router, isMobile }) {
+  const size = isMobile ? 26 : 32;
   return (
     <div
-      style={{ display: 'inline-flex', alignItems: 'flex-end', cursor: 'pointer', flexShrink: 0 }}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
       onClick={() => router.push('/')}
     >
-      <Image src="/logo.png" alt="Arat" width={w} height={h} style={{ objectFit: 'contain' }} />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginLeft: '3px', marginBottom: '3px' }}>
-        {['#ff3b3b', '#e8a020', '#22c55e'].map((bg, i) => (
-          <span key={i} style={{ width: dot, height: dot, borderRadius: '50%', background: bg, display: 'block', animation: `blink 1.2s ease-in-out infinite ${i * 0.4}s` }} />
-        ))}
-      </div>
+      <Image src="/logo.png" alt="Logo" width={size} height={size} style={{ objectFit: 'contain' }} />
+      <span className="wordmark" style={{ fontSize: isMobile ? 18 : 22 }}>Arat</span>
     </div>
   );
 }
 
-function HamburgerIcon({ color = '#fff' }) {
+function HamburgerIcon({ color = '#0d0d0d' }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round">
       <line x1="3" y1="6" x2="21" y2="6"/>
       <line x1="3" y1="12" x2="21" y2="12"/>
       <line x1="3" y1="18" x2="21" y2="18"/>
@@ -641,7 +653,7 @@ function HamburgerIcon({ color = '#fff' }) {
 
 function CartIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0d0d0d" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
       <path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.99-1.61L23 6H6"/>
     </svg>
@@ -650,7 +662,7 @@ function CartIcon() {
 
 function UserIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
       <circle cx="12" cy="7" r="4"/>
     </svg>
@@ -672,9 +684,10 @@ function CartCount() {
   return (
     <span style={{
       position: 'absolute', top: '-6px', right: '-6px',
-      background: '#ff6a00', color: '#fff', borderRadius: '50%',
-      width: '18px', height: '18px', fontSize: '11px', fontWeight: '700',
-      display: 'flex', alignItems: 'center', justifyContent: 'center'
+      background: '#0d0d0d', color: '#c9a961', borderRadius: '50%',
+      width: '17px', height: '17px', fontSize: '10px', fontWeight: '700',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      border: '1px solid #c9a961',
     }}>
       {count}
     </span>
