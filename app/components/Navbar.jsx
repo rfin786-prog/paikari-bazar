@@ -1,5 +1,4 @@
 'use client';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 
@@ -629,14 +628,12 @@ export default function Navbar() {
 /* ── Sub-components ── */
 
 function LogoMark({ router, isMobile }) {
-  const size = isMobile ? 26 : 32;
   return (
     <div
       style={{ display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
       onClick={() => router.push('/')}
     >
-      <Image src="/logo.png" alt="Logo" width={size} height={size} style={{ objectFit: 'contain' }} />
-      <span className="wordmark" style={{ fontSize: isMobile ? 18 : 22 }}>Rupanjel</span>
+      <span className="wordmark" style={{ fontSize: isMobile ? 20 : 24 }}>Rupanjel</span>
     </div>
   );
 }
