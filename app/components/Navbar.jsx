@@ -424,7 +424,7 @@ export default function Navbar() {
           alignItems: 'center', padding: '7px 24px',
         }}>
           <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, letterSpacing: '0.1em', color: '#cfcfcf', textTransform: 'uppercase' }}>
-            Bangladesh's Fashion Marketplace
+            Bangladesh's Personal Care Marketplace
           </span>
           <span style={{ display: 'flex', gap: 22 }}>
             <span className="util-link" onClick={() => router.push('/about')}>Help</span>
@@ -636,7 +636,7 @@ function LogoMark({ router, isMobile }) {
       onClick={() => router.push('/')}
     >
       <Image src="/logo.png" alt="Logo" width={size} height={size} style={{ objectFit: 'contain' }} />
-      <span className="wordmark" style={{ fontSize: isMobile ? 18 : 22 }}>Arat</span>
+      <span className="wordmark" style={{ fontSize: isMobile ? 18 : 22 }}>Rupanjel</span>
     </div>
   );
 }
