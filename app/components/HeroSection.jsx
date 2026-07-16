@@ -4,8 +4,8 @@ export default function HeroSection() {
   return (
     <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden' }}>
       <img
-        src="/IMG_1722.png"
-        alt="পাইকারি বজার"
+        src="/hero-personalcare.jpg"
+        alt="Rupanjel Personal Care"
         style={{
           width: '100%',
           height: '100%',
@@ -29,7 +29,7 @@ export default function HeroSection() {
           textShadow: '0 1px 4px rgba(0,0,0,0.5)',
           fontFamily: 'Hind Siliguri, sans-serif'
         }}>
-          পাইকারি এখন আপনার হাতের মুঠোয়
+          Everything for your care, in one place
         </p>
       </div>
     </div>
