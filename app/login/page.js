@@ -311,7 +311,7 @@ export default function LoginPage() {
   const LeftPanel = () => (
     <div style={{ flex:'0 0 260px', background:'#000', display:'flex', flexDirection:'column', justifyContent:'center', padding:'48px 36px', borderRight:'1px solid rgba(255,255,255,0.06)' }}>
       <div onClick={() => router.push('/')} style={{ cursor:'pointer', marginBottom:'12px' }}>
-        <span style={{ fontSize:'28px', fontWeight:'800', ...shimmerStyle }}>Aarot</span>
+        <span style={{ fontSize:'28px', fontWeight:'800', ...shimmerStyle }}>Rupanjel</span>
         <span className="red-dot" />
       </div>
       <p style={{ fontSize:'14px', color:'rgba(255,255,255,0.4)', lineHeight:'1.7' }}>
@@ -356,7 +356,7 @@ export default function LoginPage() {
         {isMobile && (
           <div style={{ background:'#000', padding:'18px 24px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
             <div onClick={() => router.push('/')} style={{ cursor:'pointer' }}>
-              <span style={{ fontSize:'22px', fontWeight:'800', ...shimmerStyle }}>Aarot</span>
+              <span style={{ fontSize:'22px', fontWeight:'800', ...shimmerStyle }}>Rupanjel</span>
               <span className="red-dot" />
             </div>
             <span onClick={() => router.push('/')} style={{ fontSize:'12px', color:'rgba(255,255,255,0.35)', cursor:'pointer' }}>← হোমে যান</span>
