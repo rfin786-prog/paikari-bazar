@@ -272,7 +272,7 @@ export default function LoginPage() {
 
   // ── STYLES ──
   const shimmerStyle = {
-    background: 'linear-gradient(90deg,#fff 0%,#fff 40%,#e8a020 50%,#fff 60%,#fff 100%)',
+    background: 'linear-gradient(90deg,#1a1a1a 0%,#1a1a1a 40%,#e8a020 50%,#1a1a1a 60%,#1a1a1a 100%)',
     backgroundSize: '200% auto',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
@@ -282,16 +282,16 @@ export default function LoginPage() {
   };
   const fieldWrapStyle = {
     display: 'flex', alignItems: 'center',
-    background: '#161616', border: '1px solid rgba(255,255,255,0.08)',
+    background: '#f3f2ef', border: '1px solid rgba(0,0,0,0.1)',
     borderRadius: '10px', padding: '0 12px', transition: 'border-color 0.2s,box-shadow 0.2s',
   };
   const inputStyle = {
     background: 'none', border: 'none', outline: 'none',
-    color: '#fff', fontSize: '15px', padding: '12px 0',
+    color: '#1a1a1a', fontSize: '15px', padding: '12px 0',
     width: '100%', fontFamily: 'inherit',
   };
   const labelStyle = {
-    display: 'block', fontSize: '11px', color: 'rgba(255,255,255,0.4)',
+    display: 'block', fontSize: '11px', color: 'rgba(0,0,0,0.5)',
     marginBottom: '6px', letterSpacing: '0.5px', textTransform: 'uppercase',
   };
   const btnGold = {
@@ -301,20 +301,20 @@ export default function LoginPage() {
     opacity: fpLoading ? 0.7 : 1, marginTop: '8px',
   };
   const btnOutline = {
-    width: '100%', background: 'transparent', color: 'rgba(255,255,255,0.5)',
-    border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+    width: '100%', background: 'transparent', color: 'rgba(0,0,0,0.6)',
+    border: '1px solid rgba(0,0,0,0.15)', borderRadius: '10px',
     padding: '12px', fontSize: '14px', fontWeight: '600',
     cursor: 'pointer', fontFamily: 'inherit', marginTop: '8px',
   };
 
   // ── LEFT PANEL ──
   const LeftPanel = () => (
-    <div style={{ flex:'0 0 260px', background:'#000', display:'flex', flexDirection:'column', justifyContent:'center', padding:'48px 36px', borderRight:'1px solid rgba(255,255,255,0.06)' }}>
+    <div style={{ flex:'0 0 260px', background:'#fff', display:'flex', flexDirection:'column', justifyContent:'center', padding:'48px 36px', borderRight:'1px solid rgba(0,0,0,0.08)' }}>
       <div onClick={() => router.push('/')} style={{ cursor:'pointer', marginBottom:'12px' }}>
         <span style={{ fontSize:'28px', fontWeight:'800', ...shimmerStyle }}>Rupanjel</span>
         <span className="red-dot" />
       </div>
-      <p style={{ fontSize:'14px', color:'rgba(255,255,255,0.4)', lineHeight:'1.7' }}>
+      <p style={{ fontSize:'14px', color:'rgba(0,0,0,0.5)', lineHeight:'1.7' }}>
         সরাসরি সাপ্লায়ার থেকে<br />আপনার দোকানে।
       </p>
     </div>
@@ -344,13 +344,13 @@ export default function LoginPage() {
         .fade5{opacity:0;animation:fadeup 0.5s ease forwards 0.5s}
         .shake-anim{animation:shake 0.4s ease;}
         .spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto;}
-        .otp-box{width:44px;height:52px;background:#161616;border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:22px;font-weight:700;text-align:center;outline:none;transition:border-color 0.2s,box-shadow 0.2s;font-family:inherit;}
+        .otp-box{width:44px;height:52px;background:#f3f2ef;border:1.5px solid rgba(0,0,0,0.12);border-radius:10px;color:#1a1a1a;font-size:22px;font-weight:700;text-align:center;outline:none;transition:border-color 0.2s,box-shadow 0.2s;font-family:inherit;}
         .otp-box:focus{border-color:#e8a020;box-shadow:0 0 0 3px rgba(232,160,32,0.12);}
-        .back-link{font-size:12px;color:rgba(255,255,255,0.35);cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-bottom:24px;}
-        .back-link:hover{color:rgba(255,255,255,0.6);}
+        .back-link{font-size:12px;color:rgba(0,0,0,0.45);cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-bottom:24px;}
+        .back-link:hover{color:rgba(0,0,0,0.7);}
       `}</style>
 
-      <div style={{ minHeight:'100vh', background:'#0a0a0a', display:'flex', flexDirection:'column', fontFamily:"'Hind Siliguri', sans-serif" }}>
+      <div style={{ minHeight:'100vh', background:'#faf9f7', display:'flex', flexDirection:'column', fontFamily:"'Hind Siliguri', sans-serif" }}>
 
         <div style={{ flex:1, display:'flex', flexDirection: isMobile ? 'column' : 'row' }}>
 
@@ -363,7 +363,7 @@ export default function LoginPage() {
               {view === 'login' && (
                 <>
                   {!isMobile && (
-                    <div className="fade1" onClick={() => router.push('/')} style={{ color:'rgba(255,255,255,0.35)', fontSize:'12px', cursor:'pointer', marginBottom:'32px' }}>
+                    <div className="fade1" onClick={() => router.push('/')} style={{ color:'rgba(0,0,0,0.45)', fontSize:'12px', cursor:'pointer', marginBottom:'32px' }}>
                       ← হোমে যান
                     </div>
                   )}
@@ -371,7 +371,7 @@ export default function LoginPage() {
                   <div className="fade2" style={{ marginBottom:'14px' }}>
                     <label style={labelStyle}>ফোন নম্বর</label>
                     <div className="fw" style={fieldWrapStyle}>
-                      <span style={{ fontSize:'16px', color:'rgba(255,255,255,0.3)', marginRight:'8px' }}>📞</span>
+                      <span style={{ fontSize:'16px', color:'rgba(0,0,0,0.4)', marginRight:'8px' }}>📞</span>
                       <input type="tel" placeholder="01700000000" value={form.phone}
                         onChange={e => setForm({...form, phone: e.target.value})}
                         onKeyDown={e => e.key === 'Enter' && handleSubmit()}
@@ -382,7 +382,7 @@ export default function LoginPage() {
                   <div className="fade3" style={{ marginBottom:'4px' }}>
                     <label style={labelStyle}>পাসওয়ার্ড</label>
                     <div className={`fw${shakePass ? ' shake-anim' : ''}`} style={fieldWrapStyle}>
-                      <span style={{ fontSize:'16px', color:'rgba(255,255,255,0.3)', marginRight:'8px' }}>🔒</span>
+                      <span style={{ fontSize:'16px', color:'rgba(0,0,0,0.4)', marginRight:'8px' }}>🔒</span>
                       <input type="password" placeholder="••••••••" value={form.password}
                         onChange={e => setForm({...form, password: e.target.value})}
                         onKeyDown={e => e.key === 'Enter' && handleSubmit()}
@@ -408,7 +408,7 @@ export default function LoginPage() {
                     </button>
                   </div>
 
-                  <p className="fade5" style={{ textAlign:'center', marginTop:'20px', fontSize:'13px', color:'rgba(255,255,255,0.3)' }}>
+                  <p className="fade5" style={{ textAlign:'center', marginTop:'20px', fontSize:'13px', color:'rgba(0,0,0,0.45)' }}>
                     অ্যাকাউন্ট নেই?{' '}
                     <span onClick={() => router.push('/register')} style={{ color:'#e8a020', fontWeight:'700', cursor:'pointer' }}>
                       নিবন্ধন করুন
@@ -421,15 +421,15 @@ export default function LoginPage() {
               {view === 'forgot_phone' && (
                 <>
                   <span className="back-link" onClick={() => setView('login')}>← লগইনে ফিরুন</span>
-                  <h2 style={{ color:'#fff', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>পাসওয়ার্ড রিসেট</h2>
-                  <p style={{ color:'rgba(255,255,255,0.35)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
+                  <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>পাসওয়ার্ড রিসেট</h2>
+                  <p style={{ color:'rgba(0,0,0,0.5)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
                     আপনার নিবন্ধিত ফোন নম্বরে OTP পাঠানো হবে।
                   </p>
 
                   <div style={{ marginBottom:'14px' }}>
                     <label style={labelStyle}>ফোন নম্বর</label>
                     <div className="fw" style={fieldWrapStyle}>
-                      <span style={{ fontSize:'16px', color:'rgba(255,255,255,0.3)', marginRight:'8px' }}>📞</span>
+                      <span style={{ fontSize:'16px', color:'rgba(0,0,0,0.4)', marginRight:'8px' }}>📞</span>
                       <input type="tel" placeholder="01700000000" value={fpPhone}
                         onChange={e => setFpPhone(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
@@ -448,8 +448,8 @@ export default function LoginPage() {
               {view === 'forgot_otp' && (
                 <>
                   <span className="back-link" onClick={() => setView('forgot_phone')}>← ফিরে যান</span>
-                  <h2 style={{ color:'#fff', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>OTP যাচাই</h2>
-                  <p style={{ color:'rgba(255,255,255,0.35)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
+                  <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>OTP যাচাই</h2>
+                  <p style={{ color:'rgba(0,0,0,0.5)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
                     <span style={{ color:'#e8a020' }}>{fpPhone}</span> নম্বরে ৬ সংখ্যার OTP পাঠানো হয়েছে।
                   </p>
 
@@ -473,7 +473,7 @@ export default function LoginPage() {
                   <ErrorMsg msg={fpError} />
 
                   {/* Timer & resend */}
-                  <p style={{ textAlign:'center', fontSize:'13px', color:'rgba(255,255,255,0.35)', margin:'8px 0 4px' }}>
+                  <p style={{ textAlign:'center', fontSize:'13px', color:'rgba(0,0,0,0.5)', margin:'8px 0 4px' }}>
                     {resendTimer > 0 ? (
                       <>আবার পাঠান <span style={{ color:'#e8a020', fontWeight:'700' }}>{resendTimer}s</span></>
                     ) : (
@@ -493,15 +493,15 @@ export default function LoginPage() {
               {view === 'forgot_reset' && (
                 <>
                   <span className="back-link" onClick={() => setView('forgot_otp')}>← ফিরে যান</span>
-                  <h2 style={{ color:'#fff', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>নতুন পাসওয়ার্ড</h2>
-                  <p style={{ color:'rgba(255,255,255,0.35)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
+                  <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>নতুন পাসওয়ার্ড</h2>
+                  <p style={{ color:'rgba(0,0,0,0.5)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
                     নতুন পাসওয়ার্ড দিন।
                   </p>
 
                   <div style={{ marginBottom:'14px' }}>
                     <label style={labelStyle}>নতুন পাসওয়ার্ড</label>
                     <div className="fw" style={fieldWrapStyle}>
-                      <span style={{ fontSize:'16px', color:'rgba(255,255,255,0.3)', marginRight:'8px' }}>🔒</span>
+                      <span style={{ fontSize:'16px', color:'rgba(0,0,0,0.4)', marginRight:'8px' }}>🔒</span>
                       <input type="password" placeholder="কমপক্ষে ৬ অক্ষর" value={fpNewPass}
                         onChange={e => setFpNewPass(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleResetPass()}
@@ -512,7 +512,7 @@ export default function LoginPage() {
                   <div style={{ marginBottom:'8px' }}>
                     <label style={labelStyle}>পাসওয়ার্ড নিশ্চিত করুন</label>
                     <div className="fw" style={fieldWrapStyle}>
-                      <span style={{ fontSize:'16px', color:'rgba(255,255,255,0.3)', marginRight:'8px' }}>🔒</span>
+                      <span style={{ fontSize:'16px', color:'rgba(0,0,0,0.4)', marginRight:'8px' }}>🔒</span>
                       <input type="password" placeholder="আবার দিন" value={fpConfPass}
                         onChange={e => setFpConfPass(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleResetPass()}
@@ -529,7 +529,7 @@ export default function LoginPage() {
                           flex:1, height:'3px', borderRadius:'2px',
                           background: fpNewPass.length >= i * 3
                             ? i <= 1 ? '#ef4444' : i <= 2 ? '#f97316' : i <= 3 ? '#eab308' : '#22c55e'
-                            : 'rgba(255,255,255,0.1)'
+                            : 'rgba(0,0,0,0.1)'
                         }} />
                       ))}
                     </div>
