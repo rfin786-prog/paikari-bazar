@@ -352,17 +352,6 @@ export default function LoginPage() {
 
       <div style={{ minHeight:'100vh', background:'#0a0a0a', display:'flex', flexDirection:'column', fontFamily:"'Hind Siliguri', sans-serif" }}>
 
-        {/* MOBILE TOP BAR */}
-        {isMobile && (
-          <div style={{ background:'#000', padding:'18px 24px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
-            <div onClick={() => router.push('/')} style={{ cursor:'pointer' }}>
-              <span style={{ fontSize:'22px', fontWeight:'800', ...shimmerStyle }}>Rupanjel</span>
-              <span className="red-dot" />
-            </div>
-            <span onClick={() => router.push('/')} style={{ fontSize:'12px', color:'rgba(255,255,255,0.35)', cursor:'pointer' }}>← হোমে যান</span>
-          </div>
-        )}
-
         <div style={{ flex:1, display:'flex', flexDirection: isMobile ? 'column' : 'row' }}>
 
           {!isMobile && <LeftPanel />}
