@@ -1,5 +1,4 @@
 'use client';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -127,8 +126,8 @@ export default function Footer() {
 
           {/* Bottom bar */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-            <div style={{ cursor: 'pointer' }} onClick={() => router.push('/')}>
-              <Image src="/logo.png" alt="Rupanjel" width={70} height={28} style={{ objectFit: 'contain', mixBlendMode: 'screen' }} />
+            <div style={{ cursor: 'pointer', fontSize: '20px', fontWeight: '800', letterSpacing: '1px', color: '#fff', fontFamily: 'Georgia, serif' }} onClick={() => router.push('/')}>
+              RUPANJEL
             </div>
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}>
               © {new Date().getFullYear()} <span style={{ color: 'rgba(255,106,0,0.6)' }}>Rupanjel</span> — সর্বস্বত্ব সংরক্ষিত
