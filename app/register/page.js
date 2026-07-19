@@ -9,11 +9,10 @@ export default function RegisterPage() {
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
   const [form, setForm] = useState({
-    name: '', shop_name: '', phone: '', district: '', thana: '', address: '', password: '', confirm: ''
+    name: '', phone: '', email: '', address: '', password: '', confirm: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [areas, setAreas] = useState([]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -22,32 +21,14 @@ export default function RegisterPage() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  useEffect(() => {
-    const loadAreas = async () => {
-      try {
-        const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/delivery_areas?active=eq.true&order=district.asc,thana.asc`,
-          { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
-        );
-        const data = await res.json();
-        setAreas(Array.isArray(data) ? data : []);
-      } catch {}
-    };
-    loadAreas();
-  }, []);
-
-  const districts = [...new Set(areas.map(a => a.district))];
-  const thanas = areas.filter(a => a.district === form.district).map(a => a.thana);
-
   const handleSubmit = async () => {
     setError('');
-    if (!form.name) return setError('নাম দিন');
-    if (form.phone.length !== 11) return setError('সঠিক ফোন নম্বর দিন');
-    if (!form.district) return setError('জেলা বাছুন');
-    if (!form.thana) return setError('থানা বাছুন');
-    if (!form.address) return setError('ঠিকানা দিন');
-    if (form.password.length < 6) return setError('পাসওয়ার্ড কমপক্ষে ৬ অক্ষর');
-    if (form.password !== form.confirm) return setError('পাসওয়ার্ড মিলছে না');
+    if (!form.name) return setError('Please enter your name');
+    if (form.phone.length !== 11) return setError('Please enter a valid mobile number');
+    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) return setError('Please enter a valid email');
+    if (!form.address) return setError('Please enter your address');
+    if (form.password.length < 6) return setError('Password must be at least 6 characters');
+    if (form.password !== form.confirm) return setError('Passwords do not match');
 
     setLoading(true);
     try {
@@ -61,10 +42,8 @@ export default function RegisterPage() {
         },
         body: JSON.stringify({
           name: form.name,
-          shop_name: form.shop_name,
           phone: form.phone,
-          district: form.district,
-          thana: form.thana,
+          email: form.email || null,
           address: form.address,
           password: form.password,
           role: 'user',
@@ -77,11 +56,11 @@ export default function RegisterPage() {
         router.push('/login');
       } else {
         const err = await res.json();
-        if (err.code === '23505') setError('এই ফোন নম্বর আগে ব্যবহার হয়েছে');
-        else setError('সমস্যা হয়েছে, আবার চেষ্টা করুন');
+        if (err.code === '23505') setError('This mobile number is already registered');
+        else setError('Something went wrong, please try again');
       }
     } catch {
-      setError('নেটওয়ার্ক সমস্যা');
+      setError('Network error');
     }
     setLoading(false);
   };
@@ -147,7 +126,7 @@ export default function RegisterPage() {
         <span className="red-dot" />
       </div>
       <p style={{ fontSize: '14px', color: 'rgba(0,0,0,0.5)', lineHeight: '1.7' }}>
-        সরাসরি সাপ্লায়ার থেকে<br />আপনার দোকানে।
+        Straight from trusted suppliers<br />to your shop.
       </p>
     </div>
   );
@@ -168,22 +147,11 @@ export default function RegisterPage() {
         .fade5{opacity:0;animation:fadeup 0.5s ease forwards 0.3s}
         .fade6{opacity:0;animation:fadeup 0.5s ease forwards 0.35s}
         .fade7{opacity:0;animation:fadeup 0.5s ease forwards 0.4s}
-        .fade8{opacity:0;animation:fadeup 0.5s ease forwards 0.45s}
         .spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto;}
-        .reg-select {
-          width:100%; background:#f3f2ef; border:1px solid rgba(0,0,0,0.1);
-          border-radius:10px; color:#1a1a1a; font-size:15px; padding:12px 14px;
-          font-family:inherit; outline:none; cursor:pointer;
-          transition: border-color 0.2s, box-shadow 0.2s;
-          appearance: none;
-        }
-        .reg-select:focus { border-color:#e8a020; box-shadow:0 0 0 3px rgba(232,160,32,0.12); }
-        .reg-select:disabled { opacity:0.4; cursor:not-allowed; }
-        .reg-select option { background:#fff; color:#1a1a1a; }
         .reg-textarea {
           width:100%; background:#f3f2ef; border:1px solid rgba(0,0,0,0.1);
           border-radius:10px; color:#1a1a1a; font-size:15px; padding:12px 14px;
-          font-family:inherit; outline:none; resize:none; height:72px; line-height:1.6;
+          font-family:inherit; outline:none; resize:none; height:80px; line-height:1.6;
           transition: border-color 0.2s, box-shadow 0.2s;
         }
         .reg-textarea:focus { border-color:#e8a020; box-shadow:0 0 0 3px rgba(232,160,32,0.12); }
@@ -192,7 +160,7 @@ export default function RegisterPage() {
         @media(max-width:480px) { .two-col { grid-template-columns:1fr; } }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#faf9f7', display: 'flex', flexDirection: 'column', fontFamily: "'Hind Siliguri', sans-serif" }}>
+      <div style={{ minHeight: '100vh', background: '#faf9f7', display: 'flex', flexDirection: 'column', fontFamily: "'Inter', 'Helvetica Neue', sans-serif" }}>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
 
@@ -204,13 +172,13 @@ export default function RegisterPage() {
 
               {!isMobile && (
                 <div className="fade1" onClick={() => router.push('/')} style={{ color: 'rgba(0,0,0,0.45)', fontSize: '12px', cursor: 'pointer', marginBottom: '32px' }}>
-                  ← হোমে যান
+                  ← Back to home
                 </div>
               )}
 
               <div className="fade1" style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a', marginBottom: '4px' }}>নতুন অ্যাকাউন্ট</div>
-                <div style={{ fontSize: '13px', color: 'rgba(0,0,0,0.45)' }}>আপনার তথ্য দিয়ে নিবন্ধন করুন</div>
+                <div style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a', marginBottom: '4px' }}>Create Account</div>
+                <div style={{ fontSize: '13px', color: 'rgba(0,0,0,0.45)' }}>Fill in your details to register</div>
               </div>
 
               {error && (
@@ -219,91 +187,68 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              {/* ব্যক্তিগত তথ্য */}
+              {/* Personal Info */}
               <div style={dividerStyle}>
                 <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
-                ব্যক্তিগত তথ্য
+                Personal Info
                 <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
               </div>
 
-              <div className="fade2 two-col" style={{ marginBottom: '12px' }}>
-                <div>
-                  <div style={labelStyle}>আপনার নাম *</div>
-                  <div className="fw" style={fieldWrapStyle}>
-                    <input placeholder="রহিম মিয়া" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} />
-                  </div>
-                </div>
-                <div>
-                  <div style={labelStyle}>দোকানের নাম</div>
-                  <div className="fw" style={fieldWrapStyle}>
-                    <input placeholder="রহিম স্টোর" value={form.shop_name} onChange={e => setForm({ ...form, shop_name: e.target.value })} style={inputStyle} />
-                  </div>
+              <div className="fade2" style={{ marginBottom: '12px' }}>
+                <div style={labelStyle}>Full Name *</div>
+                <div className="fw" style={fieldWrapStyle}>
+                  <input placeholder="John Doe" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} />
                 </div>
               </div>
 
               <div className="fade3" style={{ marginBottom: '12px' }}>
-                <div style={labelStyle}>ফোন নম্বর *</div>
+                <div style={labelStyle}>Mobile Number *</div>
                 <div className="fw" style={fieldWrapStyle}>
                   <span style={{ fontSize: '16px', color: 'rgba(0,0,0,0.4)', marginRight: '8px' }}>📞</span>
                   <input placeholder="01XXXXXXXXX" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={inputStyle} />
                 </div>
               </div>
 
-              {/* ডেলিভারি ঠিকানা */}
-              <div style={dividerStyle}>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
-                ডেলিভারি ঠিকানা
-                <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
+              <div className="fade4" style={{ marginBottom: '12px' }}>
+                <div style={labelStyle}>Email (optional)</div>
+                <div className="fw" style={fieldWrapStyle}>
+                  <span style={{ fontSize: '16px', color: 'rgba(0,0,0,0.4)', marginRight: '8px' }}>✉️</span>
+                  <input type="email" placeholder="you@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} style={inputStyle} />
+                </div>
               </div>
 
-              {areas.length === 0 ? (
-                <div className="fade4" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#dc2626', marginBottom: '12px' }}>
-                  ⚠️ এখনো কোনো ডেলিভারি এলাকা সেট করা হয়নি
-                </div>
-              ) : (
-                <div className="fade4 two-col" style={{ marginBottom: '12px' }}>
-                  <div>
-                    <div style={labelStyle}>জেলা *</div>
-                    <select className="reg-select" value={form.district} onChange={e => setForm({ ...form, district: e.target.value, thana: '' })}>
-                      <option value="">জেলা বাছুন</option>
-                      {districts.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <div style={labelStyle}>থানা / উপজেলা *</div>
-                    <select className="reg-select" value={form.thana} onChange={e => setForm({ ...form, thana: e.target.value })} disabled={!form.district}>
-                      <option value="">থানা বাছুন</option>
-                      {thanas.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                </div>
-              )}
+              {/* Address */}
+              <div style={dividerStyle}>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
+                Address
+                <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
+              </div>
 
               <div className="fade5" style={{ marginBottom: '12px' }}>
-                <div style={labelStyle}>পূর্ণ ঠিকানা *</div>
-                <textarea className="reg-textarea" placeholder="বাড়ি নম্বর / রাস্তা / এলাকা" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+                <div style={labelStyle}>Delivery Address *</div>
+                <textarea className="reg-textarea" placeholder="House / Road / Area / City" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
               </div>
 
-              {/* পাসওয়ার্ড */}
+              {/* Password */}
               <div style={dividerStyle}>
                 <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
-                পাসওয়ার্ড
+                Password
                 <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
               </div>
 
               <div className="fade6 two-col" style={{ marginBottom: '20px' }}>
                 <div>
-                  <div style={labelStyle}>পাসওয়ার্ড *</div>
+                  <div style={labelStyle}>Password *</div>
                   <div className="fw" style={fieldWrapStyle}>
                     <span style={{ fontSize: '16px', color: 'rgba(0,0,0,0.4)', marginRight: '8px' }}>🔒</span>
-                    <input type="password" placeholder="কমপক্ষে ৬ অক্ষর" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} style={inputStyle} />
+                    <input type="password" placeholder="At least 6 characters" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} style={inputStyle} />
                   </div>
                 </div>
                 <div>
-                  <div style={labelStyle}>নিশ্চিত করুন *</div>
+                  <div style={labelStyle}>Confirm Password *</div>
                   <div className="fw" style={fieldWrapStyle}>
                     <span style={{ fontSize: '16px', color: 'rgba(0,0,0,0.4)', marginRight: '8px' }}>🔒</span>
-                    <input type="password" placeholder="আবার লিখুন" value={form.confirm} onChange={e => setForm({ ...form, confirm: e.target.value })} style={inputStyle} />
+                    <input type="password" placeholder="Re-enter password" value={form.confirm} onChange={e => setForm({ ...form, confirm: e.target.value })} style={inputStyle} />
                   </div>
                 </div>
               </div>
@@ -315,14 +260,14 @@ export default function RegisterPage() {
                   disabled={loading}
                   style={{ width: '100%', background: '#e8a020', color: '#000', border: 'none', borderRadius: '10px', padding: '14px', fontSize: '15px', fontWeight: '700', cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.7 : 1 }}
                 >
-                  {loading ? <div className="spinner" /> : '✅ নিবন্ধন সম্পন্ন করুন'}
+                  {loading ? <div className="spinner" /> : '✅ Create Account'}
                 </button>
               </div>
 
-              <p className="fade8" style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: 'rgba(0,0,0,0.45)' }}>
-                আগে থেকে অ্যাকাউন্ট আছে?{' '}
+              <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: 'rgba(0,0,0,0.45)' }}>
+                Already have an account?{' '}
                 <span onClick={() => router.push('/login')} style={{ color: '#e8a020', fontWeight: '700', cursor: 'pointer' }}>
-                  লগইন করুন
+                  Sign In
                 </span>
               </p>
 
