@@ -5,24 +5,37 @@ import { useRouter } from 'next/navigation';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// ── SMS পাঠাও (API route দিয়ে) ──
-async function sendOTPSms(phone, otp) {
-  const number = '88' + phone; // 01700000000 → 8801700000000
-  const message = `আড়ৎ: আপনার OTP হলো ${otp}। এটি ৫ মিনিট বৈধ। কাউকে শেয়ার করবেন না।`;
-  const res = await fetch(`/api/send-sms?number=${number}&message=${encodeURIComponent(message)}`);
-  const text = await res.text();
-  const code = parseInt(text.trim());
-  if (code === 202) return { success: true };
-  const errors = {
-    1001: 'ফোন নম্বর সঠিক নয়',
-    1002: 'Sender ID সমস্যা',
-    1006: 'SMS ব্যালেন্স শেষ',
-    1007: 'ব্যালেন্স অপর্যাপ্ত',
-    1011: 'API ব্যবহারকারী পাওয়া যায়নি',
-    1031: 'অ্যাকাউন্ট ভেরিফাই হয়নি',
-    1032: 'IP whitelist করা নেই',
-  };
-  return { success: false, msg: errors[code] || `SMS পাঠানো যায়নি (${code})` };
+// ── ইমেইলে OTP পাঠাও (API route দিয়ে, Resend ব্যবহার করে) ──
+async function sendOTPEmail(email, otp) {
+  const html = `
+    <div style="font-family:sans-serif;max-width:420px;margin:0 auto;padding:24px;border:1px solid #eee;border-radius:12px;">
+      <h2 style="color:#111;margin:0 0 12px;">Rupanjel</h2>
+      <p style="color:#333;font-size:14px;">আপনার পাসওয়ার্ড রিসেট করার জন্য নিচের OTP কোডটি ব্যবহার করুন:</p>
+      <div style="font-size:28px;font-weight:700;letter-spacing:6px;background:#f3f2ef;padding:14px;text-align:center;border-radius:8px;margin:16px 0;">${otp}</div>
+      <p style="color:#888;font-size:12px;">এই কোডটি ৫ মিনিটের জন্য বৈধ। কাউকে শেয়ার করবেন না।</p>
+    </div>
+  `;
+  try {
+    const res = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: email, subject: 'আপনার Rupanjel OTP কোড', html }),
+    });
+    const data = await res.json();
+    if (data.success) return { success: true };
+    return { success: false, msg: data.error || 'ইমেইল পাঠানো যায়নি' };
+  } catch {
+    return { success: false, msg: 'ইমেইল পাঠানো যায়নি' };
+  }
+}
+
+// ইমেইল আংশিক লুকানো — যেমন rf****n@gmail.com
+function maskEmail(email) {
+  if (!email) return '';
+  const [user, domain] = email.split('@');
+  if (!domain) return email;
+  if (user.length <= 2) return `${user[0] || ''}***@${domain}`;
+  return `${user.slice(0, 2)}****${user.slice(-1)}@${domain}`;
 }
 
 // ── OTP Supabase-এ save করো ──
@@ -99,6 +112,7 @@ export default function LoginPage() {
 
   // forgot state
   const [fpPhone, setFpPhone]     = useState('');
+  const [fpEmail, setFpEmail]     = useState('');
   const [fpOtp, setFpOtp]         = useState(['', '', '', '', '', '']);
   const [fpNewPass, setFpNewPass] = useState('');
   const [fpConfPass, setFpConfPass] = useState('');
@@ -175,15 +189,22 @@ export default function LoginPage() {
         setFpLoading(false);
         return;
       }
-      // OTP generate
-      const otp = String(Math.floor(100000 + Math.random() * 900000));
-      await saveOTP(fpPhone, otp);
-      const smsRes = await sendOTPSms(fpPhone, otp);
-      if (!smsRes.success) {
-        setFpError('SMS পাঠানো যায়নি: ' + smsRes.msg);
+      const account = data[0];
+      if (!account.email) {
+        setFpError('এই একাউন্টে কোনো ইমেইল যুক্ত নেই। সাপোর্টে যোগাযোগ করুন।');
         setFpLoading(false);
         return;
       }
+      // OTP generate
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      await saveOTP(fpPhone, otp);
+      const emailRes = await sendOTPEmail(account.email, otp);
+      if (!emailRes.success) {
+        setFpError('ইমেইল পাঠানো যায়নি: ' + emailRes.msg);
+        setFpLoading(false);
+        return;
+      }
+      setFpEmail(account.email);
       setView('forgot_otp');
       setResendTimer(60);
       setFpOtp(['', '', '', '', '', '']);
@@ -237,8 +258,8 @@ export default function LoginPage() {
     try {
       const otp = String(Math.floor(100000 + Math.random() * 900000));
       await saveOTP(fpPhone, otp);
-      const smsRes = await sendOTPSms(fpPhone, otp);
-      if (!smsRes.success) { setFpError('SMS পাঠানো যায়নি: ' + smsRes.msg); setFpLoading(false); return; }
+      const emailRes = await sendOTPEmail(fpEmail, otp);
+      if (!emailRes.success) { setFpError('ইমেইল পাঠানো যায়নি: ' + emailRes.msg); setFpLoading(false); return; }
       setResendTimer(60);
       setFpOtp(['', '', '', '', '', '']);
       otpRefs.current[0]?.focus();
@@ -259,7 +280,7 @@ export default function LoginPage() {
       if (!ok) { setFpError('পাসওয়ার্ড আপডেট হয়নি, আবার চেষ্টা করুন'); setFpLoading(false); return; }
       // reset করে login-এ ফিরে যাও
       setView('login');
-      setFpPhone(''); setFpOtp(['','','','','','']); setFpNewPass(''); setFpConfPass('');
+      setFpPhone(''); setFpEmail(''); setFpOtp(['','','','','','']); setFpNewPass(''); setFpConfPass('');
       setForm({ phone: fpPhone, password: '' });
       // success toast
       setError('');
@@ -422,7 +443,7 @@ export default function LoginPage() {
                   <span className="back-link" onClick={() => setView('login')}>← লগইনে ফিরুন</span>
                   <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>পাসওয়ার্ড রিসেট</h2>
                   <p style={{ color:'rgba(0,0,0,0.5)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
-                    আপনার নিবন্ধিত ফোন নম্বরে OTP পাঠানো হবে।
+                    আপনার একাউন্টের নিবন্ধিত ইমেইলে OTP পাঠানো হবে।
                   </p>
 
                   <div style={{ marginBottom:'14px' }}>
@@ -449,7 +470,7 @@ export default function LoginPage() {
                   <span className="back-link" onClick={() => setView('forgot_phone')}>← ফিরে যান</span>
                   <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>OTP যাচাই</h2>
                   <p style={{ color:'rgba(0,0,0,0.5)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
-                    <span style={{ color:'#e8a020' }}>{fpPhone}</span> নম্বরে ৬ সংখ্যার OTP পাঠানো হয়েছে।
+                    <span style={{ color:'#e8a020' }}>{maskEmail(fpEmail)}</span> ইমেইলে ৬ সংখ্যার OTP পাঠানো হয়েছে।
                   </p>
 
                   {/* OTP boxes */}
