@@ -29,7 +29,7 @@ export default function Footer() {
 
   const cols = [
     {
-      title: 'আড়ৎ সম্পর্কে',
+      title: 'Rupanjel সম্পর্কে',
       links: [
         { title: 'আমাদের পরিচয়', href: '/about' },
         { title: 'কীভাবে কাজ করে', href: '/about' },
@@ -42,13 +42,6 @@ export default function Footer() {
         { title: 'নিবন্ধন করুন', href: '/register' },
         { title: 'পণ্য দেখুন', href: '/products' },
         { title: 'অর্ডার ট্র্যাক', href: '/orders' },
-      ],
-    },
-    {
-      title: 'সাপ্লায়ারদের জন্য',
-      links: [
-        { title: 'সাপ্লায়ার হোন', href: '/register' },
-        { title: 'পণ্য লিস্ট করুন', href: '/dashboard' },
       ],
     },
     {
@@ -135,10 +128,10 @@ export default function Footer() {
           {/* Bottom bar */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
             <div style={{ cursor: 'pointer' }} onClick={() => router.push('/')}>
-              <Image src="/logo.png" alt="আড়ৎ" width={70} height={28} style={{ objectFit: 'contain', mixBlendMode: 'screen' }} />
+              <Image src="/logo.png" alt="Rupanjel" width={70} height={28} style={{ objectFit: 'contain', mixBlendMode: 'screen' }} />
             </div>
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}>
-              © {new Date().getFullYear()} <span style={{ color: 'rgba(255,106,0,0.6)' }}>আড়ৎ</span> — সর্বস্বত্ব সংরক্ষিত
+              © {new Date().getFullYear()} <span style={{ color: 'rgba(255,106,0,0.6)' }}>Rupanjel</span> — সর্বস্বত্ব সংরক্ষিত
             </div>
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>bKash · নগদ · ব্যাংক ট্রান্সফার</div>
           </div>
