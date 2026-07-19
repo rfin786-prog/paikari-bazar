@@ -171,6 +171,10 @@ export default function Dashboard() {
   const [addressMsg, setAddressMsg] = useState('');
   const [addressLoading, setAddressLoading] = useState(false);
 
+  const [email, setEmail] = useState('');
+  const [emailMsg, setEmailMsg] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
+
   const [passwords, setPasswords] = useState({ current: '', newPass: '', confirm: '' });
   const [passMsg, setPassMsg] = useState('');
   const [passLoading, setPassLoading] = useState(false);
@@ -183,6 +187,7 @@ export default function Dashboard() {
     const u = JSON.parse(stored);
     if (u.role === 'admin') { router.push('/admin'); return; }
     setUser(u);
+    setEmail(u.email || '');
     setAddress({
       shop_name: u.shop_name || '',
       phone: u.phone || '',
@@ -239,6 +244,32 @@ export default function Dashboard() {
     setTimeout(() => setAddressMsg(''), 3000);
   };
 
+  const saveEmail = async () => {
+    setEmailMsg('');
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      setEmailMsg('invalid');
+      return;
+    }
+    setEmailLoading(true);
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: { ...headers, Prefer: 'return=minimal' },
+      body: JSON.stringify({ email }),
+    });
+    if (res.ok) {
+      const updated = { ...user, email };
+      localStorage.setItem('user', JSON.stringify(updated));
+      setUser(updated);
+      setEmailMsg('success');
+    } else {
+      const err = await res.text();
+      console.error('Email save error:', err);
+      setEmailMsg('error');
+    }
+    setEmailLoading(false);
+    setTimeout(() => setEmailMsg(''), 3000);
+  };
+
   const changePassword = async () => {
     setPassMsg('');
     if (!passwords.current || !passwords.newPass || !passwords.confirm) return setPassMsg('empty');
@@ -283,6 +314,12 @@ export default function Dashboard() {
     localStorage.removeItem('user');
     localStorage.removeItem('cart');
     router.push('/login');
+  };
+
+  const emailMessages = {
+    invalid: '❌ Please enter a valid email address',
+    success: '✅ Email updated successfully',
+    error:   '❌ Something went wrong, please try again',
   };
 
   const passMessages = {
@@ -456,7 +493,7 @@ export default function Dashboard() {
           )}
 
           <div className="tabs">
-            {[['orders', '📦 আমার অর্ডার'], ['address', '📍 ঠিকানা'], ['password', '🔒 পাসওয়ার্ড']].map(([t, l]) => (
+            {[['orders', '📦 আমার অর্ডার'], ['account', '👤 Account Info'], ['address', '📍 ঠিকানা'], ['password', '🔒 পাসওয়ার্ড']].map(([t, l]) => (
               <button key={t} onClick={() => setTab(t)} className={`tab-btn ${tab === t ? 'active' : 'inactive'}`}>{l}</button>
             ))}
           </div>
@@ -582,6 +619,36 @@ export default function Dashboard() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Account Info Tab */}
+          {tab === 'account' && (
+            <div className="form-card">
+              <div className="form-title">👤 Account Info</div>
+              {emailMsg && (
+                <div className={`alert ${emailMsg === 'success' ? 'success' : 'error'}`}>
+                  {emailMessages[emailMsg]}
+                </div>
+              )}
+              <div style={{ display: 'grid', gap: '14px' }}>
+                <div>
+                  <label className="label">Email Address</label>
+                  <input
+                    type="email"
+                    className="inp"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                  />
+                  <div style={{ marginTop: '6px', fontSize: '12px', color: '#9ca3af' }}>
+                    Used for password reset OTP and account notifications.
+                  </div>
+                </div>
+                <button className="btn-primary" onClick={saveEmail} disabled={emailLoading}>
+                  {emailLoading ? '⏳ Saving...' : '✅ Save Email'}
+                </button>
+              </div>
             </div>
           )}
 
