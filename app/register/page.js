@@ -86,8 +86,9 @@ export default function RegisterPage() {
     setLoading(false);
   };
 
+  // ── STYLES (matched to /login) ──
   const shimmerStyle = {
-    background: 'linear-gradient(90deg, #fff 0%, #fff 40%, #e8a020 50%, #fff 60%, #fff 100%)',
+    background: 'linear-gradient(90deg,#1a1a1a 0%,#1a1a1a 40%,#e8a020 50%,#1a1a1a 60%,#1a1a1a 100%)',
     backgroundSize: '200% auto',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
@@ -99,8 +100,8 @@ export default function RegisterPage() {
   const fieldWrapStyle = {
     display: 'flex',
     alignItems: 'center',
-    background: '#161616',
-    border: '1px solid rgba(255,255,255,0.08)',
+    background: '#f3f2ef',
+    border: '1px solid rgba(0,0,0,0.1)',
     borderRadius: '10px',
     padding: '0 12px',
     transition: 'border-color 0.2s, box-shadow 0.2s',
@@ -110,9 +111,9 @@ export default function RegisterPage() {
     background: 'none',
     border: 'none',
     outline: 'none',
-    color: '#fff',
-    fontSize: '14px',
-    padding: '11px 0',
+    color: '#1a1a1a',
+    fontSize: '15px',
+    padding: '12px 0',
     width: '100%',
     fontFamily: 'inherit',
   };
@@ -120,7 +121,7 @@ export default function RegisterPage() {
   const labelStyle = {
     display: 'block',
     fontSize: '11px',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(0,0,0,0.5)',
     marginBottom: '6px',
     letterSpacing: '0.5px',
     textTransform: 'uppercase',
@@ -129,7 +130,7 @@ export default function RegisterPage() {
   const dividerStyle = {
     fontSize: '10px',
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.2)',
+    color: 'rgba(0,0,0,0.3)',
     textTransform: 'uppercase',
     letterSpacing: '1px',
     margin: '20px 0 14px',
@@ -137,6 +138,19 @@ export default function RegisterPage() {
     alignItems: 'center',
     gap: '10px',
   };
+
+  // ── LEFT PANEL (matches /login) ──
+  const LeftPanel = () => (
+    <div style={{ flex: '0 0 260px', background: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 36px', borderRight: '1px solid rgba(0,0,0,0.08)' }}>
+      <div onClick={() => router.push('/')} style={{ cursor: 'pointer', marginBottom: '12px' }}>
+        <span style={{ fontSize: '28px', fontWeight: '800', ...shimmerStyle }}>Rupanjel</span>
+        <span className="red-dot" />
+      </div>
+      <p style={{ fontSize: '14px', color: 'rgba(0,0,0,0.5)', lineHeight: '1.7' }}>
+        সরাসরি সাপ্লায়ার থেকে<br />আপনার দোকানে।
+      </p>
+    </div>
+  );
 
   return (
     <>
@@ -157,83 +171,59 @@ export default function RegisterPage() {
         .fade8{opacity:0;animation:fadeup 0.5s ease forwards 0.45s}
         .spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto;}
         .reg-select {
-          width:100%; background:#161616; border:1px solid rgba(255,255,255,0.08);
-          border-radius:10px; color:#fff; font-size:14px; padding:11px 14px;
+          width:100%; background:#f3f2ef; border:1px solid rgba(0,0,0,0.1);
+          border-radius:10px; color:#1a1a1a; font-size:15px; padding:12px 14px;
           font-family:inherit; outline:none; cursor:pointer;
           transition: border-color 0.2s, box-shadow 0.2s;
           appearance: none;
         }
         .reg-select:focus { border-color:#e8a020; box-shadow:0 0 0 3px rgba(232,160,32,0.12); }
         .reg-select:disabled { opacity:0.4; cursor:not-allowed; }
-        .reg-select option { background:#161616; color:#fff; }
+        .reg-select option { background:#fff; color:#1a1a1a; }
         .reg-textarea {
-          width:100%; background:#161616; border:1px solid rgba(255,255,255,0.08);
-          border-radius:10px; color:#fff; font-size:14px; padding:11px 14px;
+          width:100%; background:#f3f2ef; border:1px solid rgba(0,0,0,0.1);
+          border-radius:10px; color:#1a1a1a; font-size:15px; padding:12px 14px;
           font-family:inherit; outline:none; resize:none; height:72px; line-height:1.6;
           transition: border-color 0.2s, box-shadow 0.2s;
         }
         .reg-textarea:focus { border-color:#e8a020; box-shadow:0 0 0 3px rgba(232,160,32,0.12); }
-        .reg-textarea::placeholder { color:rgba(255,255,255,0.2); }
+        .reg-textarea::placeholder { color:rgba(0,0,0,0.3); }
         .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         @media(max-width:480px) { .two-col { grid-template-columns:1fr; } }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', fontFamily: "'Hind Siliguri', sans-serif" }}>
-
-        {/* MOBILE TOP BAR */}
-        {isMobile && (
-          <div style={{ background: '#000', padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <div onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
-              <span style={{ fontSize: '22px', fontWeight: '800', ...shimmerStyle }}>Aarot</span>
-              <span className="red-dot" />
-            </div>
-            <span onClick={() => router.push('/')} style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}>
-              ← হোমে যান
-            </span>
-          </div>
-        )}
+      <div style={{ minHeight: '100vh', background: '#faf9f7', display: 'flex', flexDirection: 'column', fontFamily: "'Hind Siliguri', sans-serif" }}>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
 
-          {/* LEFT — desktop only */}
-          {!isMobile && (
-            <div style={{ flex: '0 0 260px', background: '#000', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 36px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-              <div onClick={() => router.push('/')} style={{ cursor: 'pointer', marginBottom: '12px' }}>
-                <span style={{ fontSize: '28px', fontWeight: '800', ...shimmerStyle }}>Aarot</span>
-                <span className="red-dot" />
-              </div>
-              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.7' }}>
-                সরাসরি সাপ্লায়ার থেকে<br />আপনার দোকানে।
-              </p>
-            </div>
-          )}
+          {!isMobile && <LeftPanel />}
 
           {/* FORM */}
           <div style={{ flex: 1, display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'center', padding: isMobile ? '32px 24px' : '48px', overflowY: 'auto' }}>
             <div style={{ width: '100%', maxWidth: '420px' }}>
 
               {!isMobile && (
-                <div className="fade1" onClick={() => router.push('/')} style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', cursor: 'pointer', marginBottom: '32px' }}>
+                <div className="fade1" onClick={() => router.push('/')} style={{ color: 'rgba(0,0,0,0.45)', fontSize: '12px', cursor: 'pointer', marginBottom: '32px' }}>
                   ← হোমে যান
                 </div>
               )}
 
               <div className="fade1" style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>নতুন অ্যাকাউন্ট</div>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.3)' }}>আপনার তথ্য দিয়ে নিবন্ধন করুন</div>
+                <div style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a', marginBottom: '4px' }}>নতুন অ্যাকাউন্ট</div>
+                <div style={{ fontSize: '13px', color: 'rgba(0,0,0,0.45)' }}>আপনার তথ্য দিয়ে নিবন্ধন করুন</div>
               </div>
 
               {error && (
-                <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', padding: '10px 14px', color: '#f87171', fontSize: '13px', marginBottom: '16px' }}>
+                <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '10px', padding: '10px 14px', color: '#dc2626', fontSize: '13px', marginBottom: '16px' }}>
                   ⚠️ {error}
                 </div>
               )}
 
               {/* ব্যক্তিগত তথ্য */}
               <div style={dividerStyle}>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
                 ব্যক্তিগত তথ্য
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
               </div>
 
               <div className="fade2 two-col" style={{ marginBottom: '12px' }}>
@@ -254,20 +244,20 @@ export default function RegisterPage() {
               <div className="fade3" style={{ marginBottom: '12px' }}>
                 <div style={labelStyle}>ফোন নম্বর *</div>
                 <div className="fw" style={fieldWrapStyle}>
-                  <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', marginRight: '8px' }}>📞</span>
+                  <span style={{ fontSize: '16px', color: 'rgba(0,0,0,0.4)', marginRight: '8px' }}>📞</span>
                   <input placeholder="01XXXXXXXXX" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={inputStyle} />
                 </div>
               </div>
 
               {/* ডেলিভারি ঠিকানা */}
               <div style={dividerStyle}>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
                 ডেলিভারি ঠিকানা
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
               </div>
 
               {areas.length === 0 ? (
-                <div className="fade4" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#f87171', marginBottom: '12px' }}>
+                <div className="fade4" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#dc2626', marginBottom: '12px' }}>
                   ⚠️ এখনো কোনো ডেলিভারি এলাকা সেট করা হয়নি
                 </div>
               ) : (
@@ -296,23 +286,23 @@ export default function RegisterPage() {
 
               {/* পাসওয়ার্ড */}
               <div style={dividerStyle}>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
                 পাসওয়ার্ড
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
               </div>
 
               <div className="fade6 two-col" style={{ marginBottom: '20px' }}>
                 <div>
                   <div style={labelStyle}>পাসওয়ার্ড *</div>
                   <div className="fw" style={fieldWrapStyle}>
-                    <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', marginRight: '8px' }}>🔒</span>
+                    <span style={{ fontSize: '16px', color: 'rgba(0,0,0,0.4)', marginRight: '8px' }}>🔒</span>
                     <input type="password" placeholder="কমপক্ষে ৬ অক্ষর" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} style={inputStyle} />
                   </div>
                 </div>
                 <div>
                   <div style={labelStyle}>নিশ্চিত করুন *</div>
                   <div className="fw" style={fieldWrapStyle}>
-                    <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', marginRight: '8px' }}>🔒</span>
+                    <span style={{ fontSize: '16px', color: 'rgba(0,0,0,0.4)', marginRight: '8px' }}>🔒</span>
                     <input type="password" placeholder="আবার লিখুন" value={form.confirm} onChange={e => setForm({ ...form, confirm: e.target.value })} style={inputStyle} />
                   </div>
                 </div>
@@ -329,7 +319,7 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              <p className="fade8" style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: 'rgba(255,255,255,0.3)' }}>
+              <p className="fade8" style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: 'rgba(0,0,0,0.45)' }}>
                 আগে থেকে অ্যাকাউন্ট আছে?{' '}
                 <span onClick={() => router.push('/login')} style={{ color: '#e8a020', fontWeight: '700', cursor: 'pointer' }}>
                   লগইন করুন
