@@ -315,7 +315,6 @@ export default function LoginPage() {
         <span className="red-dot" />
       </div>
       <p style={{ fontSize:'14px', color:'rgba(0,0,0,0.5)', lineHeight:'1.7' }}>
-        সরাসরি সাপ্লায়ার থেকে<br />আপনার দোকানে।
       </p>
     </div>
   );
