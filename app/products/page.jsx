@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -31,6 +31,7 @@ function SkeletonCard() {
 
 function ProductsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subMap, setSubMap] = useState({});
@@ -95,11 +96,32 @@ function ProductsPageContent() {
         });
         setCategories(parents);
         setSubMap(map);
-        if (parents.length > 0) setActiveCategory(parents[0]);
+
+        const catParam = searchParams.get('cat');
+        let matched = null;
+        if (catParam) {
+          // Try matching a top-level category first...
+          matched = parents.find(
+            c => c.name.toLowerCase() === catParam.toLowerCase()
+          );
+          // ...otherwise the param might be a subcategory name (e.g. "Facewash"
+          // under "Skin Care"), so find its parent and select that, plus the
+          // matching subcategory.
+          if (!matched) {
+            const subMatch = children.find(
+              c => c.name.toLowerCase() === catParam.toLowerCase()
+            );
+            if (subMatch) {
+              matched = parents.find(c => c.id === subMatch.parent_id) || null;
+              if (matched) setActiveSubcat(subMatch);
+            }
+          }
+        }
+        setActiveCategory(matched || parents[0] || null);
       } catch (e) { console.error(e); }
     };
     fetchCategories();
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchProducts = async () => {
