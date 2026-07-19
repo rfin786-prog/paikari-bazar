@@ -469,8 +469,8 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Category bar — desktop only */}
-      {!isMobile && (
+      {/* Category bar — desktop only, hidden on /products (that page has its own category bar) */}
+      {!isMobile && !pathname?.startsWith('/products') && (
         <div style={{
           background: 'var(--ink)',
           display: 'flex',
