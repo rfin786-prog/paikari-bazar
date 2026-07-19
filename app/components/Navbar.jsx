@@ -1,5 +1,5 @@
 'use client';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -17,6 +17,7 @@ function monogram(name) {
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -29,8 +30,10 @@ export default function Navbar() {
 
   useEffect(() => {
     const saved = localStorage.getItem('user');
-    if (saved) setUser(JSON.parse(saved));
+    setUser(saved ? JSON.parse(saved) : null);
+  }, [pathname]);
 
+  useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -457,7 +460,7 @@ export default function Navbar() {
             onClick={() => router.push(user ? '/dashboard' : '/login')}
           >
             <UserIcon />
-            {user ? 'Dashboard' : 'Sign In'}
+            {user ? user.name : 'Sign In'}
           </button>
           <button className="nav-icon-btn" onClick={() => router.push('/checkout')}>
             <CartIcon />
