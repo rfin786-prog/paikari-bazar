@@ -9,73 +9,158 @@ const supabase = createClient(
 
 export default function BannerTab() {
   const [banners, setBanners] = useState([]);
+  const [loadingList, setLoadingList] = useState(true);
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState(null); // { type: 'success'|'error', text }
+
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editSubtitle, setEditSubtitle] = useState('');
+  const [editLinkUrl, setEditLinkUrl] = useState('');
+  const [editFile, setEditFile] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     fetchBanners();
   }, []);
 
+  function showMessage(type, text) {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 3500);
+  }
+
   async function fetchBanners() {
-    const res = await fetch('/api/banners');
-    const data = await res.json();
-    setBanners(data);
+    setLoadingList(true);
+    try {
+      // fetch ALL banners for admin (not just active) directly from Supabase
+      const { data, error } = await supabase
+        .from('banners')
+        .select('*')
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      setBanners(data || []);
+    } catch (err) {
+      showMessage('error', 'ব্যানার লোড করতে ব্যর্থ: ' + err.message);
+    } finally {
+      setLoadingList(false);
+    }
   }
 
   async function handleUpload() {
-    if (!file) return alert('ছবি সিলেক্ট করো');
+    if (!file) return showMessage('error', 'আগে একটা ছবি সিলেক্ট করো');
     setUploading(true);
+    try {
+      const fileName = `${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('banners')
+        .upload(fileName, file);
+      if (uploadError) throw uploadError;
 
-    const fileName = `${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from('banners')
-      .upload(fileName, file);
+      const { data: urlData } = supabase.storage.from('banners').getPublicUrl(fileName);
 
-    if (uploadError) {
-      alert('আপলোড ব্যর্থ: ' + uploadError.message);
-      setUploading(false);
-      return;
-    }
-
-    const { data: urlData } = supabase.storage.from('banners').getPublicUrl(fileName);
-
-    await fetch('/api/banners', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      const { error: insertError } = await supabase.from('banners').insert([{
         image_url: urlData.publicUrl,
-        title,
-        subtitle,
-        link_url: linkUrl,
+        title: title || null,
+        subtitle: subtitle || null,
+        link_url: linkUrl || null,
+        is_active: true,
         sort_order: banners.length,
-      }),
-    });
+      }]);
+      if (insertError) throw insertError;
 
-    setTitle('');
-    setSubtitle('');
-    setLinkUrl('');
-    setFile(null);
-    setUploading(false);
-    fetchBanners();
+      setTitle('');
+      setSubtitle('');
+      setLinkUrl('');
+      setFile(null);
+      document.getElementById('banner-file-input').value = '';
+      showMessage('success', 'ব্যানার যোগ হয়েছে ✅');
+      fetchBanners();
+    } catch (err) {
+      showMessage('error', 'ব্যানার যোগ করতে ব্যর্থ: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function toggleActive(id, current) {
-    await fetch(`/api/banners?id=${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_active: !current }),
-    });
+    const { error } = await supabase.from('banners').update({ is_active: !current }).eq('id', id);
+    if (error) return showMessage('error', 'ব্যর্থ: ' + error.message);
+    showMessage('success', !current ? 'ব্যানার চালু হয়েছে' : 'ব্যানার বন্ধ হয়েছে');
     fetchBanners();
   }
 
   async function deleteBanner(id) {
-    if (!confirm('মুছে ফেলবে?')) return;
-    await fetch(`/api/banners?id=${id}`, { method: 'DELETE' });
+    if (!confirm('এই ব্যানারটা মুছে ফেলতে চাও?')) return;
+    const { error } = await supabase.from('banners').delete().eq('id', id);
+    if (error) return showMessage('error', 'মুছতে ব্যর্থ: ' + error.message);
+    showMessage('success', 'ব্যানার মুছে ফেলা হয়েছে');
     fetchBanners();
   }
+
+  function startEdit(banner) {
+    setEditingId(banner.id);
+    setEditTitle(banner.title || '');
+    setEditSubtitle(banner.subtitle || '');
+    setEditLinkUrl(banner.link_url || '');
+    setEditFile(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditFile(null);
+  }
+
+  async function saveEdit(banner) {
+    setSavingEdit(true);
+    try {
+      let imageUrl = banner.image_url;
+
+      if (editFile) {
+        const fileName = `${Date.now()}-${editFile.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('banners')
+          .upload(fileName, editFile);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('banners').getPublicUrl(fileName);
+        imageUrl = urlData.publicUrl;
+      }
+
+      const { error } = await supabase
+        .from('banners')
+        .update({
+          title: editTitle || null,
+          subtitle: editSubtitle || null,
+          link_url: editLinkUrl || null,
+          image_url: imageUrl,
+        })
+        .eq('id', banner.id);
+      if (error) throw error;
+
+      showMessage('success', 'ব্যানার আপডেট হয়েছে ✅');
+      setEditingId(null);
+      setEditFile(null);
+      fetchBanners();
+    } catch (err) {
+      showMessage('error', 'আপডেট ব্যর্থ: ' + err.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  const inputStyle = {
+    width: '100%',
+    marginBottom: '8px',
+    padding: '9px 10px',
+    borderRadius: '6px',
+    border: '1px solid rgba(255,255,255,0.15)',
+    background: '#0f0e17',
+    color: '#fff',
+    fontSize: '13px',
+  };
 
   return (
     <div style={{ padding: '20px', color: '#fff' }}>
@@ -83,57 +168,139 @@ export default function BannerTab() {
         ব্যানার ম্যানেজমেন্ট
       </h2>
 
+      {message && (
+        <div style={{
+          padding: '10px 14px',
+          borderRadius: '8px',
+          marginBottom: '14px',
+          fontSize: '13px',
+          fontWeight: '600',
+          background: message.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+          color: message.type === 'success' ? '#4ade80' : '#f87171',
+          border: `1px solid ${message.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+        }}>
+          {message.text}
+        </div>
+      )}
+
+      {/* Add new banner */}
       <div style={{ background: '#1a1828', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
+        <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '10px', color: '#e8a020' }}>
+          নতুন ব্যানার যোগ করো
+        </div>
         <input
+          id="banner-file-input"
           type="file"
           accept="image/*"
           onChange={(e) => setFile(e.target.files[0])}
-          style={{ marginBottom: '10px', display: 'block' }}
+          style={{ marginBottom: '10px', display: 'block', fontSize: '13px' }}
         />
         <input
           placeholder="টাইটেল (optional)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          style={{ width: '100%', marginBottom: '8px', padding: '8px' }}
+          style={inputStyle}
         />
         <input
           placeholder="সাবটাইটেল (optional)"
           value={subtitle}
           onChange={(e) => setSubtitle(e.target.value)}
-          style={{ width: '100%', marginBottom: '8px', padding: '8px' }}
+          style={inputStyle}
         />
         <input
           placeholder="লিংক (optional, ক্লিক করলে যেখানে যাবে)"
           value={linkUrl}
           onChange={(e) => setLinkUrl(e.target.value)}
-          style={{ width: '100%', marginBottom: '8px', padding: '8px' }}
+          style={inputStyle}
         />
         <button
           onClick={handleUpload}
           disabled={uploading}
-          style={{ background: '#f59e0b', color: '#0f0e17', padding: '8px 16px', border: 'none', borderRadius: '4px' }}
+          style={{
+            background: uploading ? '#8a6415' : '#e8a020',
+            color: '#0f0e17',
+            padding: '9px 18px',
+            border: 'none',
+            borderRadius: '6px',
+            fontWeight: '700',
+            fontSize: '13px',
+            cursor: uploading ? 'not-allowed' : 'pointer',
+          }}
         >
-          {uploading ? 'আপলোড হচ্ছে...' : 'ব্যানার যোগ করো'}
+          {uploading ? 'আপলোড হচ্ছে...' : '+ ব্যানার যোগ করো'}
         </button>
       </div>
 
-      <div style={{ display: 'grid', gap: '12px' }}>
-        {banners.map((b) => (
-          <div key={b.id} style={{ background: '#1a1828', padding: '10px', borderRadius: '8px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <img src={b.image_url} alt="" style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
-            <div style={{ flex: 1 }}>
-              <div>{b.title || '(no title)'}</div>
-              <small style={{ color: '#888' }}>{b.is_active ? 'Active' : 'Inactive'}</small>
-            </div>
-            <button onClick={() => toggleActive(b.id, b.is_active)} style={{ padding: '6px 10px' }}>
-              {b.is_active ? 'বন্ধ করো' : 'চালু করো'}
-            </button>
-            <button onClick={() => deleteBanner(b.id)} style={{ padding: '6px 10px', color: 'red' }}>
-              মুছো
-            </button>
-          </div>
-        ))}
+      {/* Banner list */}
+      <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '10px', color: 'rgba(255,255,255,0.6)' }}>
+        সব ব্যানার ({banners.length})
       </div>
+
+      {loadingList ? (
+        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>লোড হচ্ছে...</div>
+      ) : banners.length === 0 ? (
+        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', padding: '20px', textAlign: 'center', background: '#1a1828', borderRadius: '8px' }}>
+          এখনো কোনো ব্যানার যোগ করা হয়নি
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: '12px' }}>
+          {banners.map((b) => (
+            <div key={b.id} style={{ background: '#1a1828', padding: '12px', borderRadius: '8px' }}>
+              {editingId === b.id ? (
+                <div>
+                  <img src={b.image_url} alt="" style={{ width: '100%', maxWidth: '240px', height: '100px', objectFit: 'cover', borderRadius: '6px', marginBottom: '10px' }} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setEditFile(e.target.files[0])}
+                    style={{ marginBottom: '10px', display: 'block', fontSize: '12px' }}
+                  />
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px' }}>
+                    (নতুন ছবি সিলেক্ট না করলে পুরনো ছবিই থাকবে)
+                  </div>
+                  <input placeholder="টাইটেল" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} style={inputStyle} />
+                  <input placeholder="সাবটাইটেল" value={editSubtitle} onChange={(e) => setEditSubtitle(e.target.value)} style={inputStyle} />
+                  <input placeholder="লিংক" value={editLinkUrl} onChange={(e) => setEditLinkUrl(e.target.value)} style={inputStyle} />
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                    <button
+                      onClick={() => saveEdit(b)}
+                      disabled={savingEdit}
+                      style={{ background: '#e8a020', color: '#0f0e17', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}
+                    >
+                      {savingEdit ? 'সেভ হচ্ছে...' : 'সেভ করো'}
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}
+                    >
+                      বাতিল
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <img src={b.image_url} alt="" style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: '120px' }}>
+                    <div style={{ fontWeight: '600', fontSize: '13px' }}>{b.title || '(কোনো টাইটেল নেই)'}</div>
+                    <small style={{ color: b.is_active ? '#4ade80' : '#f87171' }}>
+                      {b.is_active ? '● সক্রিয়' : '○ নিষ্ক্রিয়'}
+                    </small>
+                  </div>
+                  <button onClick={() => startEdit(b)} style={{ padding: '7px 12px', background: 'rgba(232,160,32,0.15)', color: '#e8a020', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>
+                    এডিট
+                  </button>
+                  <button onClick={() => toggleActive(b.id, b.is_active)} style={{ padding: '7px 12px', background: 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                    {b.is_active ? 'বন্ধ করো' : 'চালু করো'}
+                  </button>
+                  <button onClick={() => deleteBanner(b.id)} style={{ padding: '7px 12px', background: 'rgba(239,68,68,0.15)', color: '#f87171', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                    মুছো
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
