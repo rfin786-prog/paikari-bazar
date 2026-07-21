@@ -1,7 +1,6 @@
 import { Geist, Geist_Mono, Hind_Siliguri } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
-
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 const hindSiliguri = Hind_Siliguri({
@@ -9,12 +8,13 @@ const hindSiliguri = Hind_Siliguri({
   subsets: ["bengali"],
   weight: ["400", "600", "700"],
 });
-
 export const metadata = {
-  title: "আড়ৎ",
-  description: "B2B wholesale platform",
+  title: "Rupanjel — Bangladesh's Personal Care Marketplace",
+  description: "Everything for your care, in one place",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
-
 export default function RootLayout({ children }) {
   return (
     <html lang="bn" className={`${geistSans.variable} ${geistMono.variable} ${hindSiliguri.variable} h-full antialiased`}>
