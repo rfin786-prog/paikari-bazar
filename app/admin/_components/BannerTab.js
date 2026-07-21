@@ -1,11 +1,71 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
+
+function ImageDropzone({ file, onFileSelect, previewUrl, height = '160px' }) {
+  const inputRef = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+  const preview = file ? URL.createObjectURL(file) : previewUrl;
+
+  return (
+    <div
+      onClick={() => inputRef.current?.click()}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const f = e.dataTransfer.files?.[0];
+        if (f) onFileSelect(f);
+      }}
+      style={{
+        height,
+        borderRadius: '10px',
+        border: `2px dashed ${dragOver ? '#e8a020' : 'rgba(255,255,255,0.2)'}`,
+        background: dragOver ? 'rgba(232,160,32,0.06)' : 'rgba(255,255,255,0.02)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        position: 'relative',
+        marginBottom: '12px',
+        transition: 'all .15s',
+      }}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => e.target.files?.[0] && onFileSelect(e.target.files[0])}
+        style={{ display: 'none' }}
+      />
+      {preview ? (
+        <>
+          <img src={preview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{
+            position: 'absolute', bottom: '8px', right: '8px',
+            background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '11px',
+            padding: '4px 10px', borderRadius: '6px', fontWeight: '600',
+          }}>
+            ছবি বদলাতে ক্লিক করো
+          </div>
+        </>
+      ) : (
+        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+          <div style={{ fontSize: '28px', marginBottom: '6px' }}>🖼️</div>
+          <div style={{ fontSize: '13px', fontWeight: '600' }}>ছবি সিলেক্ট করতে ক্লিক করো</div>
+          <div style={{ fontSize: '11px', marginTop: '2px' }}>অথবা এখানে drag করে ছাড়ো</div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function BannerTab() {
   const [banners, setBanners] = useState([]);
@@ -15,7 +75,7 @@ export default function BannerTab() {
   const [linkUrl, setLinkUrl] = useState('');
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState(null); // { type: 'success'|'error', text }
+  const [message, setMessage] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
@@ -36,7 +96,6 @@ export default function BannerTab() {
   async function fetchBanners() {
     setLoadingList(true);
     try {
-      // fetch ALL banners for admin (not just active) directly from Supabase
       const { data, error } = await supabase
         .from('banners')
         .select('*')
@@ -76,7 +135,6 @@ export default function BannerTab() {
       setSubtitle('');
       setLinkUrl('');
       setFile(null);
-      document.getElementById('banner-file-input').value = '';
       showMessage('success', 'ব্যানার যোগ হয়েছে ✅');
       fetchBanners();
     } catch (err) {
@@ -118,12 +176,9 @@ export default function BannerTab() {
     setSavingEdit(true);
     try {
       let imageUrl = banner.image_url;
-
       if (editFile) {
         const fileName = `${Date.now()}-${editFile.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('banners')
-          .upload(fileName, editFile);
+        const { error: uploadError } = await supabase.storage.from('banners').upload(fileName, editFile);
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from('banners').getPublicUrl(fileName);
         imageUrl = urlData.publicUrl;
@@ -170,11 +225,8 @@ export default function BannerTab() {
 
       {message && (
         <div style={{
-          padding: '10px 14px',
-          borderRadius: '8px',
-          marginBottom: '14px',
-          fontSize: '13px',
-          fontWeight: '600',
+          padding: '10px 14px', borderRadius: '8px', marginBottom: '14px',
+          fontSize: '13px', fontWeight: '600',
           background: message.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
           color: message.type === 'success' ? '#4ade80' : '#f87171',
           border: `1px solid ${message.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
@@ -183,55 +235,30 @@ export default function BannerTab() {
         </div>
       )}
 
-      {/* Add new banner */}
       <div style={{ background: '#1a1828', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
         <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '10px', color: '#e8a020' }}>
           নতুন ব্যানার যোগ করো
         </div>
-        <input
-          id="banner-file-input"
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files[0])}
-          style={{ marginBottom: '10px', display: 'block', fontSize: '13px' }}
-        />
-        <input
-          placeholder="টাইটেল (optional)"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={inputStyle}
-        />
-        <input
-          placeholder="সাবটাইটেল (optional)"
-          value={subtitle}
-          onChange={(e) => setSubtitle(e.target.value)}
-          style={inputStyle}
-        />
-        <input
-          placeholder="লিংক (optional, ক্লিক করলে যেখানে যাবে)"
-          value={linkUrl}
-          onChange={(e) => setLinkUrl(e.target.value)}
-          style={inputStyle}
-        />
+
+        <ImageDropzone file={file} onFileSelect={setFile} />
+
+        <input placeholder="টাইটেল (optional)" value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
+        <input placeholder="সাবটাইটেল (optional)" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} style={inputStyle} />
+        <input placeholder="লিংক (optional, ক্লিক করলে যেখানে যাবে)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} style={inputStyle} />
+
         <button
           onClick={handleUpload}
           disabled={uploading}
           style={{
-            background: uploading ? '#8a6415' : '#e8a020',
-            color: '#0f0e17',
-            padding: '9px 18px',
-            border: 'none',
-            borderRadius: '6px',
-            fontWeight: '700',
-            fontSize: '13px',
-            cursor: uploading ? 'not-allowed' : 'pointer',
+            background: uploading ? '#8a6415' : '#e8a020', color: '#0f0e17',
+            padding: '9px 18px', border: 'none', borderRadius: '6px',
+            fontWeight: '700', fontSize: '13px', cursor: uploading ? 'not-allowed' : 'pointer',
           }}
         >
           {uploading ? 'আপলোড হচ্ছে...' : '+ ব্যানার যোগ করো'}
         </button>
       </div>
 
-      {/* Banner list */}
       <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '10px', color: 'rgba(255,255,255,0.6)' }}>
         সব ব্যানার ({banners.length})
       </div>
@@ -248,31 +275,15 @@ export default function BannerTab() {
             <div key={b.id} style={{ background: '#1a1828', padding: '12px', borderRadius: '8px' }}>
               {editingId === b.id ? (
                 <div>
-                  <img src={b.image_url} alt="" style={{ width: '100%', maxWidth: '240px', height: '100px', objectFit: 'cover', borderRadius: '6px', marginBottom: '10px' }} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setEditFile(e.target.files[0])}
-                    style={{ marginBottom: '10px', display: 'block', fontSize: '12px' }}
-                  />
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px' }}>
-                    (নতুন ছবি সিলেক্ট না করলে পুরনো ছবিই থাকবে)
-                  </div>
+                  <ImageDropzone file={editFile} onFileSelect={setEditFile} previewUrl={b.image_url} height="140px" />
                   <input placeholder="টাইটেল" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} style={inputStyle} />
                   <input placeholder="সাবটাইটেল" value={editSubtitle} onChange={(e) => setEditSubtitle(e.target.value)} style={inputStyle} />
                   <input placeholder="লিংক" value={editLinkUrl} onChange={(e) => setEditLinkUrl(e.target.value)} style={inputStyle} />
                   <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                    <button
-                      onClick={() => saveEdit(b)}
-                      disabled={savingEdit}
-                      style={{ background: '#e8a020', color: '#0f0e17', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}
-                    >
+                    <button onClick={() => saveEdit(b)} disabled={savingEdit} style={{ background: '#e8a020', color: '#0f0e17', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
                       {savingEdit ? 'সেভ হচ্ছে...' : 'সেভ করো'}
                     </button>
-                    <button
-                      onClick={cancelEdit}
-                      style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}
-                    >
+                    <button onClick={cancelEdit} style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>
                       বাতিল
                     </button>
                   </div>
