@@ -13,12 +13,14 @@ import SalesReportTab from './_components/SalesReportTab';
 import WalletTab from './_components/WalletTab';
 import PickupPointsTab from './_components/PickupPointsTab';
 import SettingsTab from './_components/SettingsTab';
+import BannerTab from './_components/BannerTab';
 
 const TABS = [
  { key: 'dashboard',        label: 'Dashboard',  icon: '🏠' },
  { key: 'products',         label: 'Products',   icon: '📦' },
  { key: 'categories',       label: 'Categories', icon: '🏷️' },
  { key: 'brands',           label: 'Brands',     icon: '🎯' },
+ { key: 'banners',          label: 'Banners',    icon: '🖼️' },
  { key: 'orders',           label: 'Orders',     icon: '🛒' },
  { key: 'users',            label: 'Users',      icon: '👥' },
  { key: 'wallet',           label: 'Wallet',     icon: '💳' },
@@ -196,6 +198,7 @@ export default function AdminPage() {
        {tab === 'products'         && <ProductsTab />}
        {tab === 'categories'       && <CategoriesTab />}
        {tab === 'brands'           && <BrandsTab />}
+       {tab === 'banners'          && <BannerTab />}
        {tab === 'orders'           && <OrdersTab />}
        {tab === 'users'            && <UsersTab />}
        {tab === 'wallet'           && <WalletTab />}
