@@ -29,6 +29,12 @@ export default function CheckoutPage() {
   const [pickupPoints, setPickupPoints] = useState([]);
   const [selectedPickup, setSelectedPickup] = useState(null);
 
+  // Editable delivery contact/address (prefilled from user profile, editable per order)
+  const [editingAddress, setEditingAddress] = useState(false);
+  const [addrName, setAddrName] = useState('');
+  const [addrPhone, setAddrPhone] = useState('');
+  const [addrAddress, setAddrAddress] = useState('');
+
   const [deliveryOptions, setDeliveryOptions] = useState([
     { id: 'standard',  name: 'Standard',      info: '3-5 business days', price: 60 },
     { id: 'express',   name: 'Express',        info: '1-2 business days', price: 120 },
@@ -46,6 +52,13 @@ export default function CheckoutPage() {
     if (!saved) { router.push('/login'); return; }
     const u = JSON.parse(saved);
     setUser(u);
+
+    // Prefill editable address fields from profile
+    setAddrName(u.name || u.shop_name || '');
+    setAddrPhone(u.phone || '');
+    setAddrAddress(
+      [u.address, u.thana, u.district].filter(Boolean).join(', ')
+    );
 
     const cart = localStorage.getItem('cart');
     if (cart) setCartItems(JSON.parse(cart));
@@ -93,6 +106,9 @@ export default function CheckoutPage() {
 
   async function placeOrder() {
     if (cartItems.length === 0) { alert('Cart is empty.'); return; }
+    if (!addrName.trim()) { alert('Please enter a name.'); return; }
+    if (!addrPhone.trim()) { alert('Please enter a mobile number.'); return; }
+    if (deliveryMethod !== 'pickup' && !addrAddress.trim()) { alert('Please enter a delivery address.'); return; }
     if (deliveryMethod === 'scheduled' && !deliveryDate) { alert('Please select a delivery date.'); return; }
     if (deliveryMethod === 'pickup' && !selectedPickup) { alert('Please select a pickup point.'); return; }
 
@@ -112,6 +128,9 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           user_id: user.id,
           shop_name: user.shop_name,
+          delivery_name: addrName,
+          delivery_phone: addrPhone,
+          delivery_address: addrAddress,
           items: normalizedItems,
           subtotal,
           delivery: deliveryCost,
@@ -207,12 +226,38 @@ export default function CheckoutPage() {
 
         {/* Delivery Address */}
         <div style={s.card}>
-          <span style={s.label}>Delivery Address</span>
-          <div style={{ color: '#111', fontSize: '15px', fontWeight: '700', marginBottom: '4px' }}>{user?.shop_name || 'No shop name'}</div>
-          <div style={{ color: '#666', fontSize: '13px', marginBottom: '2px' }}>{user?.phone}</div>
-          <div style={{ color: '#888', fontSize: '13px', lineHeight: '1.5' }}>
-            {user?.address}{user?.thana ? `, ${user.thana}` : ''}{user?.district ? `, ${user.district}` : ''}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ ...s.label, marginBottom: 0 }}>Delivery Address</span>
+            <button
+              onClick={() => setEditingAddress(v => !v)}
+              style={{ border: 'none', background: 'none', color: '#111', fontSize: '12px', fontWeight: '700', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              {editingAddress ? 'Done' : 'Change'}
+            </button>
           </div>
+
+          {editingAddress ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div>
+                <label style={{ ...s.label, marginBottom: '6px' }}>Name</label>
+                <input style={s.input} value={addrName} onChange={e => setAddrName(e.target.value)} placeholder="Full name" />
+              </div>
+              <div>
+                <label style={{ ...s.label, marginBottom: '6px' }}>Mobile</label>
+                <input style={s.input} value={addrPhone} onChange={e => setAddrPhone(e.target.value)} placeholder="Mobile number" />
+              </div>
+              <div>
+                <label style={{ ...s.label, marginBottom: '6px' }}>Address</label>
+                <textarea style={{ ...s.input, height: '64px', resize: 'none' }} value={addrAddress} onChange={e => setAddrAddress(e.target.value)} placeholder="Full delivery address" />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div style={{ color: '#111', fontSize: '15px', fontWeight: '700', marginBottom: '4px' }}>{addrName || 'No name'}</div>
+              <div style={{ color: '#666', fontSize: '13px', marginBottom: '2px' }}>{addrPhone || 'No mobile number'}</div>
+              <div style={{ color: '#888', fontSize: '13px', lineHeight: '1.5' }}>{addrAddress || 'No address'}</div>
+            </>
+          )}
         </div>
 
         {/* Cart Items */}
