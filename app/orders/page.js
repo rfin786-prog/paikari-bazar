@@ -136,6 +136,16 @@ export default function OrdersPage() {
                 {order.note && (
                   <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>📝 নোট: {order.note}</p>
                 )}
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                  <Link href={`/orders/${order.id}`} style={{ flex: 1, textAlign: 'center', background: '#fff', border: '1px solid #ddd', color: '#333', padding: '10px', borderRadius: 8, fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>
+                    বিস্তারিত দেখুন
+                  </Link>
+                  <Link href={`/orders/${order.id}/invoice`} style={{ flex: 1, textAlign: 'center', background: '#ff6a00', color: '#fff', padding: '10px', borderRadius: 8, fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>
+                    ইনভয়েস
+                  </Link>
+                </div>
               </div>
             )}
           </div>
