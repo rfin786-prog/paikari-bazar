@@ -156,7 +156,7 @@ function TrackingTimeline({ order }) {
   );
 }
 
-// ─── Main Dashboard ───────────────────────────────────────────────────────────
+// ─── Main Dashboard ────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -445,6 +445,23 @@ export default function Dashboard() {
         .order-date { font-size: 12px; color: #9ca3af; margin-bottom: 10px; }
         .order-amount { font-size: 22px; font-weight: 800; color: #0f2442; line-height: 1; }
         .expand-btn { background: none; border: none; color: #6366f1; font-size: 13px; cursor: pointer; padding: 10px 0 0; font-family: 'Hind Siliguri', sans-serif; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+        /* Invoice button — outlined navy/gold, matches site accent */
+        .invoice-btn {
+          background: #fff;
+          border: 1.5px solid #0f2442;
+          color: #0f2442;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          padding: 7px 14px;
+          border-radius: 20px;
+          font-family: 'Hind Siliguri', sans-serif;
+          display: flex; align-items: center; gap: 5px;
+          transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .invoice-btn:hover { background: #0f2442; color: #f5c842; border-color: #0f2442; }
+
         .reorder-btn {
           background: linear-gradient(135deg, #e8a020, #f5c842);
           color: #0f2442; border: none; padding: 7px 16px;
@@ -576,9 +593,15 @@ export default function Dashboard() {
                     </div>
 
                     {/* Actions row */}
-                    <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '8px', flexWrap: 'wrap' }}>
                       <button className="expand-btn" style={{ marginTop: 0 }} onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
                         {isExpanded ? '▲ কম দেখুন' : '▼ বিস্তারিত ও ট্র্যাকিং'}
+                      </button>
+                      <button
+                        className="invoice-btn"
+                        onClick={() => router.push(`/orders/${order.id}/invoice`)}
+                      >
+                        🧾 ইনভয়েস
                       </button>
                       {/* Reorder button */}
                       {items.length > 0 && (
