@@ -6,12 +6,12 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const STATUS = {
-  pending:    { label: 'অপেক্ষমান',      color: '#92400e', bg: '#fef3c7', dot: '#f59e0b' },
-  processing: { label: 'প্রক্রিয়াধীন',   color: '#1e40af', bg: '#dbeafe', dot: '#3b82f6' },
-  confirmed:  { label: 'প্রক্রিয়াধীন',   color: '#1e40af', bg: '#dbeafe', dot: '#3b82f6' },
-  shipped:    { label: 'পাঠানো হয়েছে',   color: '#5b21b6', bg: '#ede9fe', dot: '#8b5cf6' },
-  delivered:  { label: 'ডেলিভারি হয়েছে', color: '#065f46', bg: '#d1fae5', dot: '#10b981' },
-  cancelled:  { label: 'বাতিল',           color: '#991b1b', bg: '#fee2e2', dot: '#ef4444' },
+  pending:    { label: 'অপেক্ষমান',      color: '#8a5a13', bg: '#faf0dc', dot: '#c8912f' },
+  processing: { label: 'প্রক্রিয়াধীন',   color: '#2c5f78', bg: '#e2f0f3', dot: '#3d90ae' },
+  confirmed:  { label: 'প্রক্রিয়াধীন',   color: '#2c5f78', bg: '#e2f0f3', dot: '#3d90ae' },
+  shipped:    { label: 'পাঠানো হয়েছে',   color: '#5c4a7a', bg: '#eee8f5', dot: '#8168ab' },
+  delivered:  { label: 'ডেলিভারি হয়েছে', color: '#2f5f3f', bg: '#e5f2e6', dot: '#4f8b5f' },
+  cancelled:  { label: 'বাতিল',           color: '#8c2f2f', bg: '#f7e6e6', dot: '#b34a4a' },
 };
 
 const TIMELINE_STEPS = [
@@ -39,11 +39,11 @@ function PasswordStrength({ password }) {
   if (/[^A-Za-z0-9]/.test(password)) strength++;
 
   const levels = [
-    { label: 'খুব দুর্বল', color: '#ef4444' },
-    { label: 'দুর্বল',     color: '#f97316' },
-    { label: 'মধ্যম',      color: '#eab308' },
-    { label: 'ভালো',       color: '#22c55e' },
-    { label: 'শক্তিশালী', color: '#10b981' },
+    { label: 'খুব দুর্বল', color: '#b34a4a' },
+    { label: 'দুর্বল',     color: '#c8802f' },
+    { label: 'মধ্যম',      color: '#c8912f' },
+    { label: 'ভালো',       color: '#6a9b5e' },
+    { label: 'শক্তিশালী', color: '#4f8b5f' },
   ];
   const lvl = levels[Math.min(strength, 4)];
 
@@ -53,7 +53,7 @@ function PasswordStrength({ password }) {
         {levels.map((l, i) => (
           <div key={i} style={{
             flex: 1, height: '4px', borderRadius: '4px',
-            background: i <= strength - 1 ? lvl.color : '#e5e7eb',
+            background: i <= strength - 1 ? lvl.color : '#e8ddc9',
             transition: 'background 0.3s',
           }} />
         ))}
@@ -67,8 +67,8 @@ function PasswordStrength({ password }) {
 function TrackingTimeline({ order }) {
   if (order.status === 'cancelled') {
     return (
-      <div style={{ marginTop: '16px', padding: '14px 16px', background: '#fee2e2', borderRadius: '12px', border: '1px solid #fca5a5' }}>
-        <div style={{ fontSize: '13px', fontWeight: '700', color: '#991b1b' }}>❌ এই অর্ডারটি বাতিল করা হয়েছে</div>
+      <div style={{ marginTop: '16px', padding: '14px 16px', background: '#f7e6e6', borderRadius: '10px', border: '1px solid #e3bcbc' }}>
+        <div style={{ fontSize: '13px', fontWeight: '700', color: '#8c2f2f' }}>❌ এই অর্ডারটি বাতিল করা হয়েছে</div>
       </div>
     );
   }
@@ -89,8 +89,8 @@ function TrackingTimeline({ order }) {
   };
 
   return (
-    <div style={{ marginTop: '16px', padding: '16px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e5e7eb' }}>
-      <div style={{ fontSize: '12px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px' }}>
+    <div style={{ marginTop: '16px', padding: '16px', background: '#faf7f0', borderRadius: '12px', border: '1px solid #ece1cb' }}>
+      <div style={{ fontSize: '11px', fontWeight: '700', color: '#8a7f6e', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '16px' }}>
         অর্ডার ট্র্যাকিং
       </div>
       {TIMELINE_STEPS.map((step, idx) => {
@@ -106,45 +106,43 @@ function TrackingTimeline({ order }) {
 
         return (
           <div key={step.value} style={{ display: 'flex', gap: '14px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '38px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '36px', flexShrink: 0 }}>
               <div style={{
-                width: '38px', height: '38px', borderRadius: '50%',
+                width: '36px', height: '36px', borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: isCurrent ? '17px' : '15px',
-                background: isCurrent ? '#f59e0b' : isDone ? '#10b981' : '#e5e7eb',
-                border: isCurrent ? '3px solid #fcd34d' : isDone ? '3px solid #6ee7b7' : '3px solid #e5e7eb',
-                boxShadow: isCurrent ? '0 0 0 4px rgba(245,158,11,0.15)' : isDone ? '0 0 0 4px rgba(16,185,129,0.1)' : 'none',
-                color: isPending ? '#9ca3af' : '#fff',
-                fontWeight: '700', fontSize: isPending ? '13px' : '16px',
+                background: isCurrent ? '#b8862e' : isDone ? '#4f8b5f' : '#ece1cb',
+                border: isCurrent ? '3px solid #e3c88a' : isDone ? '3px solid #a9cbaf' : '3px solid #ece1cb',
+                color: isPending ? '#a99e8c' : '#fff',
+                fontWeight: '700', fontSize: isPending ? '13px' : '15px',
               }}>
                 {isPending ? (idx + 1) : (isDone && !isCurrent ? '✓' : step.icon)}
               </div>
               {!isLast && (
                 <div style={{
-                  width: '3px', flex: 1, minHeight: '28px',
-                  background: idx < currentStepIdx ? '#10b981' : '#e5e7eb',
+                  width: '3px', flex: 1, minHeight: '26px',
+                  background: idx < currentStepIdx ? '#4f8b5f' : '#ece1cb',
                   margin: '4px 0', borderRadius: '2px',
                 }} />
               )}
             </div>
             <div style={{ flex: 1, paddingBottom: isLast ? 0 : '14px' }}>
-              <div style={{ fontWeight: '700', fontSize: '14px', color: isPending ? '#9ca3af' : '#111827' }}>
+              <div style={{ fontWeight: '700', fontSize: '14px', color: isPending ? '#a99e8c' : '#241f1b' }}>
                 {step.label}
               </div>
               {isDone && displayTime && (
-                <div style={{ fontSize: '11px', color: isCurrent ? '#f59e0b' : '#10b981', marginTop: '2px', fontWeight: '600' }}>
+                <div style={{ fontSize: '11px', color: isCurrent ? '#b8862e' : '#4f8b5f', marginTop: '2px', fontWeight: '600' }}>
                   📅 {formatDateTime(displayTime)}
                 </div>
               )}
-              {isPending && <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>অপেক্ষমান</div>}
-              {isDone && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>{step.sub}</div>}
+              {isPending && <div style={{ fontSize: '11px', color: '#a99e8c', marginTop: '2px' }}>অপেক্ষমান</div>}
+              {isDone && <div style={{ fontSize: '12px', color: '#8a7f6e', marginTop: '2px' }}>{step.sub}</div>}
               {noteText && (
                 <div style={{
-                  marginTop: '8px', background: '#fff', border: '1px solid #e5e7eb',
-                  borderLeft: '3px solid #f59e0b', borderRadius: '8px', padding: '8px 10px',
-                  fontSize: '12px', color: '#374151',
+                  marginTop: '8px', background: '#fff', border: '1px solid #ece1cb',
+                  borderLeft: '3px solid #b8862e', borderRadius: '8px', padding: '8px 10px',
+                  fontSize: '12px', color: '#4a4238',
                 }}>
-                  <span style={{ fontSize: '10px', fontWeight: '700', color: '#9ca3af', display: 'block', marginBottom: '2px' }}>নোট</span>
+                  <span style={{ fontSize: '10px', fontWeight: '700', color: '#a99e8c', display: 'block', marginBottom: '2px' }}>নোট</span>
                   {noteText}
                 </div>
               )}
@@ -198,7 +196,6 @@ export default function Dashboard() {
     loadOrders(u.id);
   }, []);
 
-  // Filter orders whenever filter or orders change
   useEffect(() => {
     if (orderFilter === 'all') {
       setFilteredOrders(orders);
@@ -332,15 +329,20 @@ export default function Dashboard() {
   };
 
   const avatarLetter = user?.name?.[0] || user?.phone?.[0] || '?';
-
-  // Address incomplete warning
   const addressIncomplete = user && (!user.district || !user.thana || !user.address);
 
   const filterOptions = [
     { value: 'all',       label: 'সব' },
-    { value: 'active',    label: '🔄 চলমান' },
-    { value: 'delivered', label: '✅ ডেলিভারি' },
-    { value: 'cancelled', label: '❌ বাতিল' },
+    { value: 'active',    label: 'চলমান' },
+    { value: 'delivered', label: 'ডেলিভারি' },
+    { value: 'cancelled', label: 'বাতিল' },
+  ];
+
+  const tabList = [
+    ['orders',   '📦', 'আমার অর্ডার'],
+    ['account',  '👤', 'Account Info'],
+    ['address',  '📍', 'ঠিকানা'],
+    ['password', '🔒', 'পাসওয়ার্ড'],
   ];
 
   return (
@@ -352,84 +354,91 @@ export default function Dashboard() {
 
         .dash-wrap {
           min-height: 100vh;
-          background: linear-gradient(160deg, #0a1628 0%, #0f2442 40%, #1a3a6b 100%);
+          background: #f7f1e6;
+          background-image:
+            radial-gradient(circle at 12% 8%, rgba(184,134,46,0.07) 0%, transparent 45%),
+            radial-gradient(circle at 90% 92%, rgba(79,139,95,0.06) 0%, transparent 45%);
+        }
+        .content { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+
+        /* User hero — receipt-tag style */
+        .user-hero {
+          background: #fffdf8;
+          border: 1px solid #ece1cb;
+          border-radius: 16px; padding: 20px;
+          display: flex; align-items: center; gap: 16px;
+          margin-bottom: 20px;
+          box-shadow: 0 2px 10px rgba(74,66,56,0.05);
           position: relative;
         }
-        .dash-wrap::before {
+        .user-hero::before {
           content: '';
-          position: fixed; top: -200px; right: -200px;
-          width: 600px; height: 600px;
-          background: radial-gradient(circle, rgba(232,160,32,0.08) 0%, transparent 70%);
-          pointer-events: none; z-index: 0;
-        }
-        .content { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 28px 16px 48px; }
-        .user-hero {
-          background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 20px; padding: 24px;
-          display: flex; align-items: center; gap: 18px;
-          margin-bottom: 24px; backdrop-filter: blur(10px);
+          position: absolute; left: 0; top: 14px; bottom: 14px; width: 4px;
+          background: #b8862e; border-radius: 0 3px 3px 0;
         }
         .avatar {
-          width: 64px; height: 64px; border-radius: 50%;
-          background: linear-gradient(135deg, #e8a020, #f5c842);
+          width: 56px; height: 56px; border-radius: 50%;
+          background: #4f8b5f;
           display: flex; align-items: center; justify-content: center;
-          font-size: 26px; font-weight: 800; color: #0f2442; flex-shrink: 0;
-          box-shadow: 0 4px 20px rgba(232,160,32,0.4);
+          font-size: 22px; font-weight: 700; color: #fff; flex-shrink: 0;
           font-family: 'Tiro Bangla', serif;
         }
-        .user-info-name { font-size: 19px; font-weight: 700; color: #fff; margin-bottom: 4px; font-family: 'Tiro Bangla', serif; }
-        .user-info-sub { font-size: 13px; color: rgba(255,255,255,0.5); }
-        .user-info-sub span { display: inline-block; background: rgba(232,160,32,0.15); color: #e8a020; padding: 2px 10px; border-radius: 20px; font-size: 12px; margin-left: 6px; }
+        .user-info-name { font-size: 18px; font-weight: 700; color: #241f1b; margin-bottom: 3px; font-family: 'Tiro Bangla', serif; }
+        .user-info-sub { font-size: 13px; color: #8a7f6e; }
+        .user-info-sub span { display: inline-block; background: #f0e9d8; color: #8a5a13; padding: 2px 10px; border-radius: 20px; font-size: 11px; margin-left: 6px; font-weight: 600; }
         .btn-logout {
-          background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
-          border: 1px solid rgba(255,255,255,0.12);
-          padding: 9px 16px; border-radius: 10px;
-          font-size: 13px; cursor: pointer;
+          background: #fff; color: #8c2f2f;
+          border: 1px solid #e3bcbc;
+          padding: 8px 14px; border-radius: 8px;
+          font-size: 12px; font-weight: 600; cursor: pointer;
           font-family: 'Hind Siliguri', sans-serif;
-          transition: background 0.15s; flex-shrink: 0;
-          margin-left: auto;
+          transition: background 0.15s; flex-shrink: 0; margin-left: auto;
         }
-        .btn-logout:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
-        .tabs {
-          display: flex; gap: 6px;
-          background: rgba(0,0,0,0.2);
-          border: 1px solid rgba(255,255,255,0.08);
-          padding: 6px; border-radius: 14px;
-          margin-bottom: 24px; backdrop-filter: blur(10px);
-        }
-        .tab-btn { flex: 1; padding: 10px 8px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; transition: all 0.2s; }
-        .tab-btn.active { background: linear-gradient(135deg, #e8a020, #f5c842); color: #0f2442; box-shadow: 0 4px 12px rgba(232,160,32,0.35); }
-        .tab-btn.inactive { background: transparent; color: rgba(255,255,255,0.5); }
-        .tab-btn.inactive:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.06); }
+        .btn-logout:hover { background: #f7e6e6; }
 
-        /* Order Filter Pills */
+        /* Underline tabs */
+        .tabs {
+          display: flex; gap: 4px;
+          border-bottom: 2px solid #ece1cb;
+          margin-bottom: 20px;
+          overflow-x: auto;
+        }
+        .tab-btn {
+          flex: 1; min-width: fit-content; padding: 10px 10px 12px;
+          border: none; background: transparent; cursor: pointer;
+          font-size: 13px; font-weight: 600; font-family: 'Hind Siliguri', sans-serif;
+          color: #a99e8c; border-bottom: 2px solid transparent; margin-bottom: -2px;
+          transition: color 0.15s, border-color 0.15s;
+          display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+        }
+        .tab-btn.active { color: #241f1b; border-bottom-color: #b8862e; }
+        .tab-btn.inactive:hover { color: #4a4238; }
+
+        /* Filter pills */
         .filter-pills { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
         .pill {
           padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
-          border: 1.5px solid rgba(255,255,255,0.15); cursor: pointer;
+          border: 1.5px solid #ece1cb; cursor: pointer;
           font-family: 'Hind Siliguri', sans-serif; transition: all 0.2s;
-          color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05);
+          color: #8a7f6e; background: #fffdf8;
         }
-        .pill.active { background: rgba(232,160,32,0.2); border-color: #e8a020; color: #f5c842; }
-        .pill:hover:not(.active) { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+        .pill.active { background: #4f8b5f; border-color: #4f8b5f; color: #fff; }
+        .pill:hover:not(.active) { border-color: #c9bb98; color: #4a4238; }
 
-        /* Address warning banner */
         .address-warning {
-          background: rgba(234,179,8,0.12); border: 1px solid rgba(234,179,8,0.3);
-          border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;
+          background: #faf0dc; border: 1px solid #e3c88a;
+          border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
           display: flex; align-items: center; gap: 10px;
-          font-size: 13px; color: #fcd34d; font-weight: 600; cursor: pointer;
+          font-size: 13px; color: #8a5a13; font-weight: 600; cursor: pointer;
         }
-        .address-warning:hover { background: rgba(234,179,8,0.18); }
+        .address-warning:hover { background: #f5e6c4; }
 
-        /* Reorder toast */
         .reorder-toast {
           position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-          background: #0f2442; border: 1px solid #e8a020; color: #f5c842;
-          padding: 12px 24px; border-radius: 40px; font-size: 14px; font-weight: 700;
+          background: #241f1b; border: 1px solid #b8862e; color: #f0e9d8;
+          padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 700;
           z-index: 9999; font-family: 'Hind Siliguri', sans-serif;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.25);
           animation: slideUp 0.3s ease;
         }
         @keyframes slideUp {
@@ -437,64 +446,65 @@ export default function Dashboard() {
           to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
-        .card { background: rgba(255,255,255,0.97); border-radius: 18px; padding: 22px; margin-bottom: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); transition: transform 0.15s; }
-        .card:hover { transform: translateY(-1px); }
-        .order-id { font-size: 11px; font-family: monospace; color: #9ca3af; background: #f3f4f6; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
-        .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin-left: 6px; }
+        /* Order card — receipt styling with a perforated cut line */
+        .card {
+          background: #fffdf8; border: 1px solid #ece1cb; border-radius: 14px;
+          padding: 18px 20px; margin-bottom: 12px;
+          box-shadow: 0 2px 10px rgba(74,66,56,0.05);
+        }
+        .order-id { font-size: 11px; font-family: 'Courier New', monospace; color: #a99e8c; background: #f4efe3; padding: 3px 8px; border-radius: 5px; display: inline-block; margin-bottom: 8px; letter-spacing: 0.3px; }
+        .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 20px; margin-left: 6px; }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; }
-        .order-date { font-size: 12px; color: #9ca3af; margin-bottom: 10px; }
-        .order-amount { font-size: 22px; font-weight: 800; color: #0f2442; line-height: 1; }
-        .expand-btn { background: none; border: none; color: #6366f1; font-size: 13px; cursor: pointer; padding: 10px 0 0; font-family: 'Hind Siliguri', sans-serif; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+        .order-date { font-size: 12px; color: #a99e8c; margin-bottom: 10px; }
+        .order-amount { font-size: 20px; font-weight: 800; color: #241f1b; line-height: 1; font-family: 'Tiro Bangla', serif; }
+        .cut-line {
+          border: none; height: 0; margin: 12px 0 0;
+          border-top: 1.5px dashed #ddd0b3;
+        }
+        .expand-btn { background: none; border: none; color: #4f8b5f; font-size: 13px; cursor: pointer; padding: 10px 0 0; font-family: 'Hind Siliguri', sans-serif; font-weight: 600; display: flex; align-items: center; gap: 4px; }
 
-        /* Invoice button — outlined navy/gold, matches site accent */
         .invoice-btn {
-          background: #fff;
-          border: 1.5px solid #0f2442;
-          color: #0f2442;
-          font-size: 12px;
-          font-weight: 700;
-          cursor: pointer;
-          padding: 7px 14px;
-          border-radius: 20px;
+          background: #fff; border: 1.5px solid #d8cba8; color: #4a4238;
+          font-size: 12px; font-weight: 700; cursor: pointer;
+          padding: 7px 14px; border-radius: 8px;
           font-family: 'Hind Siliguri', sans-serif;
           display: flex; align-items: center; gap: 5px;
-          transition: background 0.15s, color 0.15s, border-color 0.15s;
+          transition: background 0.15s, border-color 0.15s;
         }
-        .invoice-btn:hover { background: #0f2442; color: #f5c842; border-color: #0f2442; }
+        .invoice-btn:hover { background: #f4efe3; border-color: #b8862e; }
 
         .reorder-btn {
-          background: linear-gradient(135deg, #e8a020, #f5c842);
-          color: #0f2442; border: none; padding: 7px 16px;
-          border-radius: 20px; font-size: 12px; font-weight: 700;
+          background: #b8862e; color: #fff; border: none; padding: 7px 16px;
+          border-radius: 8px; font-size: 12px; font-weight: 700;
           cursor: pointer; font-family: 'Hind Siliguri', sans-serif;
-          margin-left: auto; transition: transform 0.15s, box-shadow 0.15s;
-          box-shadow: 0 2px 10px rgba(232,160,32,0.3);
+          margin-left: auto; transition: background 0.15s;
         }
-        .reorder-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(232,160,32,0.45); }
-        .order-detail { margin-top: 14px; background: #f9fafb; border-radius: 12px; padding: 14px; border: 1px solid #f0f0f0; }
-        .detail-total { display: flex; justify-content: space-between; font-weight: 800; font-size: 15px; padding-top: 12px; margin-top: 4px; border-top: 2px solid #e5e7eb; color: #0f2442; }
-        .form-card { background: rgba(255,255,255,0.97); border-radius: 18px; padding: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
-        .form-title { font-size: 17px; font-weight: 700; color: #0f2442; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; padding-bottom: 14px; border-bottom: 2px solid #f3f4f6; font-family: 'Tiro Bangla', serif; }
-        .label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 6px; letter-spacing: 0.3px; }
-        .inp { width: 100%; padding: 11px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 14px; color: #111827; font-family: 'Hind Siliguri', sans-serif; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #fafafa; }
-        .inp:focus { border-color: #0f2442; box-shadow: 0 0 0 3px rgba(15,36,66,0.08); background: #fff; }
+        .reorder-btn:hover { background: #a3762a; }
+
+        .order-detail { margin-top: 14px; background: #faf7f0; border-radius: 10px; padding: 14px; border: 1px solid #ece1cb; }
+        .detail-total { display: flex; justify-content: space-between; font-weight: 800; font-size: 15px; padding-top: 12px; margin-top: 4px; border-top: 2px solid #ece1cb; color: #241f1b; }
+
+        .form-card { background: #fffdf8; border: 1px solid #ece1cb; border-radius: 14px; padding: 22px; box-shadow: 0 2px 10px rgba(74,66,56,0.05); }
+        .form-title { font-size: 16px; font-weight: 700; color: #241f1b; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; padding-bottom: 12px; border-bottom: 2px solid #ece1cb; font-family: 'Tiro Bangla', serif; }
+        .label { display: block; font-size: 12px; font-weight: 600; color: #8a7f6e; margin-bottom: 6px; letter-spacing: 0.3px; }
+        .inp { width: 100%; padding: 11px 14px; border: 1.5px solid #ece1cb; border-radius: 9px; font-size: 14px; color: #241f1b; font-family: 'Hind Siliguri', sans-serif; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #faf7f0; }
+        .inp:focus { border-color: #4f8b5f; box-shadow: 0 0 0 3px rgba(79,139,95,0.12); background: #fff; }
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        .btn-primary { background: linear-gradient(135deg, #0f2442, #1a3a6b); color: #fff; border: none; padding: 13px 28px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; width: 100%; margin-top: 6px; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 4px 16px rgba(15,36,66,0.25); }
-        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(15,36,66,0.35); }
-        .btn-primary:disabled { opacity: 0.65; cursor: not-allowed; }
-        .alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 13px; font-weight: 600; }
-        .alert.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-        .alert.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-        .empty-state { text-align: center; padding: 48px 20px; color: #9ca3af; }
-        .empty-icon { font-size: 48px; margin-bottom: 12px; }
-        .empty-text { font-size: 15px; margin-bottom: 16px; }
-        .loading-state { text-align: center; padding: 48px; color: rgba(255,255,255,0.5); font-size: 15px; }
-        @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } .order-amount { font-size: 18px; } }
+        .btn-primary { background: #4f8b5f; color: #fff; border: none; padding: 13px 28px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Hind Siliguri', sans-serif; width: 100%; margin-top: 6px; transition: background 0.15s; }
+        .btn-primary:hover:not(:disabled) { background: #3f7550; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .alert { padding: 12px 16px; border-radius: 9px; margin-bottom: 16px; font-size: 13px; font-weight: 600; }
+        .alert.success { background: #e5f2e6; color: #2f5f3f; border: 1px solid #b9dcbe; }
+        .alert.error { background: #f7e6e6; color: #8c2f2f; border: 1px solid #e3bcbc; }
+        .empty-state { text-align: center; padding: 44px 20px; color: #a99e8c; }
+        .empty-icon { font-size: 42px; margin-bottom: 12px; }
+        .empty-text { font-size: 14px; margin-bottom: 16px; }
+        .loading-state { text-align: center; padding: 44px; color: #a99e8c; font-size: 14px; }
+        @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } .order-amount { font-size: 17px; } }
       `}</style>
 
       <div className="dash-wrap">
         <div className="content">
-          {/* User Hero Card — logout button এখানে */}
           {user && (
             <div className="user-hero">
               <div className="avatar">{avatarLetter}</div>
@@ -510,23 +520,23 @@ export default function Dashboard() {
           )}
 
           <div className="tabs">
-            {[['orders', '📦 আমার অর্ডার'], ['account', '👤 Account Info'], ['address', '📍 ঠিকানা'], ['password', '🔒 পাসওয়ার্ড']].map(([t, l]) => (
-              <button key={t} onClick={() => setTab(t)} className={`tab-btn ${tab === t ? 'active' : 'inactive'}`}>{l}</button>
+            {tabList.map(([t, icon, l]) => (
+              <button key={t} onClick={() => setTab(t)} className={`tab-btn ${tab === t ? 'active' : 'inactive'}`}>
+                <span>{icon}</span><span>{l}</span>
+              </button>
             ))}
           </div>
 
           {/* Orders Tab */}
           {tab === 'orders' && (
             <div>
-              {/* Address incomplete warning */}
               {addressIncomplete && (
                 <div className="address-warning" onClick={() => setTab('address')}>
-                  <span style={{ fontSize: '18px' }}>⚠️</span>
+                  <span style={{ fontSize: '17px' }}>⚠️</span>
                   <span>ডেলিভারি ঠিকানা অসম্পূর্ণ! অর্ডার দেওয়ার আগে ঠিকানা পূরণ করুন →</span>
                 </div>
               )}
 
-              {/* Filter pills */}
               {!ordersLoading && orders.length > 0 && (
                 <div className="filter-pills">
                   {filterOptions.map(opt => (
@@ -546,7 +556,7 @@ export default function Dashboard() {
               )}
 
               {ordersLoading ? (
-                <div className="loading-state">⏳ লোড হচ্ছে...</div>
+                <div className="loading-state">লোড হচ্ছে...</div>
               ) : filteredOrders.length === 0 ? (
                 <div className="card">
                   <div className="empty-state">
@@ -578,21 +588,22 @@ export default function Dashboard() {
                           <span style={{
                             display: 'inline-flex', alignItems: 'center', fontSize: '11px', fontWeight: '700',
                             padding: '3px 10px', borderRadius: '20px', marginLeft: '4px',
-                            background: order.payment_status === 'paid' ? '#d1fae5' : '#fee2e2',
-                            color: order.payment_status === 'paid' ? '#065f46' : '#991b1b',
+                            background: order.payment_status === 'paid' ? '#e5f2e6' : '#f7e6e6',
+                            color: order.payment_status === 'paid' ? '#2f5f3f' : '#8c2f2f',
                           }}>
                             {order.payment_status === 'paid' ? '✅ PAID' : '⚠️ DUE'}
                           </span>
                         </div>
                         <div className="order-date">{date}</div>
-                        <div style={{ fontSize: '12px', color: '#9ca3af' }}>{items.length} টি পণ্য</div>
+                        <div style={{ fontSize: '12px', color: '#a99e8c' }}>{items.length} টি পণ্য</div>
                       </div>
                       <div style={{ flexShrink: 0, textAlign: 'right' }}>
                         <div className="order-amount">৳{Number(order.total || 0).toLocaleString()}</div>
                       </div>
                     </div>
 
-                    {/* Actions row */}
+                    <hr className="cut-line" />
+
                     <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '8px', flexWrap: 'wrap' }}>
                       <button className="expand-btn" style={{ marginTop: 0 }} onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
                         {isExpanded ? '▲ কম দেখুন' : '▼ বিস্তারিত ও ট্র্যাকিং'}
@@ -603,7 +614,6 @@ export default function Dashboard() {
                       >
                         🧾 ইনভয়েস
                       </button>
-                      {/* Reorder button */}
                       {items.length > 0 && (
                         <button className="reorder-btn" onClick={() => handleReorder(order)}>
                           🔄 আবার অর্ডার করুন
@@ -613,21 +623,21 @@ export default function Dashboard() {
 
                     {isExpanded && (
                       <div className="order-detail">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px', padding: '6px 0 8px', borderBottom: '2px solid #e5e7eb', marginBottom: '4px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Item</span>
-                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>Unit Price</span>
-                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center' }}>Qty</span>
-                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>Amount</span>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px', padding: '6px 0 8px', borderBottom: '2px solid #ece1cb', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#a99e8c', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Item</span>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#a99e8c', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>Unit Price</span>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#a99e8c', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center' }}>Qty</span>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#a99e8c', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>Amount</span>
                         </div>
                         {items.map((item, i) => {
                           const qty = item.qty || item.quantity || 1;
                           const total = item.price * qty;
                           return (
-                            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px', padding: '7px 0', borderBottom: i < items.length - 1 ? '1px dashed #f0f0f0' : 'none', alignItems: 'center' }}>
-                              <span style={{ fontSize: '13px', color: '#374151' }}>{item.emoji || ''} {item.name}</span>
-                              <span style={{ fontSize: '13px', color: '#6b7280', textAlign: 'right' }}>৳{Number(item.price).toLocaleString()}</span>
-                              <span style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', background: '#f3f4f6', borderRadius: '6px', padding: '2px 8px' }}>×{qty}</span>
-                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f2442', textAlign: 'right' }}>৳{total.toLocaleString()}</span>
+                            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px', padding: '7px 0', borderBottom: i < items.length - 1 ? '1px dashed #ece1cb' : 'none', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: '#4a4238' }}>{item.emoji || ''} {item.name}</span>
+                              <span style={{ fontSize: '13px', color: '#8a7f6e', textAlign: 'right' }}>৳{Number(item.price).toLocaleString()}</span>
+                              <span style={{ fontSize: '13px', color: '#8a7f6e', textAlign: 'center', background: '#f4efe3', borderRadius: '6px', padding: '2px 8px' }}>×{qty}</span>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#241f1b', textAlign: 'right' }}>৳{total.toLocaleString()}</span>
                             </div>
                           );
                         })}
@@ -664,12 +674,12 @@ export default function Dashboard() {
                     onChange={e => setEmail(e.target.value)}
                     placeholder="you@example.com"
                   />
-                  <div style={{ marginTop: '6px', fontSize: '12px', color: '#9ca3af' }}>
+                  <div style={{ marginTop: '6px', fontSize: '12px', color: '#a99e8c' }}>
                     Used for password reset OTP and account notifications.
                   </div>
                 </div>
                 <button className="btn-primary" onClick={saveEmail} disabled={emailLoading}>
-                  {emailLoading ? '⏳ Saving...' : '✅ Save Email'}
+                  {emailLoading ? 'Saving...' : 'Save Email'}
                 </button>
               </div>
             </div>
@@ -711,7 +721,7 @@ export default function Dashboard() {
                   <textarea className="inp" style={{ height: '88px', resize: 'none' }} value={address.address || ''} onChange={e => setAddress({ ...address, address: e.target.value })} placeholder="বাড়ি নম্বর / রাস্তা / এলাকা" />
                 </div>
                 <button className="btn-primary" onClick={saveAddress} disabled={addressLoading}>
-                  {addressLoading ? '⏳ সেভ হচ্ছে...' : '✅ ঠিকানা সেভ করুন'}
+                  {addressLoading ? 'সেভ হচ্ছে...' : 'ঠিকানা সেভ করুন'}
                 </button>
               </div>
             </div>
@@ -740,13 +750,13 @@ export default function Dashboard() {
                   <label className="label">পাসওয়ার্ড নিশ্চিত করুন</label>
                   <input type="password" className="inp" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="আবার পাসওয়ার্ড দিন" />
                   {passwords.confirm && passwords.newPass && (
-                    <div style={{ marginTop: '6px', fontSize: '12px', fontWeight: '600', color: passwords.confirm === passwords.newPass ? '#16a34a' : '#dc2626' }}>
+                    <div style={{ marginTop: '6px', fontSize: '12px', fontWeight: '600', color: passwords.confirm === passwords.newPass ? '#2f5f3f' : '#8c2f2f' }}>
                       {passwords.confirm === passwords.newPass ? '✅ পাসওয়ার্ড মিলছে' : '❌ পাসওয়ার্ড মিলছে না'}
                     </div>
                   )}
                 </div>
                 <button className="btn-primary" onClick={changePassword} disabled={passLoading}>
-                  {passLoading ? '⏳ পরিবর্তন হচ্ছে...' : '🔒 পাসওয়ার্ড পরিবর্তন করুন'}
+                  {passLoading ? 'পরিবর্তন হচ্ছে...' : 'পাসওয়ার্ড পরিবর্তন করুন'}
                 </button>
               </div>
             </div>
@@ -755,7 +765,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Reorder Toast */}
       {reorderToast && <div className="reorder-toast">{reorderToast}</div>}
     </>
   );
