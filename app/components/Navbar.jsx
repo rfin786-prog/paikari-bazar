@@ -426,7 +426,7 @@ export default function Navbar() {
           background: '#d4a5b8', display: 'flex', justifyContent: 'space-between',
           alignItems: 'center', padding: '7px 24px',
         }}>
-          <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, letterSpacing: '0.1em', color: '#cfcfcf', textTransform: 'uppercase' }}>
+          <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, letterSpacing: '0.1em', color: '#c9a961', textTransform: 'uppercase' }}>
             Bangladesh's Personal Care Marketplace
           </span>
           <span style={{ display: 'flex', gap: 22 }}>
