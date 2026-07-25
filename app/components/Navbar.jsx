@@ -89,6 +89,7 @@ export default function Navbar() {
 
         :root {
           --ink: #0d0d0d;
+          --pink: #d4a5b8
           --white: #ffffff;
           --gold: #c9a961;
           --gold-soft: #e3d3ab;
@@ -422,7 +423,7 @@ export default function Navbar() {
       {/* Top utility bar — desktop only */}
       {!isMobile && (
         <div className="util-bar" style={{
-          background: '#0d0d0d', display: 'flex', justifyContent: 'space-between',
+          background: '#d4a5b8', display: 'flex', justifyContent: 'space-between',
           alignItems: 'center', padding: '7px 24px',
         }}>
           <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, letterSpacing: '0.1em', color: '#cfcfcf', textTransform: 'uppercase' }}>
