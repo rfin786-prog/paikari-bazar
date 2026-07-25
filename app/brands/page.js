@@ -35,66 +35,67 @@ export default function BrandsPage() {
       <style>{`
         .brand-grid-card {
           cursor: pointer;
-          border: 1.5px solid #eee;
-          border-radius: 12px;
+          border: 1px solid #ececec;
+          border-radius: 16px;
           background: #fff;
-          padding: 16px 12px;
+          padding: 24px 16px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 10px;
-          transition: all 0.2s ease;
+          gap: 12px;
+          transition: border-color 0.2s ease, transform 0.2s ease;
           position: relative;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
         .brand-grid-card:hover {
-          border-color: #ff6a00;
-          box-shadow: 0 6px 20px rgba(255,106,0,0.15);
-          transform: translateY(-3px);
+          border-color: #ddd;
+          transform: translateY(-2px);
         }
         .search-input:focus {
           outline: none;
-          border-color: #ff6a00;
-          box-shadow: 0 0 0 3px rgba(255,106,0,0.1);
+          border-color: #d0d0d0;
+          background: #fff;
         }
         @keyframes pulse {
           0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
+          50% { opacity: 0.45; }
         }
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-        .brand-grid-card { animation: fadeIn 0.3s ease forwards; }
+        .brand-grid-card { animation: fadeIn 0.25s ease forwards; }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#fafafa' }}>
+      <div style={{ minHeight: '100vh', background: '#fff' }}>
         {/* Header */}
         <div style={{
           background: '#fff',
-          borderBottom: '1px solid #f0f0f0',
-          padding: '16px 20px',
+          padding: '28px 24px 20px',
           position: 'sticky', top: 0, zIndex: 10,
+          borderBottom: '1px solid #f4f4f4',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
             <button
               onClick={() => router.back()}
               aria-label="Go back"
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 20, padding: 0, color: '#333',
+                fontSize: 20, padding: 0, color: '#1a1a1a',
                 display: 'flex', alignItems: 'center',
               }}
             >
               ←
             </button>
             <div>
-              <h1 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
+              <h1 style={{
+                fontSize: 20, fontWeight: 600, color: '#111',
+                margin: 0, letterSpacing: '-0.01em',
+              }}>
                 All Brands
               </h1>
               {!loading && (
-                <p style={{ fontSize: 12, color: '#888', margin: 0 }}>
-                  {filtered.length} brand{filtered.length !== 1 ? 's' : ''} found
+                <p style={{ fontSize: 13, color: '#aaa', margin: '2px 0 0' }}>
+                  {filtered.length} brand{filtered.length !== 1 ? 's' : ''}
                 </p>
               )}
             </div>
@@ -104,36 +105,36 @@ export default function BrandsPage() {
           <input
             className="search-input"
             type="text"
-            placeholder="Search brands..."
+            placeholder="Search brands"
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
               width: '100%',
-              padding: '10px 14px',
-              borderRadius: 10,
-              border: '1.5px solid #eee',
+              padding: '13px 16px',
+              borderRadius: 12,
+              border: '1px solid #eee',
               fontSize: 14,
-              color: '#1a1a1a',
+              color: '#111',
               background: '#fafafa',
               boxSizing: 'border-box',
-              transition: 'all 0.2s ease',
+              transition: 'border-color 0.2s ease, background 0.2s ease',
             }}
           />
         </div>
 
         {/* Content */}
-        <div style={{ padding: 16 }}>
+        <div style={{ padding: '24px 20px 40px' }}>
           {/* Loading */}
           {loading && (
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 12,
+              gap: 16,
             }}>
               {Array.from({ length: 9 }).map((_, i) => (
                 <div key={i} style={{
-                  height: 120, borderRadius: 12,
-                  background: '#f0f0f0',
+                  height: 128, borderRadius: 16,
+                  background: '#f6f6f6',
                   animation: 'pulse 1.4s ease-in-out infinite',
                   animationDelay: `${i * 0.08}s`,
                 }} />
@@ -143,16 +144,15 @@ export default function BrandsPage() {
 
           {/* Error */}
           {error && (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
-              <p style={{ fontSize: 14 }}>Failed to load brands. Please try again.</p>
+            <div style={{ textAlign: 'center', padding: '80px 20px', color: '#999' }}>
+              <p style={{ fontSize: 14, marginBottom: 16 }}>Couldn't load brands. Please try again.</p>
               <button
                 onClick={() => window.location.reload()}
                 style={{
-                  marginTop: 12, padding: '8px 20px',
-                  background: '#ff6a00', color: '#fff',
-                  border: 'none', borderRadius: 8,
-                  fontSize: 13, cursor: 'pointer', fontWeight: 600,
+                  padding: '10px 24px',
+                  background: '#111', color: '#fff',
+                  border: 'none', borderRadius: 10,
+                  fontSize: 13, cursor: 'pointer', fontWeight: 500,
                 }}
               >
                 Retry
@@ -162,8 +162,7 @@ export default function BrandsPage() {
 
           {/* Empty */}
           {!loading && !error && filtered.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+            <div style={{ textAlign: 'center', padding: '80px 20px', color: '#aaa' }}>
               <p style={{ fontSize: 14 }}>No brands found for "{search}"</p>
             </div>
           )}
@@ -173,7 +172,7 @@ export default function BrandsPage() {
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 12,
+              gap: 16,
             }}>
               {filtered.map((brand, i) => (
                 <button
@@ -181,27 +180,16 @@ export default function BrandsPage() {
                   className="brand-grid-card"
                   onClick={() => router.push(`/products?brand=${brand.id}`)}
                   aria-label={`View products from ${brand.name}`}
-                  style={{ animationDelay: `${i * 0.04}s` }}
+                  style={{ animationDelay: `${i * 0.03}s` }}
                 >
-                  {brand.product_count > 0 && (
-                    <span style={{
-                      position: 'absolute', top: 8, right: 8,
-                      background: '#ff6a00', color: '#fff',
-                      fontSize: 9, fontWeight: 700,
-                      borderRadius: 20, padding: '2px 6px',
-                      lineHeight: 1.5,
-                    }}>
-                      {brand.product_count}
-                    </span>
-                  )}
                   <img
                     src={brand.logo_url}
                     alt={brand.name}
-                    style={{ height: 48, maxWidth: '100%', objectFit: 'contain' }}
+                    style={{ height: 44, maxWidth: '100%', objectFit: 'contain' }}
                     onError={e => { e.currentTarget.style.display = 'none'; }}
                   />
                   <span style={{
-                    fontSize: 11, fontWeight: 600, color: '#333',
+                    fontSize: 12, fontWeight: 500, color: '#333',
                     textAlign: 'center', lineHeight: 1.3,
                     overflow: 'hidden', textOverflow: 'ellipsis',
                     display: '-webkit-box',
@@ -212,7 +200,7 @@ export default function BrandsPage() {
                     {brand.name}
                   </span>
                   {brand.product_count > 0 && (
-                    <span style={{ fontSize: 10, color: '#999' }}>
+                    <span style={{ fontSize: 11, color: '#bbb' }}>
                       {brand.product_count} product{brand.product_count !== 1 ? 's' : ''}
                     </span>
                   )}
