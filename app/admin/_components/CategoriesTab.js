@@ -192,6 +192,56 @@ export default function CategoriesTab() {
   };
 
   // ─── Delete ───────────────────────────────────────────────────
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const deleteAllCategories = async () => {
+    const total = parents.length + subs.length;
+    if (total === 0) return;
+    const confirmed = window.confirm(
+      `সব ${parents.length} প্যারেন্ট ক্যাটাগরি ও ${subs.length} সাব-ক্যাটাগরি মুছে ফেলবেন? এটা আর ফেরানো যাবে না।`
+    );
+    if (!confirmed) return;
+
+    setBulkDeleting(true);
+    let deletedCount = 0;
+    let blockedNames = [];
+
+    // Delete all sub-categories first
+    for (const sc of subs) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/categories?id=eq.${sc.id}`, {
+        method: 'DELETE',
+        headers: { ...headers, 'Prefer': 'return=representation' },
+      });
+      if (r.ok) {
+        deletedCount++;
+      } else {
+        blockedNames.push(sc.name);
+      }
+    }
+
+    // Then delete parent categories
+    for (const cat of parents) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/categories?id=eq.${cat.id}`, {
+        method: 'DELETE',
+        headers: { ...headers, 'Prefer': 'return=representation' },
+      });
+      if (r.ok) {
+        deletedCount++;
+      } else {
+        blockedNames.push(cat.name);
+      }
+    }
+
+    setBulkDeleting(false);
+    await loadAll();
+
+    if (blockedNames.length > 0) {
+      showMsg(`✅ ${deletedCount}টা মোছা হয়েছে। ❌ ${blockedNames.length}টা মুছতে পারিনি (product যুক্ত আছে): ${blockedNames.join(', ')}`, 'error');
+    } else {
+      showMsg(`✅ সব ${deletedCount}টা ক্যাটাগরি/সাব-ক্যাটাগরি মুছে ফেলা হয়েছে`, 'success');
+    }
+  };
+
   const deleteCategory = async (id, isParent = false) => {
     const confirmed = window.confirm(
       isParent
@@ -401,9 +451,20 @@ export default function CategoriesTab() {
 
       {/* Category List */}
       <div style={s.card}>
-        <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: '#1e1b4b' }}>
-          ক্যাটাগরি তালিকা ({parents.length} ক্যাটাগরি, {subs.length} সাব-ক্যাটাগরি)
-        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#1e1b4b', margin: 0 }}>
+            ক্যাটাগরি তালিকা ({parents.length} ক্যাটাগরি, {subs.length} সাব-ক্যাটাগরি)
+          </h3>
+          {(parents.length > 0 || subs.length > 0) && (
+            <button
+              onClick={deleteAllCategories}
+              disabled={bulkDeleting}
+              style={{ ...s.btn, background: '#dc2626', color: '#fff', padding: '7px 14px', fontSize: '12.5px', opacity: bulkDeleting ? 0.7 : 1 }}
+            >
+              {bulkDeleting ? 'মুছে ফেলা হচ্ছে...' : '🗑 সব ক্যাটাগরি মুছুন'}
+            </button>
+          )}
+        </div>
 
         {parents.length === 0 && (
           <p style={{ color: '#6b7280', fontSize: '13px' }}>কোনো ক্যাটাগরি নেই</p>
