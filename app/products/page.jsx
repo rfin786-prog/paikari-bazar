@@ -37,6 +37,7 @@ function ProductsPageContent() {
   const [subMap, setSubMap] = useState({});
   const [activeCategory, setActiveCategory] = useState(null);
   const [activeSubcat, setActiveSubcat] = useState(null);
+  const [activeAge, setActiveAge] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cartQty, setCartQty] = useState({});
   const [cartTotal, setCartTotal] = useState(0);
@@ -143,11 +144,20 @@ function ProductsPageContent() {
     return subMap[activeCategory.id] || [];
   }, [activeCategory, subMap]);
 
+  const ageOptions = useMemo(() => {
+    if (!activeSubcat) return [];
+    return subMap[activeSubcat.id] || [];
+  }, [activeSubcat, subMap]);
+
   const groupedProducts = useMemo(() => {
     if (!activeCategory) return {};
     let list = products.filter(p => p.category_id === activeCategory.id);
     if (activeSubcat) {
-      return { [activeSubcat.name]: { items: list.filter(p => p.sub_category_id === activeSubcat.id) } };
+      let subList = list.filter(p => p.sub_category_id === activeSubcat.id);
+      if (activeAge) {
+        subList = subList.filter(p => p.age_category_id === activeAge.id);
+      }
+      return { [activeSubcat.name]: { items: subList } };
     }
     const groups = {};
     const noSubcat = [];
@@ -161,21 +171,27 @@ function ProductsPageContent() {
     });
     if (noSubcat.length > 0) groups['অন্যান্য'] = { items: noSubcat, sub: null };
     return groups;
-  }, [products, activeCategory, activeSubcat, subcategories]);
+  }, [products, activeCategory, activeSubcat, activeAge, subcategories]);
 
   const handleCategoryClick = (cat) => {
     setActiveCategory(cat);
     setActiveSubcat(null);
+    setActiveAge(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubcatClick = (sub) => {
-    if (activeSubcat?.id === sub.id) { setActiveSubcat(null); return; }
+    if (activeSubcat?.id === sub.id) { setActiveSubcat(null); setActiveAge(null); return; }
     setActiveSubcat(sub);
+    setActiveAge(null);
     setTimeout(() => {
       const el = subcatRefs.current[sub.name];
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
+  };
+
+  const handleAgeClick = (age) => {
+    setActiveAge(prev => prev?.id === age.id ? null : age);
   };
 
   const getCoords = (e) => {
@@ -527,6 +543,27 @@ function ProductsPageContent() {
                       style={{ width: 24, height: 24, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
                   )}
                   {sub.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {activeSubcat && ageOptions.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px 10px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+              <button className="subcat-chip" onClick={() => setActiveAge(null)}
+                style={{ flexShrink: 0, padding: '5px 14px', borderRadius: 24, fontSize: 11.5, fontWeight: 700,
+                  border: `1.5px solid ${!activeAge ? '#c9a961' : '#e0e0e0'}`,
+                  background: !activeAge ? '#c9a961' : '#fff',
+                  color: !activeAge ? '#111' : '#888' }}>
+                সব বয়স
+              </button>
+              {ageOptions.map(age => (
+                <button key={age.id} className="subcat-chip" onClick={() => handleAgeClick(age)}
+                  style={{ flexShrink: 0, padding: '5px 14px', borderRadius: 24, fontSize: 11.5, fontWeight: 700,
+                    border: `1.5px solid ${activeAge?.id === age.id ? '#c9a961' : '#e0e0e0'}`,
+                    background: activeAge?.id === age.id ? '#c9a961' : '#fff',
+                    color: activeAge?.id === age.id ? '#111' : '#888' }}>
+                  {age.name}
                 </button>
               ))}
             </div>
