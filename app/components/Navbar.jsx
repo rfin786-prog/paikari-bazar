@@ -426,7 +426,7 @@ export default function Navbar() {
           alignItems: 'center', padding: '7px 24px',
         }}>
           <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, letterSpacing: '0.1em', color: '#cfcfcf', textTransform: 'uppercase' }}>
-            Bangladesh's Personal Care Marketplace
+            Bangladesh's Baby & Kids Lifestyle Store
           </span>
           <span style={{ display: 'flex', gap: 22 }}>
             <span className="util-link" onClick={() => router.push('/about')}>Help</span>
