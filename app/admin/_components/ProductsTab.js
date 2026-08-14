@@ -9,7 +9,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const UNITS = ['Piece', 'Dozen', 'KG', 'Gram', 'Litre', 'ML', 'Sack', 'Packet', 'Carton', 'Box'];
 
 const EMPTY_FORM = {
-  name: '', category: '', sub_category: '', cost_price: '', mrp: '', price: '',
+  name: '', category: '', sub_category: '', age_category_id: '', cost_price: '', mrp: '', price: '',
   trade_price: '', discount_price: '',
   unit: '', stock: '', max_qty: '',
   image_url: '', description: '', brand: '', sku: '', weight: '', active: true,
@@ -114,6 +114,7 @@ export default function ProductsTab() {
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
+  const [ageCategories, setAgeCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
@@ -165,9 +166,17 @@ export default function ProductsTab() {
 
   const handleCategoryChange = (e) => {
     const parentId = e.target.value;
-    setFormData(p => ({ ...p, category: parentId, sub_category: '' }));
+    setFormData(p => ({ ...p, category: parentId, sub_category: '', age_category_id: '' }));
     const subs = categories.filter(c => c.parent_id === parentId);
     setSubCategories(subs);
+    setAgeCategories([]);
+  };
+
+  const handleSubCategoryChange = (e) => {
+    const subId = e.target.value;
+    setFormData(p => ({ ...p, sub_category: subId, age_category_id: '' }));
+    const ages = categories.filter(c => c.parent_id === subId);
+    setAgeCategories(ages);
   };
 
   const handleImageUpload = async (e) => {
@@ -192,6 +201,7 @@ export default function ProductsTab() {
   const openAdd = () => {
     setFormData(EMPTY_FORM);
     setSubCategories([]);
+    setAgeCategories([]);
     setEditId(null);
     setShowForm(true);
   };
@@ -201,6 +211,7 @@ export default function ProductsTab() {
       name: p.name || '',
       category: p.category_id || '',
       sub_category: p.sub_category_id || '',
+      age_category_id: p.age_category_id || '',
       cost_price: p.cost_price || '',
       mrp: p.mrp || '',
       price: p.price || '',
@@ -221,6 +232,12 @@ export default function ProductsTab() {
       setSubCategories(subs);
     } else {
       setSubCategories([]);
+    }
+    if (p.sub_category_id) {
+      const ages = categories.filter(c => c.parent_id === p.sub_category_id);
+      setAgeCategories(ages);
+    } else {
+      setAgeCategories([]);
     }
     setEditId(p.id);
     setShowForm(true);
@@ -468,11 +485,24 @@ export default function ProductsTab() {
                   </select>
                 </Field>
                 <Field label="Sub Category">
-                  <select name="sub_category" value={formData.sub_category} onChange={handleChange}
+                  <select name="sub_category" value={formData.sub_category} onChange={handleSubCategoryChange}
                     disabled={subCategories.length === 0}
                     style={{ ...inputStyle, opacity: subCategories.length === 0 ? 0.5 : 1, cursor: subCategories.length === 0 ? 'not-allowed' : 'pointer' }}>
                     <option value="">{subCategories.length === 0 ? 'আগে category বেছে নিন' : 'Select sub-category'}</option>
                     {subCategories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+                <Field label="Age">
+                  <select name="age_category_id" value={formData.age_category_id} onChange={handleChange}
+                    disabled={ageCategories.length === 0}
+                    style={{ ...inputStyle, opacity: ageCategories.length === 0 ? 0.5 : 1, cursor: ageCategories.length === 0 ? 'not-allowed' : 'pointer' }}>
+                    <option value="">{ageCategories.length === 0 ? 'আগে sub-category বেছে নিন' : 'Select age'}</option>
+                    {ageCategories.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
