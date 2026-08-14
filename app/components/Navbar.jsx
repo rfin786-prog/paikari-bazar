@@ -25,6 +25,7 @@ export default function Navbar() {
   const [subMap, setSubMap] = useState({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [expandedCatId, setExpandedCatId] = useState(null);
+  const [hoveredCatId, setHoveredCatId] = useState(null);
   const menuRef = useRef(null);
   const closeTimer = useRef(null);
 
@@ -75,6 +76,14 @@ export default function Navbar() {
   };
   const handleMenuLeave = () => {
     closeTimer.current = setTimeout(() => setMenuOpen(false), 180);
+  };
+
+  const handleCatEnter = (id) => {
+    clearTimeout(closeTimer.current);
+    setHoveredCatId(id);
+  };
+  const handleCatLeave = () => {
+    closeTimer.current = setTimeout(() => setHoveredCatId(null), 180);
   };
 
   const goTo = (name) => {
@@ -481,67 +490,50 @@ export default function Navbar() {
           top: 64,
           zIndex: 99,
         }}>
-          <div
-            ref={menuRef}
-            style={{ position: 'relative', flexShrink: 0 }}
-            onMouseEnter={handleMenuEnter}
-            onMouseLeave={handleMenuLeave}
-          >
-            <button className={`cat-bar-btn all-cat-btn${menuOpen ? ' open' : ''}`}>
-              All Categories
-              <span className="plus-icon">+</span>
-            </button>
+          {categories.map(cat => {
+            const subs = subMap[cat.id] || [];
+            const isOpen = hoveredCatId === cat.id;
+            return (
+              <div
+                key={cat.id}
+                style={{ position: 'relative', flexShrink: 0 }}
+                onMouseEnter={() => handleCatEnter(cat.id)}
+                onMouseLeave={handleCatLeave}
+              >
+                <button className="cat-bar-btn" onClick={() => goTo(cat.name)}>
+                  {cat.name}
+                </button>
 
-            {menuOpen && categories.length > 0 && (
-              <div className="mega-dropdown" onMouseEnter={handleMenuEnter} onMouseLeave={handleMenuLeave}>
-                <div className="mega-heading">Shop by Category</div>
-                <div className="mega-grid">
-                  {categories.map(cat => {
-                    const subs = (subMap[cat.id] || []).slice(0, 4);
-                    const extra = (subMap[cat.id] || []).length - subs.length;
-                    return (
-                      <div key={cat.id} className="cat-card">
-                        <div className="cat-card-image" onClick={() => goTo(cat.name)}>
-                          {cat.image_url ? (
-                            <img src={cat.image_url} alt={cat.name} />
-                          ) : (
-                            <div className="cat-card-mono">{monogram(cat.name)}</div>
-                          )}
-                          <div className="cat-card-overlay" />
-                          <div className="cat-card-name">{cat.name}</div>
-                        </div>
-                        {subs.length > 0 && (
-                          <div className="cat-card-subs">
-                            {subs.map(s => (
-                              <span key={s.id} className="cat-card-sub-tag" onClick={() => goTo(s.name)}>
-                                {s.name}
-                              </span>
-                            ))}
-                            {extra > 0 && (
-                              <span className="cat-card-sub-tag" onClick={() => goTo(cat.name)}>
-                                +{extra} more
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="mega-footer">
-                  <button className="mega-view-all" onClick={() => goTo('')}>
-                    Shop All Products →
-                  </button>
-                </div>
+                {isOpen && subs.length > 0 && (
+                  <div
+                    className="mega-dropdown"
+                    style={{ minWidth: 260, padding: '24px 26px' }}
+                    onMouseEnter={() => handleCatEnter(cat.id)}
+                    onMouseLeave={handleCatLeave}
+                  >
+                    <div className="mega-heading">{cat.name} — Shop by Type</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {subs.map(s => (
+                        <span
+                          key={s.id}
+                          className="cat-card-sub-tag"
+                          style={{ fontSize: 12.5, padding: '6px 0' }}
+                          onClick={() => goTo(s.name)}
+                        >
+                          {s.name}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mega-footer">
+                      <button className="mega-view-all" onClick={() => goTo(cat.name)}>
+                        Shop All {cat.name} →
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {categories.slice(0, 8).map(cat => (
-            <button key={cat.id} className="cat-bar-btn" onClick={() => goTo(cat.name)}>
-              {cat.name}
-            </button>
-          ))}
+            );
+          })}
 
           <button
             className="cat-bar-btn"
