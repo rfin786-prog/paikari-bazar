@@ -30,7 +30,7 @@ export default function HeroSection() {
     return () => clearInterval(timer);
   }, [banners]);
 
-  const heroHeight = isMobile ? '320px' : 'clamp(360px, 48vh, 520px)';
+  const heroHeight = isMobile ? '200px' : 'clamp(260px, 32vh, 380px)';
   const usingFallback = banners.length === 0;
   const banner = usingFallback ? null : banners[current];
 
