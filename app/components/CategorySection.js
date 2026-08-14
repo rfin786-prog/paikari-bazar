@@ -134,8 +134,8 @@ export default function CategorySection() {
       `}</style>
 
       <div className="cs-wrap">
-        <p className="cs-eyebrow">Shop by Age</p>
-        <h2 className="cs-heading">Baby &amp; Kids Collections</h2>
+        <p className="cs-eyebrow">Shop by Category</p>
+        <h2 className="cs-heading">Girls &amp; Boys Collections</h2>
 
         {loading ? (
           <div className="cs-grid">
