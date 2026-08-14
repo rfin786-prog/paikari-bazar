@@ -2,7 +2,6 @@
 import HeroSection from './components/HeroSection';
 import CategorySection from './components/CategorySection';
 import DailyDeals from './components/DailyDeals';
-import BrandsSection from './components/BrandsSection';
 import Footer from './components/Footer';
 
 export default function Home() {
@@ -22,9 +21,6 @@ export default function Home() {
         </div>
         <div style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', marginTop: '12px', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
           <DailyDeals />
-        </div>
-        <div style={{ marginTop: '12px' }}>
-          <BrandsSection />
         </div>
       </div>
       <Footer />
