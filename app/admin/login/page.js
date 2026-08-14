@@ -19,7 +19,7 @@ export default function AdminLogin() {
       setError('সব তথ্য পূরণ করুন');
       return;
     }
-    if (form.username !== 'admin' || form.password !== 'admin123') {
+    if (form.username !== 'admin' || form.password !== 'Rupanjel@2026') {
       setError('ভুল username বা password');
       return;
     }
@@ -48,7 +48,7 @@ export default function AdminLogin() {
     <main style={{ minHeight: '100vh', background: '#1e1b4b', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
       <div style={{ background: '#2d2a5e', borderRadius: '16px', padding: '40px', width: '100%', maxWidth: '400px', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
         <h1 style={{ color: '#e8a020', fontSize: '24px', fontWeight: '800', marginBottom: '8px', textAlign: 'center' }}>Admin Panel</h1>
-        <p style={{ color: '#aaa', fontSize: '14px', textAlign: 'center', marginBottom: '28px' }}>পাইকারি বাজার পরিচালনা</p>
+        <p style={{ color: '#aaa', fontSize: '14px', textAlign: 'center', marginBottom: '28px' }}>Rupanjel অ্যাডমিন</p>
 
         {error && (
           <div style={{ background: '#4a1a1a', color: '#ff8080', padding: '10px 14px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' }}>{error}</div>
