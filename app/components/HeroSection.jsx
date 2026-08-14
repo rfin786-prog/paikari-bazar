@@ -43,14 +43,6 @@ export default function HeroSection() {
           from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .hero-eyebrow {
-          font-family: 'Jost', sans-serif;
-          font-size: 11px;
-          letter-spacing: 0.28em;
-          text-transform: uppercase;
-          color: #c9a961;
-          animation: heroFadeUp 0.6s ease 0.1s both;
-        }
         .hero-title {
           font-family: 'Cormorant Garamond', serif;
           font-weight: 600;
@@ -81,13 +73,6 @@ export default function HeroSection() {
           padding: 14px 30px;
         }
         .hero-cta-primary:hover { background: #e3d3ab; }
-        .hero-cta-secondary {
-          background: transparent;
-          color: #ffffff;
-          padding: 13px 28px;
-          border: 1px solid rgba(255,255,255,0.55);
-        }
-        .hero-cta-secondary:hover { border-color: #c9a961; color: #c9a961; }
         .hero-dots button {
           width: 7px; height: 7px; border-radius: 50%; border: none; padding: 0; cursor: pointer;
         }
@@ -101,53 +86,33 @@ export default function HeroSection() {
 
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(180deg, rgba(13,13,13,0.55) 0%, rgba(13,13,13,0.15) 45%, rgba(13,13,13,0.65) 100%)',
+        background: 'linear-gradient(180deg, rgba(13,13,13,0.35) 0%, rgba(13,13,13,0.05) 45%, rgba(13,13,13,0.4) 100%)',
       }} />
 
-      <div style={{
-        position: 'absolute', inset: 0,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        textAlign: 'center', padding: isMobile ? '0 24px' : '0 40px',
-      }}>
-        {usingFallback ? (
-          <>
-            <p className="hero-eyebrow" style={{ margin: '0 0 14px' }}>Bangladesh's Baby &amp; Kids Lifestyle Store</p>
-            <h1 className="hero-title" style={{ margin: 0, fontSize: isMobile ? '34px' : 'clamp(42px, 5vw, 68px)', maxWidth: '820px' }}>
-              Little Beginnings,<br />Beautifully Dressed
+      {!usingFallback && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          textAlign: 'center', padding: isMobile ? '0 24px' : '0 40px',
+        }}>
+          {banner.title && (
+            <h1 className="hero-title" style={{ margin: 0, fontSize: isMobile ? '30px' : 'clamp(38px, 4.6vw, 60px)', maxWidth: '820px' }}>
+              {banner.title}
             </h1>
-            <p className="hero-sub" style={{ margin: isMobile ? '16px 0 26px' : '20px 0 34px', fontSize: isMobile ? '13.5px' : '15px', maxWidth: '480px', lineHeight: 1.6 }}>
-              Thoughtfully made clothing for every age, from New Born to Kids — crafted for comfort, styled for every occasion.
+          )}
+          {banner.subtitle && (
+            <p className="hero-sub" style={{ margin: isMobile ? '14px 0 24px' : '18px 0 30px', fontSize: isMobile ? '13.5px' : '15px', maxWidth: '480px', lineHeight: 1.6 }}>
+              {banner.subtitle}
             </p>
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button className="hero-cta hero-cta-primary" onClick={() => router.push('/products')}>
-                Shop New Arrivals
-              </button>
-              <button className="hero-cta hero-cta-secondary" onClick={() => router.push('/products')}>
-                Explore Collections
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            {banner.title && (
-              <h1 className="hero-title" style={{ margin: 0, fontSize: isMobile ? '30px' : 'clamp(38px, 4.6vw, 60px)', maxWidth: '820px' }}>
-                {banner.title}
-              </h1>
-            )}
-            {banner.subtitle && (
-              <p className="hero-sub" style={{ margin: isMobile ? '14px 0 24px' : '18px 0 30px', fontSize: isMobile ? '13.5px' : '15px', maxWidth: '480px', lineHeight: 1.6 }}>
-                {banner.subtitle}
-              </p>
-            )}
-            <button
-              className="hero-cta hero-cta-primary"
-              onClick={() => router.push(banner.link_url || '/products')}
-            >
-              Shop Now
-            </button>
-          </>
-        )}
-      </div>
+          )}
+          <button
+            className="hero-cta hero-cta-primary"
+            onClick={() => router.push(banner.link_url || '/products')}
+          >
+            Shop Now
+          </button>
+        </div>
+      )}
 
       {!usingFallback && banners.length > 1 && (
         <div className="hero-dots" style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px' }}>
