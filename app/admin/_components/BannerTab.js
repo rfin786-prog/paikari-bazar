@@ -13,56 +13,64 @@ function ImageDropzone({ file, onFileSelect, previewUrl, height = '160px' }) {
   const preview = file ? URL.createObjectURL(file) : previewUrl;
 
   return (
-    <div
-      onClick={() => inputRef.current?.click()}
-      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setDragOver(false);
-        const f = e.dataTransfer.files?.[0];
-        if (f) onFileSelect(f);
-      }}
-      style={{
-        height,
-        borderRadius: '10px',
-        border: `2px dashed ${dragOver ? '#e8a020' : 'rgba(255,255,255,0.2)'}`,
-        background: dragOver ? 'rgba(232,160,32,0.06)' : 'rgba(255,255,255,0.02)',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        position: 'relative',
-        marginBottom: '12px',
-        transition: 'all .15s',
-      }}
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        onChange={(e) => e.target.files?.[0] && onFileSelect(e.target.files[0])}
-        style={{ display: 'none' }}
-      />
-      {preview ? (
-        <>
-          <img src={preview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{
-            position: 'absolute', bottom: '8px', right: '8px',
-            background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '11px',
-            padding: '4px 10px', borderRadius: '6px', fontWeight: '600',
-          }}>
-            ছবি বদলাতে ক্লিক করো
+    <div>
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f) onFileSelect(f);
+        }}
+        style={{
+          height,
+          borderRadius: '10px',
+          border: `2px dashed ${dragOver ? '#e8a020' : 'rgba(255,255,255,0.2)'}`,
+          background: dragOver ? 'rgba(232,160,32,0.06)' : 'rgba(255,255,255,0.02)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          position: 'relative',
+          transition: 'all .15s',
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          onChange={(e) => e.target.files?.[0] && onFileSelect(e.target.files[0])}
+          style={{ display: 'none' }}
+        />
+        {preview ? (
+          <>
+            <img src={preview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{
+              position: 'absolute', bottom: '8px', right: '8px',
+              background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '11px',
+              padding: '4px 10px', borderRadius: '6px', fontWeight: '600',
+            }}>
+              ছবি বদলাতে ক্লিক করো
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+            <div style={{ fontSize: '28px', marginBottom: '6px' }}>🖼️</div>
+            <div style={{ fontSize: '13px', fontWeight: '600' }}>ছবি সিলেক্ট করতে ক্লিক করো</div>
+            <div style={{ fontSize: '11px', marginTop: '2px' }}>অথবা এখানে drag করে ছাড়ো</div>
           </div>
-        </>
-      ) : (
-        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
-          <div style={{ fontSize: '28px', marginBottom: '6px' }}>🖼️</div>
-          <div style={{ fontSize: '13px', fontWeight: '600' }}>ছবি সিলেক্ট করতে ক্লিক করো</div>
-          <div style={{ fontSize: '11px', marginTop: '2px' }}>অথবা এখানে drag করে ছাড়ো</div>
-        </div>
-      )}
+        )}
+      </div>
+      <div style={{
+        fontSize: '11px', color: 'rgba(255,255,255,0.45)',
+        marginTop: '6px', marginBottom: '12px', lineHeight: 1.5,
+      }}>
+        সাইজ: <strong style={{ color: 'rgba(255,255,255,0.65)' }}>1920 × 700px</strong> (landscape, ratio ~2.7:1) —
+        JPG/PNG, ৫০০KB-এর কম হলে ভালো লোড হবে। ছোট সাইজের ছবি দিলে ঝাপসা দেখাবে।
+      </div>
     </div>
   );
 }
