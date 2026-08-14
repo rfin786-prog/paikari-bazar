@@ -9,8 +9,8 @@ const hindSiliguri = Hind_Siliguri({
   weight: ["400", "600", "700"],
 });
 export const metadata = {
-  title: "Rupanjel — Bangladesh's Personal Care Marketplace",
-  description: "Everything for your care, in one place",
+  title: "Rupanjel — Bangladesh's Baby & Kids Lifestyle Store",
+  description: "Thoughtfully made clothing for every age, from New Born to Kids",
   icons: {
     icon: "/favicon.png",
   },
