@@ -7,13 +7,18 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-function ImageDropzone({ file, onFileSelect, previewUrl, height = '160px' }) {
+function ImageDropzone({ file, onFileSelect, previewUrl, height = '160px', label, sizeHint }) {
   const inputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const preview = file ? URL.createObjectURL(file) : previewUrl;
 
   return (
     <div>
+      {label && (
+        <div style={{ fontSize: '12px', fontWeight: '700', color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>
+          {label}
+        </div>
+      )}
       <div
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -68,12 +73,20 @@ function ImageDropzone({ file, onFileSelect, previewUrl, height = '160px' }) {
         fontSize: '11px', color: 'rgba(255,255,255,0.45)',
         marginTop: '6px', marginBottom: '12px', lineHeight: 1.5,
       }}>
-        Size: <strong style={{ color: 'rgba(255,255,255,0.65)' }}>1920 × 350px</strong> (landscape, ratio ~5.5:1) —
-        JPG/PNG, under 500KB loads fastest. A banner made for a different ratio will get cropped on the sides.
+        {sizeHint}
       </div>
     </div>
   );
 }
+
+const DESKTOP_SIZE_HINT = (
+  <>Size: <strong style={{ color: 'rgba(255,255,255,0.65)' }}>1920 × 350px</strong> (landscape, ratio ~5.5:1) —
+  JPG/PNG, under 500KB loads fastest. A banner made for a different ratio will get cropped on the sides.</>
+);
+const MOBILE_SIZE_HINT = (
+  <>Optional — if left empty, the desktop image above is used and cropped to fit. For best results on phones,
+  upload one sized <strong style={{ color: 'rgba(255,255,255,0.65)' }}>800 × 400px</strong> (ratio ~2:1).</>
+);
 
 export default function BannerTab() {
   const [banners, setBanners] = useState([]);
@@ -82,6 +95,7 @@ export default function BannerTab() {
   const [subtitle, setSubtitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [file, setFile] = useState(null);
+  const [mobileFile, setMobileFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(null);
 
@@ -90,6 +104,7 @@ export default function BannerTab() {
   const [editSubtitle, setEditSubtitle] = useState('');
   const [editLinkUrl, setEditLinkUrl] = useState('');
   const [editFile, setEditFile] = useState(null);
+  const [editMobileFile, setEditMobileFile] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
@@ -129,8 +144,18 @@ export default function BannerTab() {
 
       const { data: urlData } = supabase.storage.from('banners').getPublicUrl(fileName);
 
+      let mobileImageUrl = null;
+      if (mobileFile) {
+        const mFileName = `${Date.now()}-mobile-${mobileFile.name}`;
+        const { error: mUploadError } = await supabase.storage.from('banners').upload(mFileName, mobileFile);
+        if (mUploadError) throw mUploadError;
+        const { data: mUrlData } = supabase.storage.from('banners').getPublicUrl(mFileName);
+        mobileImageUrl = mUrlData.publicUrl;
+      }
+
       const { error: insertError } = await supabase.from('banners').insert([{
         image_url: urlData.publicUrl,
+        mobile_image_url: mobileImageUrl,
         title: title || null,
         subtitle: subtitle || null,
         link_url: linkUrl || null,
@@ -143,6 +168,7 @@ export default function BannerTab() {
       setSubtitle('');
       setLinkUrl('');
       setFile(null);
+      setMobileFile(null);
       showMessage('success', 'ব্যানার যোগ হয়েছে ✅');
       fetchBanners();
     } catch (err) {
@@ -173,11 +199,13 @@ export default function BannerTab() {
     setEditSubtitle(banner.subtitle || '');
     setEditLinkUrl(banner.link_url || '');
     setEditFile(null);
+    setEditMobileFile(null);
   }
 
   function cancelEdit() {
     setEditingId(null);
     setEditFile(null);
+    setEditMobileFile(null);
   }
 
   async function saveEdit(banner) {
@@ -192,6 +220,15 @@ export default function BannerTab() {
         imageUrl = urlData.publicUrl;
       }
 
+      let mobileImageUrl = banner.mobile_image_url || null;
+      if (editMobileFile) {
+        const mFileName = `${Date.now()}-mobile-${editMobileFile.name}`;
+        const { error: mUploadError } = await supabase.storage.from('banners').upload(mFileName, editMobileFile);
+        if (mUploadError) throw mUploadError;
+        const { data: mUrlData } = supabase.storage.from('banners').getPublicUrl(mFileName);
+        mobileImageUrl = mUrlData.publicUrl;
+      }
+
       const { error } = await supabase
         .from('banners')
         .update({
@@ -199,6 +236,7 @@ export default function BannerTab() {
           subtitle: editSubtitle || null,
           link_url: editLinkUrl || null,
           image_url: imageUrl,
+          mobile_image_url: mobileImageUrl,
         })
         .eq('id', banner.id);
       if (error) throw error;
@@ -206,6 +244,7 @@ export default function BannerTab() {
       showMessage('success', 'ব্যানার আপডেট হয়েছে ✅');
       setEditingId(null);
       setEditFile(null);
+      setEditMobileFile(null);
       fetchBanners();
     } catch (err) {
       showMessage('error', 'আপডেট ব্যর্থ: ' + err.message);
@@ -248,7 +287,8 @@ export default function BannerTab() {
           নতুন ব্যানার যোগ করো
         </div>
 
-        <ImageDropzone file={file} onFileSelect={setFile} />
+        <ImageDropzone file={file} onFileSelect={setFile} label="Desktop Image" sizeHint={DESKTOP_SIZE_HINT} />
+        <ImageDropzone file={mobileFile} onFileSelect={setMobileFile} height="110px" label="Mobile Image" sizeHint={MOBILE_SIZE_HINT} />
 
         <input placeholder="টাইটেল (optional)" value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
         <input placeholder="সাবটাইটেল (optional)" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} style={inputStyle} />
@@ -283,7 +323,8 @@ export default function BannerTab() {
             <div key={b.id} style={{ background: '#1a1828', padding: '12px', borderRadius: '8px' }}>
               {editingId === b.id ? (
                 <div>
-                  <ImageDropzone file={editFile} onFileSelect={setEditFile} previewUrl={b.image_url} height="140px" />
+                  <ImageDropzone file={editFile} onFileSelect={setEditFile} previewUrl={b.image_url} height="140px" label="Desktop Image" sizeHint={DESKTOP_SIZE_HINT} />
+                  <ImageDropzone file={editMobileFile} onFileSelect={setEditMobileFile} previewUrl={b.mobile_image_url} height="110px" label="Mobile Image" sizeHint={MOBILE_SIZE_HINT} />
                   <input placeholder="টাইটেল" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} style={inputStyle} />
                   <input placeholder="সাবটাইটেল" value={editSubtitle} onChange={(e) => setEditSubtitle(e.target.value)} style={inputStyle} />
                   <input placeholder="লিংক" value={editLinkUrl} onChange={(e) => setEditLinkUrl(e.target.value)} style={inputStyle} />

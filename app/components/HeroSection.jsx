@@ -77,7 +77,7 @@ export default function HeroSection() {
       `}</style>
 
       <img
-        src={usingFallback ? '/hero-babydress.jpg' : banner.image_url}
+        src={usingFallback ? '/hero-babydress.jpg' : ((isMobile && banner.mobile_image_url) ? banner.mobile_image_url : banner.image_url)}
         alt={usingFallback ? 'Rupanjel — Baby & Kids Fashion' : (banner.title || 'Rupanjel banner')}
         style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.82 }}
       />
