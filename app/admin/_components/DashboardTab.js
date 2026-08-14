@@ -65,7 +65,7 @@ export default function DashboardTab({ setTab }) {
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ color: '#fff', fontSize: '22px', fontWeight: '700', margin: 0, marginBottom: '4px' }}>ড্যাশবোর্ড</h1>
-        <p style={{ color: 'rgba(255,255,255,.35)', fontSize: '13px', margin: 0 }}>পাইকারি বাজার — অ্যাডমিন প্যানেল</p>
+        <p style={{ color: 'rgba(255,255,255,.35)', fontSize: '13px', margin: 0 }}>Rupanjel — অ্যাডমিন প্যানেল</p>
       </div>
 
       {/* Stat Cards */}
