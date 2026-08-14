@@ -1,9 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function HeroSection() {
-  const router = useRouter();
   const [banners, setBanners] = useState([]);
   const [current, setCurrent] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -89,7 +87,7 @@ export default function HeroSection() {
         background: 'linear-gradient(180deg, rgba(13,13,13,0.35) 0%, rgba(13,13,13,0.05) 45%, rgba(13,13,13,0.4) 100%)',
       }} />
 
-      {!usingFallback && (
+      {!usingFallback && (banner.title || banner.subtitle) && (
         <div style={{
           position: 'absolute', inset: 0,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -105,12 +103,6 @@ export default function HeroSection() {
               {banner.subtitle}
             </p>
           )}
-          <button
-            className="hero-cta hero-cta-primary"
-            onClick={() => router.push(banner.link_url || '/products')}
-          >
-            Shop Now
-          </button>
         </div>
       )}
 
