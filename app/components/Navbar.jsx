@@ -606,7 +606,7 @@ export default function Navbar() {
                         </div>
                       ))}
                       <div className="drawer-sub-view-all" onClick={() => goTo(cat.name)}>
-                        সব দেখুন →
+                        View All →
                       </div>
                     </div>
                   )}

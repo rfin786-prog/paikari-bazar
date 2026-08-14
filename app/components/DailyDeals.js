@@ -276,11 +276,11 @@ export default function DailyDeals() {
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '6px' }}>
                   <div>
                     <div style={{ color: '#111111', fontWeight: 'bold', fontSize: '1.1rem' }}>
-                      ৳{parseFloat(deal.price).toLocaleString('bn-BD')}
+                      ৳{parseFloat(deal.price).toLocaleString('en-US')}
                       <span style={{ fontSize: '0.75rem', color: '#666666' }}>/{unitLabel(deal.unit)}</span>
                     </div>
                     <div style={{ color: '#999999', fontSize: '0.8rem', textDecoration: 'line-through' }}>
-                      ৳{parseFloat(deal.mrp).toLocaleString('bn-BD')}
+                      ৳{parseFloat(deal.mrp).toLocaleString('en-US')}
                     </div>
                   </div>
 

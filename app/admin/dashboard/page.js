@@ -190,7 +190,7 @@ export default function Dashboard() {
                       }}>+</button>
                     </div>
                     <div style={{ fontWeight: '700', color: '#111', minWidth: '60px', textAlign: 'right' }}>
-                      ৳{(item.price * item.qty).toLocaleString()}
+                      ৳{(item.price * item.qty).toLocaleString('en-US')}
                     </div>
                   </div>
                 ))
@@ -201,7 +201,7 @@ export default function Dashboard() {
               <div style={{ padding: '16px', borderTop: '1px solid #f3f4f6' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                   <span style={{ fontWeight: '600', fontSize: '16px' }}>Total</span>
-                  <span style={{ fontWeight: '800', fontSize: '18px', color: '#111' }}>৳{cartTotal.toLocaleString()}</span>
+                  <span style={{ fontWeight: '800', fontSize: '18px', color: '#111' }}>৳{cartTotal.toLocaleString('en-US')}</span>
                 </div>
                 <button onClick={() => { setCartOpen(false); router.push('/checkout'); }} style={{
                   width: '100%', background: '#111', color: '#fff', border: 'none',

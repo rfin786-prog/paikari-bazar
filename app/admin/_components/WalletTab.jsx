@@ -107,7 +107,7 @@ export default function WalletTab() {
       <div style={{ background: 'linear-gradient(135deg, #1e1b4b, #3730a3)', borderRadius: '14px', padding: '16px 20px', marginBottom: '20px', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
         <div>
           <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>মোট ওয়ালেট ব্যালেন্স</div>
-          <div style={{ color: '#fff', fontSize: '22px', fontWeight: '700' }}>৳{totalWallet.toLocaleString()}</div>
+          <div style={{ color: '#fff', fontSize: '22px', fontWeight: '700' }}>৳{totalWallet.toLocaleString('en-US')}</div>
         </div>
         <div>
           <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>মোট গ্রাহক</div>
@@ -155,7 +155,7 @@ export default function WalletTab() {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontWeight: '700', fontSize: '15px', color: (u.wallet || 0) > 0 ? '#059669' : '#9ca3af' }}>
-                        ৳{(u.wallet || 0).toLocaleString()}
+                        ৳{(u.wallet || 0).toLocaleString('en-US')}
                       </div>
                       <div style={{ fontSize: '10px', color: '#9ca3af' }}>{userTx(u.id).length} লেনদেন</div>
                     </div>
@@ -176,7 +176,7 @@ export default function WalletTab() {
               {selectedUser.shop_name && <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', marginTop: '2px' }}>🏪 {selectedUser.shop_name}</div>}
               <div style={{ marginTop: '10px', background: 'rgba(255,255,255,0.12)', borderRadius: '10px', padding: '10px 14px', display: 'inline-block' }}>
                 <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px' }}>বর্তমান ব্যালেন্স</div>
-                <div style={{ color: '#fff', fontSize: '22px', fontWeight: '700' }}>৳{(selectedUser.wallet || 0).toLocaleString()}</div>
+                <div style={{ color: '#fff', fontSize: '22px', fontWeight: '700' }}>৳{(selectedUser.wallet || 0).toLocaleString('en-US')}</div>
               </div>
             </div>
 
@@ -255,7 +255,7 @@ export default function WalletTab() {
                           </div>
                         </div>
                         <div style={{ fontWeight: '700', fontSize: '14px', color: t.type === 'credit' ? '#059669' : '#dc2626' }}>
-                          {t.type === 'credit' ? '+' : '-'}৳{Number(t.amount).toLocaleString()}
+                          {t.type === 'credit' ? '+' : '-'}৳{Number(t.amount).toLocaleString('en-US')}
                         </div>
                       </div>
                     ))}

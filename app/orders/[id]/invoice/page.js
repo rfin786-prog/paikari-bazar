@@ -12,11 +12,11 @@ const SB = {
 };
 
 const STATUS_MAP = {
-  pending:   { label: 'অপেক্ষমান' },
-  confirmed: { label: 'প্রক্রিয়াধীন' },
-  shipped:   { label: 'পাঠানো হয়েছে' },
-  delivered: { label: 'ডেলিভারি সম্পন্ন' },
-  cancelled: { label: 'বাতিল' },
+  pending:   { label: 'Pending' },
+  confirmed: { label: 'Processing' },
+  shipped:   { label: 'Shipped' },
+  delivered: { label: 'Delivered' },
+  cancelled: { label: 'Cancelled' },
 };
 
 export default function InvoicePage() {
@@ -44,14 +44,14 @@ export default function InvoicePage() {
 
   if (loading) return (
     <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#999', fontFamily: 'Hind Siliguri, sans-serif' }}>লোড হচ্ছে...</p>
+      <p style={{ color: '#999', fontFamily: 'Hind Siliguri, sans-serif' }}>Loading...</p>
     </div>
   );
 
   if (!order) return (
     <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Hind Siliguri, sans-serif' }}>
-      <p style={{ color: '#999', fontSize: 13, marginBottom: 20 }}>অর্ডারটি খুঁজে পাওয়া যায়নি।</p>
-      <Link href="/orders" style={{ color: '#ff6a00', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>← অর্ডার লিস্টে ফিরে যান</Link>
+      <p style={{ color: '#999', fontSize: 13, marginBottom: 20 }}>Order not found.</p>
+      <Link href="/orders" style={{ color: '#ff6a00', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>← Back to Order List</Link>
     </div>
   );
 
@@ -71,12 +71,12 @@ export default function InvoicePage() {
 
       {/* Action bar — hidden on print */}
       <div className="no-print" style={{ maxWidth: 640, margin: '0 auto 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'Hind Siliguri, sans-serif' }}>
-        <Link href={`/orders`} style={{ color: '#888', fontSize: 13, textDecoration: 'none' }}>← ফিরে যান</Link>
+        <Link href={`/orders`} style={{ color: '#888', fontSize: 13, textDecoration: 'none' }}>← Go Back</Link>
         <button
           onClick={handlePrint}
           style={{ background: '#ff6a00', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif' }}
         >
-          🖨️ প্রিন্ট / PDF ডাউনলোড
+          🖨️ Print / Download PDF
         </button>
       </div>
 
@@ -87,10 +87,10 @@ export default function InvoicePage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #1a1a1a', paddingBottom: 16, marginBottom: 20 }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1a1a1a', margin: 0, letterSpacing: 1 }}>RUPANJEL</h1>
-            <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>Invoice / চালান</p>
+            <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>Invoice</p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 11, color: '#aaa', margin: 0 }}>অর্ডার নম্বর</p>
+            <p style={{ fontSize: 11, color: '#aaa', margin: 0 }}>Order No.</p>
             <p style={{ fontSize: 15, fontWeight: 800, color: '#ff6a00', margin: '2px 0', fontFamily: 'monospace', letterSpacing: 1 }}>
               #{String(order.id).slice(0, 8).toUpperCase()}
             </p>
@@ -103,13 +103,13 @@ export default function InvoicePage() {
         {/* Customer + status */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, fontSize: 13 }}>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', margin: '0 0 4px' }}>গ্রাহক</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', margin: '0 0 4px' }}>Customer</p>
             <p style={{ margin: 0, color: '#1a1a1a', fontWeight: 700 }}>{order.customer_name || user?.name || '—'}</p>
             <p style={{ margin: '2px 0 0', color: '#888' }}>{order.phone || user?.phone || ''}</p>
             <p style={{ margin: '2px 0 0', color: '#888' }}>{order.delivery_address || order.address || ''}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', margin: '0 0 4px' }}>স্ট্যাটাস</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', margin: '0 0 4px' }}>Status</p>
             <p style={{ margin: 0, color: '#1a1a1a', fontWeight: 700 }}>{st.label}</p>
           </div>
         </div>
@@ -130,9 +130,9 @@ export default function InvoicePage() {
               return (
                 <tr key={i} style={{ borderBottom: '1px solid #f5f5f5' }}>
                   <td style={{ padding: '8px 0', color: '#1a1a1a' }}>{item.name}</td>
-                  <td style={{ padding: '8px 0', textAlign: 'right', color: '#888' }}>৳{Number(item.price).toLocaleString()}</td>
+                  <td style={{ padding: '8px 0', textAlign: 'right', color: '#888' }}>৳{Number(item.price).toLocaleString('en-US')}</td>
                   <td style={{ padding: '8px 0', textAlign: 'right', color: '#888' }}>×{qty}</td>
-                  <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>৳{(item.price * qty).toLocaleString()}</td>
+                  <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>৳{(item.price * qty).toLocaleString('en-US')}</td>
                 </tr>
               );
             })}
@@ -142,25 +142,25 @@ export default function InvoicePage() {
         {/* Totals */}
         <div style={{ marginLeft: 'auto', width: '60%', fontSize: 13 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#888', marginBottom: 4 }}>
-            <span>সাবটোটাল</span><span>৳{Number(order.subtotal || 0).toLocaleString()}</span>
+            <span>Subtotal</span><span>৳{Number(order.subtotal || 0).toLocaleString('en-US')}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#888', marginBottom: 8 }}>
-            <span>ডেলিভারি</span><span>{order.delivery === 0 ? 'বিনামূল্যে' : `৳${Number(order.delivery || 0).toLocaleString()}`}</span>
+            <span>Delivery</span><span>{order.delivery === 0 ? 'Free' : `৳${Number(order.delivery || 0).toLocaleString('en-US')}`}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 15, color: '#1a1a1a', borderTop: '2px solid #1a1a1a', paddingTop: 8 }}>
-            <span>সর্বমোট</span><span style={{ color: '#ff6a00' }}>৳{Number(order.total || 0).toLocaleString()}</span>
+            <span>Total</span><span style={{ color: '#ff6a00' }}>৳{Number(order.total || 0).toLocaleString('en-US')}</span>
           </div>
         </div>
 
         {/* Payment info */}
         {order.payment_method && (
           <p style={{ fontSize: 12, color: '#888', margin: '20px 0 0' }}>
-            পেমেন্ট মেথড: <strong>{order.payment_method === 'cod' ? 'ক্যাশ অন ডেলিভারি' : order.payment_method}</strong>
+            Payment Method: <strong>{order.payment_method === 'cod' ? 'Cash on Delivery' : order.payment_method}</strong>
           </p>
         )}
 
         <p style={{ fontSize: 11, color: '#ccc', textAlign: 'center', marginTop: 32, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
-          এই ইনভয়েসটি সিস্টেম জেনারেটেড — Rupanjel
+          This invoice is system-generated — Rupanjel
         </p>
       </div>
     </div>

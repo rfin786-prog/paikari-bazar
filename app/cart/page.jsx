@@ -45,7 +45,7 @@ export default function CartPage() {
   };
 
   const handleClearCart = () => {
-    if (confirm('কার্ট খালি করবেন?')) saveCart([]);
+    if (confirm('Clear the cart?')) saveCart([]);
   };
 
   const subtotal = cartItems.reduce((s, i) => s + i.price * (i.quantity || 1), 0);
@@ -120,14 +120,14 @@ export default function CartPage() {
             <button className="back-btn" onClick={() => router.back()}
               style={{ background: '#f5f5f5', border: 'none', borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer', color: '#555' }}>←</button>
             <div>
-              <h1 style={{ fontSize: 16, fontWeight: 800, color: '#1a1a1a' }}>আমার কার্ট</h1>
-              {cartItems.length > 0 && <p style={{ fontSize: 11, color: '#bbb', marginTop: 1 }}>{cartItems.length}টি পণ্য</p>}
+              <h1 style={{ fontSize: 16, fontWeight: 800, color: '#1a1a1a' }}>My Cart</h1>
+              {cartItems.length > 0 && <p style={{ fontSize: 11, color: '#bbb', marginTop: 1 }}>{cartItems.length} Products</p>}
             </div>
           </div>
           {cartItems.length > 0 && (
             <button className="clear-btn" onClick={handleClearCart}
               style={{ fontSize: 12, color: '#aaa', background: 'none', border: '1.5px solid #ebebeb', borderRadius: 8, padding: '5px 12px', cursor: 'pointer', fontWeight: 600, fontFamily: 'Hind Siliguri' }}>
-              সব মুছুন
+              Clear All
             </button>
           )}
         </div>
@@ -148,11 +148,11 @@ export default function CartPage() {
           ) : cartItems.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeUp 0.4s ease' }}>
               <div style={{ fontSize: 64, marginBottom: 16 }}>🛒</div>
-              <p style={{ fontSize: 17, fontWeight: 800, color: '#333', marginBottom: 8 }}>কার্ট খালি আছে</p>
-              <p style={{ fontSize: 13, color: '#bbb', marginBottom: 24 }}>পছন্দের পণ্য কার্টে যোগ করুন</p>
+              <p style={{ fontSize: 17, fontWeight: 800, color: '#333', marginBottom: 8 }}>Cart is Empty</p>
+              <p style={{ fontSize: 13, color: '#bbb', marginBottom: 24 }}>Add your favorite products to the cart</p>
               <button onClick={() => router.push('/products')}
                 style={{ background: '#111', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Hind Siliguri' }}>
-                পণ্য দেখুন →
+                View Products →
               </button>
             </div>
 
@@ -196,7 +196,7 @@ export default function CartPage() {
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <div>
                               <div style={{ fontSize: 16, fontWeight: 800, color: '#111', letterSpacing: -0.3 }}>
-                                ৳{itemTotal.toLocaleString('bn-BD')}
+                                ৳{itemTotal.toLocaleString('en-US')}
                               </div>
                               <div style={{ fontSize: 10, color: '#c0c0c0', fontWeight: 500, marginTop: 1 }}>
                                 ৳{item.price} × {qty}
@@ -218,7 +218,7 @@ export default function CartPage() {
 
               {/* ── Order Summary ── */}
               <div style={{ background: '#fff', borderRadius: 16, border: '1.5px solid #ebebeb', padding: '16px', marginBottom: 10, animation: 'fadeUp 0.35s ease 0.1s both' }}>
-                <p style={{ fontSize: 9, fontWeight: 800, color: '#c8c8c8', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12 }}>অর্ডার সারসংক্ষেপ</p>
+                <p style={{ fontSize: 9, fontWeight: 800, color: '#c8c8c8', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12 }}>Order Summary</p>
 
                 {cartItems.map(item => (
                   <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f5f5f5' }}>
@@ -226,22 +226,22 @@ export default function CartPage() {
                       {item.name} × {item.quantity || 1}
                     </span>
                     <span style={{ fontSize: 12, color: '#555', fontWeight: 600, flexShrink: 0 }}>
-                      ৳{(item.price * (item.quantity || 1)).toLocaleString('bn-BD')}
+                      ৳{(item.price * (item.quantity || 1)).toLocaleString('en-US')}
                     </span>
                   </div>
                 ))}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1.5px solid #f0f0f0' }}>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: '#111' }}>সাবটোটাল</span>
-                  <span style={{ fontSize: 20, fontWeight: 800, color: '#111', letterSpacing: -0.5 }}>৳{subtotal.toLocaleString('bn-BD')}</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: '#111' }}>Subtotal</span>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: '#111', letterSpacing: -0.5 }}>৳{subtotal.toLocaleString('en-US')}</span>
                 </div>
-                <p style={{ fontSize: 10, color: '#c0c0c0', marginTop: 6 }}>* ডেলিভারি চার্জ চেকআউটে যোগ হবে</p>
+                <p style={{ fontSize: 10, color: '#c0c0c0', marginTop: 6 }}>* Delivery charge will be added at checkout</p>
               </div>
 
               {/* Continue shopping */}
               <button className="continue-btn" onClick={() => router.push('/products')}
                 style={{ width: '100%', background: '#fff', border: '1.5px solid #ebebeb', borderRadius: 12, padding: '11px', fontSize: 13, fontWeight: 600, color: '#999', cursor: 'pointer', fontFamily: 'Hind Siliguri', marginBottom: 10, animation: 'fadeUp 0.35s ease 0.15s both' }}>
-                ← আরও কেনাকাটা করুন
+                ← Continue Shopping
               </button>
             </>
           )}
@@ -253,10 +253,10 @@ export default function CartPage() {
             <button className="checkout-btn" onClick={() => router.push('/checkout')}
               style={{ width: '100%', maxWidth: 560, margin: '0 auto', background: '#111', color: '#fff', border: 'none', borderRadius: 16, padding: '14px 20px', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 8px 32px rgba(0,0,0,0.18)', animation: 'slideUp 0.3s ease' }}>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{totalQty}টি পণ্য</div>
-                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>৳{subtotal.toLocaleString('bn-BD')}</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{totalQty} Products</div>
+                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>৳{subtotal.toLocaleString('en-US')}</div>
               </div>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>চেকআউট করুন →</div>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>Checkout →</div>
             </button>
           </div>
         )}

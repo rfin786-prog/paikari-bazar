@@ -242,11 +242,11 @@ export default function ProductsSection() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ fontSize: isMobile ? '14px' : '15px', fontWeight: '600', color: '#f97316', lineHeight: 1 }}>
-                        ৳{parseFloat(p.price).toLocaleString('bn-BD')}
+                        ৳{parseFloat(p.price).toLocaleString('en-US')}
                       </div>
                       {hasDiscount ? (
                         <div style={{ fontSize: '10px', color: '#bbb', textDecoration: 'line-through', marginTop: '1px' }}>
-                          ৳{parseFloat(p.mrp).toLocaleString('bn-BD')}
+                          ৳{parseFloat(p.mrp).toLocaleString('en-US')}
                         </div>
                       ) : (
                         <div style={{ fontSize: '10px', color: 'transparent' }}>—</div>

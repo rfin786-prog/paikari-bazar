@@ -167,8 +167,8 @@ export default function UsersTab() {
                 <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
                   {[
                     { label: 'অর্ডার', value: stat.orderCount },
-                    { label: 'মোট খরচ', value: `৳${stat.totalSpent.toLocaleString()}` },
-                    { label: 'ওয়ালেট', value: `৳${(u.wallet || 0).toLocaleString()}` },
+                    { label: 'মোট খরচ', value: `৳${stat.totalSpent.toLocaleString('en-US')}` },
+                    { label: 'ওয়ালেট', value: `৳${(u.wallet || 0).toLocaleString('en-US')}` },
                   ].map(item => (
                     <div key={item.label} style={{ flex: 1, background: 'rgba(255,255,255,0.12)', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
                       <div style={{ fontWeight: '700', fontSize: '15px', color: '#fff' }}>{item.value}</div>
@@ -198,7 +198,7 @@ export default function UsersTab() {
                       { icon: '🏪', label: 'দোকান', value: u.shop_name },
                       { icon: '📍', label: 'ঠিকানা', value: u.address },
                       { icon: '📅', label: 'যোগ দিয়েছেন', value: joinDate },
-                      { icon: '👛', label: 'ওয়ালেট', value: u.wallet > 0 ? `৳${u.wallet.toLocaleString()}` : null },
+                      { icon: '👛', label: 'ওয়ালেট', value: u.wallet > 0 ? `৳${u.wallet.toLocaleString('en-US')}` : null },
                     ].filter(r => r.value).map(row => (
                       <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f9fafb' }}>
                         <span style={{ fontSize: '16px', width: '24px', textAlign: 'center' }}>{row.icon}</span>
@@ -240,13 +240,13 @@ export default function UsersTab() {
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '20px', background: st.bg, color: st.color }}>{st.label}</span>
-                              <span style={{ fontWeight: '700', fontSize: '14px', color: '#1e1b4b' }}>৳{Number(o.total || 0).toLocaleString()}</span>
+                              <span style={{ fontWeight: '700', fontSize: '14px', color: '#1e1b4b' }}>৳{Number(o.total || 0).toLocaleString('en-US')}</span>
                             </div>
                           </div>
                           {items.map((item, idx) => (
                             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#374151', padding: '3px 0', borderTop: idx === 0 ? '1px solid #f3f4f6' : 'none' }}>
                               <span>{item.name} × {item.qty || item.quantity || 1}</span>
-                              <span style={{ fontWeight: '600' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
+                              <span style={{ fontWeight: '600' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString('en-US')}</span>
                             </div>
                           ))}
                         </div>
@@ -405,7 +405,7 @@ export default function UsersTab() {
                     borderRadius: '8px', padding: '5px 10px',
                     fontSize: '12px', color: '#15803d', fontWeight: '600',
                   }}>
-                    💰 ৳{stat.totalSpent.toLocaleString()}
+                    💰 ৳{stat.totalSpent.toLocaleString('en-US')}
                   </div>
                 )}
                 {u.wallet > 0 && (

@@ -79,7 +79,7 @@ function TrackingModal({ order, onClose, onUpdateStatus, onSaveNote, isUpdating 
                 {order.shop_name || userInfo.shop_name || 'অজানা'}
               </div>
               <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>
-                {formatDateTime(order.created_at)} · {items.length} টি পণ্য · ৳{Number(order.total || 0).toLocaleString()}
+                {formatDateTime(order.created_at)} · {items.length} টি পণ্য · ৳{Number(order.total || 0).toLocaleString('en-US')}
               </div>
             </div>
             <button onClick={onClose} style={{
@@ -275,12 +275,12 @@ function TrackingModal({ order, onClose, onUpdateStatus, onSaveNote, isUpdating 
                 padding: '6px 0', borderBottom: idx < items.length - 1 ? '1px solid #e5e7eb' : 'none',
               }}>
                 <span style={{ color: '#374151' }}>{item.name} × {item.qty || item.quantity || 1}</span>
-                <span style={{ fontWeight: '700', color: '#1e1b4b' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
+                <span style={{ fontWeight: '700', color: '#1e1b4b' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString('en-US')}</span>
               </div>
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '700', paddingTop: '10px', marginTop: '4px', borderTop: '2px solid #1e1b4b' }}>
               <span>সর্বমোট</span>
-              <span style={{ color: '#1e1b4b' }}>৳{Number(order.total || 0).toLocaleString()}</span>
+              <span style={{ color: '#1e1b4b' }}>৳{Number(order.total || 0).toLocaleString('en-US')}</span>
             </div>
           </div>
 
@@ -529,16 +529,16 @@ export default function OrdersTab() {
             ${items.map(item => `
               <tr>
                 <td>${item.name || ''}</td>
-                <td>৳${Number(item.price || 0).toLocaleString()}</td>
+                <td>৳${Number(item.price || 0).toLocaleString('en-US')}</td>
                 <td>${item.qty || item.quantity || 1}</td>
-                <td>৳${Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</td>
+                <td>৳${Number(item.price * (item.qty || item.quantity || 1)).toLocaleString('en-US')}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
         <div class="total-section">
           <span class="total-label">Total Amount</span>
-          <span class="total-amount">৳${Number(o.total || 0).toLocaleString()}</span>
+          <span class="total-amount">৳${Number(o.total || 0).toLocaleString('en-US')}</span>
         </div>
 
         <div class="payment-box">
@@ -655,7 +655,7 @@ export default function OrdersTab() {
                   </div>
                   {phone && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>📞 {phone}</div>}
                   <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                    {date} · {items.length} টি পণ্য · ৳{Number(o.total || 0).toLocaleString()}
+                    {date} · {items.length} টি পণ্য · ৳{Number(o.total || 0).toLocaleString('en-US')}
                   </div>
                   {address && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>📍 {address}</div>}
                 </div>
@@ -729,12 +729,12 @@ export default function OrdersTab() {
                   {items.map((item, idx) => (
                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '6px 0', borderBottom: idx < items.length - 1 ? '1px solid #e5e7eb' : 'none', color: '#111827' }}>
                       <span style={{ fontWeight: '500' }}>{item.name} × {item.qty || item.quantity || 1}</span>
-                      <span style={{ fontWeight: '700', color: '#1e1b4b' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString()}</span>
+                      <span style={{ fontWeight: '700', color: '#1e1b4b' }}>৳{Number(item.price * (item.qty || item.quantity || 1)).toLocaleString('en-US')}</span>
                     </div>
                   ))}
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '700', paddingTop: '10px', marginTop: '4px', borderTop: '2px solid #1e1b4b', color: '#111827' }}>
-                    <span>মোট</span><span style={{ color: '#1e1b4b' }}>৳{Number(o.total || 0).toLocaleString()}</span>
+                    <span>মোট</span><span style={{ color: '#1e1b4b' }}>৳{Number(o.total || 0).toLocaleString('en-US')}</span>
                   </div>
 
                   {o.note && <div style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>📝 নোট: {o.note}</div>}

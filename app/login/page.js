@@ -10,22 +10,22 @@ async function sendOTPEmail(email, otp) {
   const html = `
     <div style="font-family:sans-serif;max-width:420px;margin:0 auto;padding:24px;border:1px solid #eee;border-radius:12px;">
       <h2 style="color:#111;margin:0 0 12px;">Rupanjel</h2>
-      <p style="color:#333;font-size:14px;">আপনার পাসওয়ার্ড রিসেট করার জন্য নিচের OTP কোডটি ব্যবহার করুন:</p>
+      <p style="color:#333;font-size:14px;">Use the OTP code below to reset your password:</p>
       <div style="font-size:28px;font-weight:700;letter-spacing:6px;background:#f3f2ef;padding:14px;text-align:center;border-radius:8px;margin:16px 0;">${otp}</div>
-      <p style="color:#888;font-size:12px;">এই কোডটি ৫ মিনিটের জন্য বৈধ। কাউকে শেয়ার করবেন না।</p>
+      <p style="color:#888;font-size:12px;">This code is valid for 5 minutes. Do not share it with anyone.</p>
     </div>
   `;
   try {
     const res = await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: email, subject: 'আপনার Rupanjel OTP কোড', html }),
+      body: JSON.stringify({ to: email, subject: 'Your Rupanjel OTP Code', html }),
     });
     const data = await res.json();
     if (data.success) return { success: true };
-    return { success: false, msg: data.error || 'ইমেইল পাঠানো যায়নি' };
+    return { success: false, msg: data.error || 'Failed to send email' };
   } catch {
-    return { success: false, msg: 'ইমেইল পাঠানো যায়নি' };
+    return { success: false, msg: 'Failed to send email' };
   }
 }
 
@@ -66,9 +66,9 @@ async function verifyOTP(phone, otp) {
     { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
   );
   const data = await res.json();
-  if (!data.length) return { valid: false, msg: 'OTP ভুল' };
+  if (!data.length) return { valid: false, msg: 'Incorrect OTP' };
   const record = data[0];
-  if (new Date(record.expires_at) < new Date()) return { valid: false, msg: 'OTP মেয়াদ শেষ' };
+  if (new Date(record.expires_at) < new Date()) return { valid: false, msg: 'OTP expired' };
   // mark as used
   await fetch(`${SUPABASE_URL}/rest/v1/otp_requests?id=eq.${record.id}`, {
     method: 'PATCH',
@@ -143,7 +143,7 @@ export default function LoginPage() {
     if (!form.phone || !form.password) {
       setShakePass(false);
       setTimeout(() => setShakePass(true), 10);
-      setError('সব তথ্য পূরণ করুন');
+      setError('Please fill in all fields');
       return;
     }
     setLoading(true);
@@ -156,7 +156,7 @@ export default function LoginPage() {
       if (!data.length) {
         setShakePass(false);
         setTimeout(() => setShakePass(true), 10);
-        setError('ফোন নম্বর বা পাসওয়ার্ড ভুল');
+        setError('Incorrect phone number or password');
         setLoading(false);
         return;
       }
@@ -164,7 +164,7 @@ export default function LoginPage() {
       localStorage.setItem('user', JSON.stringify(user));
       router.push(user.role === 'admin' ? '/admin' : '/products');
     } catch {
-      setError('সমস্যা হয়েছে, আবার চেষ্টা করুন');
+      setError('Something went wrong, please try again');
       setLoading(false);
     }
   };
@@ -173,7 +173,7 @@ export default function LoginPage() {
   const handleSendOtp = async () => {
     setFpError('');
     if (!/^01[3-9]\d{8}$/.test(fpPhone)) {
-      setFpError('সঠিক ফোন নম্বর দিন (01XXXXXXXXX)');
+      setFpError('Enter a valid phone number (01XXXXXXXXX)');
       return;
     }
     setFpLoading(true);
@@ -185,13 +185,13 @@ export default function LoginPage() {
       );
       const data = await res.json();
       if (!data.length) {
-        setFpError('এই ফোন নম্বরে কোনো অ্যাকাউন্ট নেই');
+        setFpError('No account found with this phone number');
         setFpLoading(false);
         return;
       }
       const account = data[0];
       if (!account.email) {
-        setFpError('এই একাউন্টে কোনো ইমেইল যুক্ত নেই। সাপোর্টে যোগাযোগ করুন।');
+        setFpError('No email is linked to this account. Please contact support.');
         setFpLoading(false);
         return;
       }
@@ -200,7 +200,7 @@ export default function LoginPage() {
       await saveOTP(fpPhone, otp);
       const emailRes = await sendOTPEmail(account.email, otp);
       if (!emailRes.success) {
-        setFpError('ইমেইল পাঠানো যায়নি: ' + emailRes.msg);
+        setFpError('Failed to send email: ' + emailRes.msg);
         setFpLoading(false);
         return;
       }
@@ -209,7 +209,7 @@ export default function LoginPage() {
       setResendTimer(60);
       setFpOtp(['', '', '', '', '', '']);
     } catch {
-      setFpError('সমস্যা হয়েছে, আবার চেষ্টা করুন');
+      setFpError('Something went wrong, please try again');
     }
     setFpLoading(false);
   };
@@ -238,14 +238,14 @@ export default function LoginPage() {
   const handleVerifyOtp = async () => {
     setFpError('');
     const otp = fpOtp.join('');
-    if (otp.length < 6) { setFpError('৬ সংখ্যার OTP দিন'); return; }
+    if (otp.length < 6) { setFpError('Enter the 6-digit OTP'); return; }
     setFpLoading(true);
     try {
       const result = await verifyOTP(fpPhone, otp);
       if (!result.valid) { setFpError(result.msg); setFpLoading(false); return; }
       setView('forgot_reset');
     } catch {
-      setFpError('সমস্যা হয়েছে, আবার চেষ্টা করুন');
+      setFpError('Something went wrong, please try again');
     }
     setFpLoading(false);
   };
@@ -259,12 +259,12 @@ export default function LoginPage() {
       const otp = String(Math.floor(100000 + Math.random() * 900000));
       await saveOTP(fpPhone, otp);
       const emailRes = await sendOTPEmail(fpEmail, otp);
-      if (!emailRes.success) { setFpError('ইমেইল পাঠানো যায়নি: ' + emailRes.msg); setFpLoading(false); return; }
+      if (!emailRes.success) { setFpError('Failed to send email: ' + emailRes.msg); setFpLoading(false); return; }
       setResendTimer(60);
       setFpOtp(['', '', '', '', '', '']);
       otpRefs.current[0]?.focus();
     } catch {
-      setFpError('সমস্যা হয়েছে');
+      setFpError('Something went wrong');
     }
     setFpLoading(false);
   };
@@ -272,21 +272,21 @@ export default function LoginPage() {
   // ── FORGOT: নতুন পাসওয়ার্ড ──
   const handleResetPass = async () => {
     setFpError('');
-    if (fpNewPass.length < 6) { setFpError('পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে'); return; }
-    if (fpNewPass !== fpConfPass) { setFpError('পাসওয়ার্ড দুটো মিলছে না'); return; }
+    if (fpNewPass.length < 6) { setFpError('Password must be at least 6 characters'); return; }
+    if (fpNewPass !== fpConfPass) { setFpError('Passwords do not match'); return; }
     setFpLoading(true);
     try {
       const ok = await updatePassword(fpPhone, fpNewPass);
-      if (!ok) { setFpError('পাসওয়ার্ড আপডেট হয়নি, আবার চেষ্টা করুন'); setFpLoading(false); return; }
+      if (!ok) { setFpError('Password update failed, please try again'); setFpLoading(false); return; }
       // reset করে login-এ ফিরে যাও
       setView('login');
       setFpPhone(''); setFpEmail(''); setFpOtp(['','','','','','']); setFpNewPass(''); setFpConfPass('');
       setForm({ phone: fpPhone, password: '' });
       // success toast
       setError('');
-      setTimeout(() => setError('✅ পাসওয়ার্ড পরিবর্তন সফল! নতুন পাসওয়ার্ড দিয়ে লগইন করুন'), 100);
+      setTimeout(() => setError('✅ Password changed successfully! Log in with your new password'), 100);
     } catch {
-      setFpError('সমস্যা হয়েছে, আবার চেষ্টা করুন');
+      setFpError('Something went wrong, please try again');
     }
     setFpLoading(false);
   };
@@ -384,12 +384,12 @@ export default function LoginPage() {
                 <>
                   {!isMobile && (
                     <div className="fade1" onClick={() => router.push('/')} style={{ color:'rgba(0,0,0,0.45)', fontSize:'12px', cursor:'pointer', marginBottom:'32px' }}>
-                      ← হোমে যান
+                      ← Go Home
                     </div>
                   )}
 
                   <div className="fade2" style={{ marginBottom:'14px' }}>
-                    <label style={labelStyle}>ফোন নম্বর</label>
+                    <label style={labelStyle}>Phone Number</label>
                     <div className="fw" style={fieldWrapStyle}>
                       <span style={{ fontSize:'16px', color:'rgba(0,0,0,0.4)', marginRight:'8px' }}>📞</span>
                       <input type="tel" placeholder="01700000000" value={form.phone}
@@ -400,7 +400,7 @@ export default function LoginPage() {
                   </div>
 
                   <div className="fade3" style={{ marginBottom:'4px' }}>
-                    <label style={labelStyle}>পাসওয়ার্ড</label>
+                    <label style={labelStyle}>Password</label>
                     <div className={`fw${shakePass ? ' shake-anim' : ''}`} style={fieldWrapStyle}>
                       <span style={{ fontSize:'16px', color:'rgba(0,0,0,0.4)', marginRight:'8px' }}>🔒</span>
                       <input type="password" placeholder="••••••••" value={form.password}
@@ -417,21 +417,21 @@ export default function LoginPage() {
                       onClick={() => { setView('forgot_phone'); setFpPhone(form.phone); setFpError(''); }}
                       style={{ fontSize:'12px', color:'rgba(232,160,32,0.7)', cursor:'pointer' }}
                     >
-                      পাসওয়ার্ড ভুলে গেছেন?
+                      Forgot Password?
                     </span>
                   </div>
 
                   <div className="fade4">
                     <button onClick={handleSubmit} disabled={loading}
                       style={{ width:'100%', background:'#e8a020', color:'#000', border:'none', borderRadius:'10px', padding:'14px', fontSize:'15px', fontWeight:'700', cursor: loading ? 'not-allowed' : 'pointer', marginTop:'8px', fontFamily:'inherit', opacity: loading ? 0.7 : 1 }}>
-                      {loading ? <div className="spinner" /> : 'লগইন করুন'}
+                      {loading ? <div className="spinner" /> : 'Login'}
                     </button>
                   </div>
 
                   <p className="fade5" style={{ textAlign:'center', marginTop:'20px', fontSize:'13px', color:'rgba(0,0,0,0.45)' }}>
-                    অ্যাকাউন্ট নেই?{' '}
+                    Don't have an account?{' '}
                     <span onClick={() => router.push('/register')} style={{ color:'#e8a020', fontWeight:'700', cursor:'pointer' }}>
-                      নিবন্ধন করুন
+                      Register
                     </span>
                   </p>
                 </>
@@ -440,14 +440,14 @@ export default function LoginPage() {
               {/* ════ FORGOT: ফোন নম্বর ════ */}
               {view === 'forgot_phone' && (
                 <>
-                  <span className="back-link" onClick={() => setView('login')}>← লগইনে ফিরুন</span>
-                  <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>পাসওয়ার্ড রিসেট</h2>
+                  <span className="back-link" onClick={() => setView('login')}>← Back to Login</span>
+                  <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>Reset Password</h2>
                   <p style={{ color:'rgba(0,0,0,0.5)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
-                    আপনার একাউন্টের নিবন্ধিত ইমেইলে OTP পাঠানো হবে।
+                    An OTP will be sent to your registered email.
                   </p>
 
                   <div style={{ marginBottom:'14px' }}>
-                    <label style={labelStyle}>ফোন নম্বর</label>
+                    <label style={labelStyle}>Phone Number</label>
                     <div className="fw" style={fieldWrapStyle}>
                       <span style={{ fontSize:'16px', color:'rgba(0,0,0,0.4)', marginRight:'8px' }}>📞</span>
                       <input type="tel" placeholder="01700000000" value={fpPhone}
@@ -459,7 +459,7 @@ export default function LoginPage() {
                   </div>
 
                   <button onClick={handleSendOtp} disabled={fpLoading} style={btnGold}>
-                    {fpLoading ? <div className="spinner" /> : 'OTP পাঠান'}
+                    {fpLoading ? <div className="spinner" /> : 'Send OTP'}
                   </button>
                 </>
               )}
@@ -467,10 +467,10 @@ export default function LoginPage() {
               {/* ════ FORGOT: OTP ════ */}
               {view === 'forgot_otp' && (
                 <>
-                  <span className="back-link" onClick={() => setView('forgot_phone')}>← ফিরে যান</span>
-                  <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>OTP যাচাই</h2>
+                  <span className="back-link" onClick={() => setView('forgot_phone')}>← Go Back</span>
+                  <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>Verify OTP</h2>
                   <p style={{ color:'rgba(0,0,0,0.5)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
-                    <span style={{ color:'#e8a020' }}>{maskEmail(fpEmail)}</span> ইমেইলে ৬ সংখ্যার OTP পাঠানো হয়েছে।
+                    A 6-digit OTP has been sent to <span style={{ color:'#e8a020' }}>{maskEmail(fpEmail)}</span>.
                   </p>
 
                   {/* OTP boxes */}
@@ -495,16 +495,16 @@ export default function LoginPage() {
                   {/* Timer & resend */}
                   <p style={{ textAlign:'center', fontSize:'13px', color:'rgba(0,0,0,0.5)', margin:'8px 0 4px' }}>
                     {resendTimer > 0 ? (
-                      <>আবার পাঠান <span style={{ color:'#e8a020', fontWeight:'700' }}>{resendTimer}s</span></>
+                      <>Resend in <span style={{ color:'#e8a020', fontWeight:'700' }}>{resendTimer}s</span></>
                     ) : (
                       <span onClick={handleResend} style={{ color:'#e8a020', cursor:'pointer', fontWeight:'600' }}>
-                        আবার OTP পাঠান
+                        Resend OTP
                       </span>
                     )}
                   </p>
 
                   <button onClick={handleVerifyOtp} disabled={fpLoading || fpOtp.join('').length < 6} style={{ ...btnGold, opacity: fpLoading || fpOtp.join('').length < 6 ? 0.5 : 1 }}>
-                    {fpLoading ? <div className="spinner" /> : 'যাচাই করুন'}
+                    {fpLoading ? <div className="spinner" /> : 'Verify'}
                   </button>
                 </>
               )}
@@ -512,17 +512,17 @@ export default function LoginPage() {
               {/* ════ FORGOT: নতুন পাসওয়ার্ড ════ */}
               {view === 'forgot_reset' && (
                 <>
-                  <span className="back-link" onClick={() => setView('forgot_otp')}>← ফিরে যান</span>
-                  <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>নতুন পাসওয়ার্ড</h2>
+                  <span className="back-link" onClick={() => setView('forgot_otp')}>← Go Back</span>
+                  <h2 style={{ color:'#1a1a1a', fontSize:'20px', fontWeight:'700', marginBottom:'6px' }}>New Password</h2>
                   <p style={{ color:'rgba(0,0,0,0.5)', fontSize:'13px', marginBottom:'24px', lineHeight:'1.6' }}>
-                    নতুন পাসওয়ার্ড দিন।
+                    Enter your new password.
                   </p>
 
                   <div style={{ marginBottom:'14px' }}>
-                    <label style={labelStyle}>নতুন পাসওয়ার্ড</label>
+                    <label style={labelStyle}>New Password</label>
                     <div className="fw" style={fieldWrapStyle}>
                       <span style={{ fontSize:'16px', color:'rgba(0,0,0,0.4)', marginRight:'8px' }}>🔒</span>
-                      <input type="password" placeholder="কমপক্ষে ৬ অক্ষর" value={fpNewPass}
+                      <input type="password" placeholder="At least 6 characters" value={fpNewPass}
                         onChange={e => setFpNewPass(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleResetPass()}
                         style={inputStyle} />
@@ -530,10 +530,10 @@ export default function LoginPage() {
                   </div>
 
                   <div style={{ marginBottom:'8px' }}>
-                    <label style={labelStyle}>পাসওয়ার্ড নিশ্চিত করুন</label>
+                    <label style={labelStyle}>Confirm Password</label>
                     <div className="fw" style={fieldWrapStyle}>
                       <span style={{ fontSize:'16px', color:'rgba(0,0,0,0.4)', marginRight:'8px' }}>🔒</span>
-                      <input type="password" placeholder="আবার দিন" value={fpConfPass}
+                      <input type="password" placeholder="Re-enter password" value={fpConfPass}
                         onChange={e => setFpConfPass(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleResetPass()}
                         style={inputStyle} />
@@ -556,7 +556,7 @@ export default function LoginPage() {
                   )}
 
                   <button onClick={handleResetPass} disabled={fpLoading} style={btnGold}>
-                    {fpLoading ? <div className="spinner" /> : 'পাসওয়ার্ড পরিবর্তন করুন'}
+                    {fpLoading ? <div className="spinner" /> : 'Change Password'}
                   </button>
                 </>
               )}

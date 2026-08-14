@@ -6,19 +6,19 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const STATUS = {
-  pending:    { label: 'অপেক্ষমান',      color: '#8a5a13', bg: '#faf0dc', dot: '#c8912f' },
-  processing: { label: 'প্রক্রিয়াধীন',   color: '#2c5f78', bg: '#e2f0f3', dot: '#3d90ae' },
-  confirmed:  { label: 'প্রক্রিয়াধীন',   color: '#2c5f78', bg: '#e2f0f3', dot: '#3d90ae' },
-  shipped:    { label: 'পাঠানো হয়েছে',   color: '#5c4a7a', bg: '#eee8f5', dot: '#8168ab' },
-  delivered:  { label: 'ডেলিভারি হয়েছে', color: '#2f5f3f', bg: '#e5f2e6', dot: '#4f8b5f' },
-  cancelled:  { label: 'বাতিল',           color: '#8c2f2f', bg: '#f7e6e6', dot: '#b34a4a' },
+  pending:    { label: 'Pending',      color: '#8a5a13', bg: '#faf0dc', dot: '#c8912f' },
+  processing: { label: 'Processing',   color: '#2c5f78', bg: '#e2f0f3', dot: '#3d90ae' },
+  confirmed:  { label: 'Processing',   color: '#2c5f78', bg: '#e2f0f3', dot: '#3d90ae' },
+  shipped:    { label: 'Shipped',   color: '#5c4a7a', bg: '#eee8f5', dot: '#8168ab' },
+  delivered:  { label: 'Delivered', color: '#2f5f3f', bg: '#e5f2e6', dot: '#4f8b5f' },
+  cancelled:  { label: 'Cancelled',           color: '#8c2f2f', bg: '#f7e6e6', dot: '#b34a4a' },
 };
 
 const TIMELINE_STEPS = [
-  { value: 'pending',   label: 'অর্ডার দেওয়া হয়েছে', icon: '📋', sub: 'আপনার অর্ডারটি গ্রহণ করা হয়েছে' },
-  { value: 'confirmed', label: 'প্রক্রিয়াধীন',         icon: '⚙️', sub: 'অর্ডারটি যাচাই ও প্যাক করা হচ্ছে' },
-  { value: 'shipped',   label: 'মাল পাঠানো হয়েছে',    icon: '🚚', sub: 'পণ্যটি কুরিয়ারে বা ডেলিভারিতে আছে' },
-  { value: 'delivered', label: 'ডেলিভারি সম্পন্ন',    icon: '✅', sub: 'আপনি পণ্যটি হাতে পেয়েছেন' },
+  { value: 'pending',   label: 'Order Placed', icon: '📋', sub: 'Your order has been received' },
+  { value: 'confirmed', label: 'Processing',         icon: '⚙️', sub: 'Your order is being verified and packed' },
+  { value: 'shipped',   label: 'Shipped',    icon: '🚚', sub: 'Your product is with the courier or on the way' },
+  { value: 'delivered', label: 'Delivered',    icon: '✅', sub: 'You have received the product' },
 ];
 const STEP_ORDER = ['pending', 'confirmed', 'shipped', 'delivered'];
 
@@ -39,11 +39,11 @@ function PasswordStrength({ password }) {
   if (/[^A-Za-z0-9]/.test(password)) strength++;
 
   const levels = [
-    { label: 'খুব দুর্বল', color: '#b34a4a' },
-    { label: 'দুর্বল',     color: '#c8802f' },
-    { label: 'মধ্যম',      color: '#c8912f' },
-    { label: 'ভালো',       color: '#6a9b5e' },
-    { label: 'শক্তিশালী', color: '#4f8b5f' },
+    { label: 'Very Weak', color: '#b34a4a' },
+    { label: 'Weak',     color: '#c8802f' },
+    { label: 'Medium',      color: '#c8912f' },
+    { label: 'Good',       color: '#6a9b5e' },
+    { label: 'Strong', color: '#4f8b5f' },
   ];
   const lvl = levels[Math.min(strength, 4)];
 
@@ -68,7 +68,7 @@ function TrackingTimeline({ order }) {
   if (order.status === 'cancelled') {
     return (
       <div style={{ marginTop: '16px', padding: '14px 16px', background: '#f7e6e6', borderRadius: '10px', border: '1px solid #e3bcbc' }}>
-        <div style={{ fontSize: '13px', fontWeight: '700', color: '#8c2f2f' }}>❌ এই অর্ডারটি বাতিল করা হয়েছে</div>
+        <div style={{ fontSize: '13px', fontWeight: '700', color: '#8c2f2f' }}>❌ This order has been cancelled</div>
       </div>
     );
   }
@@ -91,7 +91,7 @@ function TrackingTimeline({ order }) {
   return (
     <div style={{ marginTop: '16px', padding: '16px', background: '#faf7f0', borderRadius: '12px', border: '1px solid #ece1cb' }}>
       <div style={{ fontSize: '11px', fontWeight: '700', color: '#8a7f6e', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '16px' }}>
-        অর্ডার ট্র্যাকিং
+        Order Tracking
       </div>
       {TIMELINE_STEPS.map((step, idx) => {
         const isDone = idx <= currentStepIdx;
@@ -134,7 +134,7 @@ function TrackingTimeline({ order }) {
                   📅 {formatDateTime(displayTime)}
                 </div>
               )}
-              {isPending && <div style={{ fontSize: '11px', color: '#a99e8c', marginTop: '2px' }}>অপেক্ষমান</div>}
+              {isPending && <div style={{ fontSize: '11px', color: '#a99e8c', marginTop: '2px' }}>Pending</div>}
               {isDone && <div style={{ fontSize: '12px', color: '#8a7f6e', marginTop: '2px' }}>{step.sub}</div>}
               {noteText && (
                 <div style={{
@@ -142,7 +142,7 @@ function TrackingTimeline({ order }) {
                   borderLeft: '3px solid #b8862e', borderRadius: '8px', padding: '8px 10px',
                   fontSize: '12px', color: '#4a4238',
                 }}>
-                  <span style={{ fontSize: '10px', fontWeight: '700', color: '#a99e8c', display: 'block', marginBottom: '2px' }}>নোট</span>
+                  <span style={{ fontSize: '10px', fontWeight: '700', color: '#a99e8c', display: 'block', marginBottom: '2px' }}>Note</span>
                   {noteText}
                 </div>
               )}
@@ -300,7 +300,7 @@ export default function Dashboard() {
       qty: item.qty || item.quantity || 1,
     }));
     localStorage.setItem('cart', JSON.stringify(cartItems));
-    setReorderToast('✅ কার্টে যোগ হয়েছে! চেকআউটে যাচ্ছে...');
+    setReorderToast('✅ Added to cart! Redirecting to checkout...');
     setTimeout(() => {
       setReorderToast('');
       router.push('/checkout');
@@ -320,29 +320,29 @@ export default function Dashboard() {
   };
 
   const passMessages = {
-    empty:    '❌ সব ঘর পূরণ করুন',
-    wrong:    '❌ বর্তমান পাসওয়ার্ড ভুল',
-    mismatch: '❌ নতুন পাসওয়ার্ড মিলছে না',
-    short:    '❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে',
-    success:  '✅ পাসওয়ার্ড পরিবর্তন হয়েছে',
-    error:    '❌ সমস্যা হয়েছে',
+    empty:    '❌ Please fill in all fields',
+    wrong:    '❌ Current password is incorrect',
+    mismatch: '❌ New passwords do not match',
+    short:    '❌ Password must be at least 6 characters',
+    success:  '✅ Password changed successfully',
+    error:    '❌ Something went wrong',
   };
 
   const avatarLetter = user?.name?.[0] || user?.phone?.[0] || '?';
   const addressIncomplete = user && (!user.district || !user.thana || !user.address);
 
   const filterOptions = [
-    { value: 'all',       label: 'সব' },
-    { value: 'active',    label: 'চলমান' },
-    { value: 'delivered', label: 'ডেলিভারি' },
-    { value: 'cancelled', label: 'বাতিল' },
+    { value: 'all',       label: 'All' },
+    { value: 'active',    label: 'Active' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'cancelled', label: 'Cancelled' },
   ];
 
   const tabList = [
-    ['orders',   '📦', 'আমার অর্ডার'],
+    ['orders',   '📦', 'My Orders'],
     ['account',  '👤', 'Account Info'],
-    ['address',  '📍', 'ঠিকানা'],
-    ['password', '🔒', 'পাসওয়ার্ড'],
+    ['address',  '📍', 'Address'],
+    ['password', '🔒', 'Password'],
   ];
 
   return (
@@ -509,13 +509,13 @@ export default function Dashboard() {
             <div className="user-hero">
               <div className="avatar">{avatarLetter}</div>
               <div style={{ flex: 1 }}>
-                <div className="user-info-name">{user.name || 'ব্যবহারকারী'}</div>
+                <div className="user-info-name">{user.name || 'User'}</div>
                 <div className="user-info-sub">
                   {user.phone}
                   {user.shop_name && <span>{user.shop_name}</span>}
                 </div>
               </div>
-              <button className="btn-logout" onClick={logout}>লগআউট</button>
+              <button className="btn-logout" onClick={logout}>Logout</button>
             </div>
           )}
 
@@ -533,7 +533,7 @@ export default function Dashboard() {
               {addressIncomplete && (
                 <div className="address-warning" onClick={() => setTab('address')}>
                   <span style={{ fontSize: '17px' }}>⚠️</span>
-                  <span>ডেলিভারি ঠিকানা অসম্পূর্ণ! অর্ডার দেওয়ার আগে ঠিকানা পূরণ করুন →</span>
+                  <span>Delivery address incomplete! Please fill it in before placing an order →</span>
                 </div>
               )}
 
@@ -556,16 +556,16 @@ export default function Dashboard() {
               )}
 
               {ordersLoading ? (
-                <div className="loading-state">লোড হচ্ছে...</div>
+                <div className="loading-state">Loading...</div>
               ) : filteredOrders.length === 0 ? (
                 <div className="card">
                   <div className="empty-state">
                     <div className="empty-icon">📦</div>
                     <p className="empty-text">
-                      {orders.length === 0 ? 'এখনো কোনো অর্ডার নেই' : 'এই ক্যাটাগরিতে কোনো অর্ডার নেই'}
+                      {orders.length === 0 ? 'No orders yet' : 'No orders in this category'}
                     </p>
                     {orders.length === 0 && (
-                      <button className="btn-primary" style={{ width: 'auto', padding: '11px 28px', marginTop: 0 }} onClick={() => router.push('/products')}>পণ্য দেখুন</button>
+                      <button className="btn-primary" style={{ width: 'auto', padding: '11px 28px', marginTop: 0 }} onClick={() => router.push('/products')}>View Products</button>
                     )}
                   </div>
                 </div>
@@ -595,10 +595,10 @@ export default function Dashboard() {
                           </span>
                         </div>
                         <div className="order-date">{date}</div>
-                        <div style={{ fontSize: '12px', color: '#a99e8c' }}>{items.length} টি পণ্য</div>
+                        <div style={{ fontSize: '12px', color: '#a99e8c' }}>{items.length} Products</div>
                       </div>
                       <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                        <div className="order-amount">৳{Number(order.total || 0).toLocaleString()}</div>
+                        <div className="order-amount">৳{Number(order.total || 0).toLocaleString('en-US')}</div>
                       </div>
                     </div>
 
@@ -606,17 +606,17 @@ export default function Dashboard() {
 
                     <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '8px', flexWrap: 'wrap' }}>
                       <button className="expand-btn" style={{ marginTop: 0 }} onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
-                        {isExpanded ? '▲ কম দেখুন' : '▼ বিস্তারিত ও ট্র্যাকিং'}
+                        {isExpanded ? '▲ Show Less' : '▼ Details & Tracking'}
                       </button>
                       <button
                         className="invoice-btn"
                         onClick={() => router.push(`/orders/${order.id}/invoice`)}
                       >
-                        🧾 ইনভয়েস
+                        🧾 Invoice
                       </button>
                       {items.length > 0 && (
                         <button className="reorder-btn" onClick={() => handleReorder(order)}>
-                          🔄 আবার অর্ডার করুন
+                          🔄 Reorder
                         </button>
                       )}
                     </div>
@@ -635,15 +635,15 @@ export default function Dashboard() {
                           return (
                             <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px', padding: '7px 0', borderBottom: i < items.length - 1 ? '1px dashed #ece1cb' : 'none', alignItems: 'center' }}>
                               <span style={{ fontSize: '13px', color: '#4a4238' }}>{item.emoji || ''} {item.name}</span>
-                              <span style={{ fontSize: '13px', color: '#8a7f6e', textAlign: 'right' }}>৳{Number(item.price).toLocaleString()}</span>
+                              <span style={{ fontSize: '13px', color: '#8a7f6e', textAlign: 'right' }}>৳{Number(item.price).toLocaleString('en-US')}</span>
                               <span style={{ fontSize: '13px', color: '#8a7f6e', textAlign: 'center', background: '#f4efe3', borderRadius: '6px', padding: '2px 8px' }}>×{qty}</span>
-                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#241f1b', textAlign: 'right' }}>৳{total.toLocaleString()}</span>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#241f1b', textAlign: 'right' }}>৳{total.toLocaleString('en-US')}</span>
                             </div>
                           );
                         })}
                         <div className="detail-total">
                           <span>Total</span>
-                          <span>৳{Number(order.total || 0).toLocaleString()}</span>
+                          <span>৳{Number(order.total || 0).toLocaleString('en-US')}</span>
                         </div>
                       </div>
                     )}
@@ -688,40 +688,40 @@ export default function Dashboard() {
           {/* Address Tab */}
           {tab === 'address' && (
             <div className="form-card">
-              <div className="form-title">📍 ডেলিভারি ঠিকানা</div>
+              <div className="form-title">📍 Delivery Address</div>
               {addressMsg && (
                 <div className={`alert ${addressMsg === 'success' ? 'success' : 'error'}`}>
-                  {addressMsg === 'success' ? '✅ ঠিকানা সেভ হয়েছে' : '❌ সমস্যা হয়েছে'}
+                  {addressMsg === 'success' ? '✅ Address saved' : '❌ Something went wrong'}
                 </div>
               )}
               <div style={{ display: 'grid', gap: '14px' }}>
                 <div>
-                  <label className="label">দোকানের নাম</label>
-                  <input className="inp" value={address.shop_name || ''} onChange={e => setAddress({ ...address, shop_name: e.target.value })} placeholder="দোকানের নাম লিখুন" />
+                  <label className="label">Shop Name</label>
+                  <input className="inp" value={address.shop_name || ''} onChange={e => setAddress({ ...address, shop_name: e.target.value })} placeholder="Enter shop name" />
                 </div>
                 <div>
-                  <label className="label">ফোন নম্বর</label>
+                  <label className="label">Phone Number</label>
                   <input className="inp" value={address.phone || ''} onChange={e => setAddress({ ...address, phone: e.target.value })} placeholder="01XXXXXXXXX" />
                 </div>
                 <div className="grid2">
                   <div>
-                    <label className="label">জেলা</label>
+                    <label className="label">District</label>
                     <select className="inp" value={address.district || ''} onChange={e => setAddress({ ...address, district: e.target.value })}>
-                      <option value="">জেলা বাছুন</option>
-                      {['ঢাকা','চট্টগ্রাম','রাজশাহী','সিলেট','খুলনা','বরিশাল','ময়মনসিংহ','রংপুর'].map(d => <option key={d}>{d}</option>)}
+                      <option value="">Select District</option>
+                      {['Dhaka','Chattogram','Rajshahi','Sylhet','Khulna','Barishal','Mymensingh','Rangpur'].map(d => <option key={d}>{d}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="label">থানা</label>
-                    <input className="inp" value={address.thana || ''} onChange={e => setAddress({ ...address, thana: e.target.value })} placeholder="থানার নাম" />
+                    <label className="label">Thana</label>
+                    <input className="inp" value={address.thana || ''} onChange={e => setAddress({ ...address, thana: e.target.value })} placeholder="Thana name" />
                   </div>
                 </div>
                 <div>
-                  <label className="label">পূর্ণ ঠিকানা</label>
-                  <textarea className="inp" style={{ height: '88px', resize: 'none' }} value={address.address || ''} onChange={e => setAddress({ ...address, address: e.target.value })} placeholder="বাড়ি নম্বর / রাস্তা / এলাকা" />
+                  <label className="label">Full Address</label>
+                  <textarea className="inp" style={{ height: '88px', resize: 'none' }} value={address.address || ''} onChange={e => setAddress({ ...address, address: e.target.value })} placeholder="House No. / Road / Area" />
                 </div>
                 <button className="btn-primary" onClick={saveAddress} disabled={addressLoading}>
-                  {addressLoading ? 'সেভ হচ্ছে...' : 'ঠিকানা সেভ করুন'}
+                  {addressLoading ? 'Saving...' : 'Save Address'}
                 </button>
               </div>
             </div>
@@ -730,7 +730,7 @@ export default function Dashboard() {
           {/* Password Tab */}
           {tab === 'password' && (
             <div className="form-card">
-              <div className="form-title">🔒 পাসওয়ার্ড পরিবর্তন</div>
+              <div className="form-title">🔒 Change Password</div>
               {passMsg && (
                 <div className={`alert ${passMsg === 'success' ? 'success' : 'error'}`}>
                   {passMessages[passMsg]}
@@ -738,25 +738,25 @@ export default function Dashboard() {
               )}
               <div style={{ display: 'grid', gap: '14px' }}>
                 <div>
-                  <label className="label">বর্তমান পাসওয়ার্ড</label>
-                  <input type="password" className="inp" value={passwords.current} onChange={e => setPasswords({ ...passwords, current: e.target.value })} placeholder="বর্তমান পাসওয়ার্ড দিন" />
+                  <label className="label">Current Password</label>
+                  <input type="password" className="inp" value={passwords.current} onChange={e => setPasswords({ ...passwords, current: e.target.value })} placeholder="Enter current password" />
                 </div>
                 <div>
-                  <label className="label">নতুন পাসওয়ার্ড</label>
-                  <input type="password" className="inp" value={passwords.newPass} onChange={e => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="কমপক্ষে ৬ অক্ষর" />
+                  <label className="label">New Password</label>
+                  <input type="password" className="inp" value={passwords.newPass} onChange={e => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="At least 6 characters" />
                   <PasswordStrength password={passwords.newPass} />
                 </div>
                 <div>
-                  <label className="label">পাসওয়ার্ড নিশ্চিত করুন</label>
-                  <input type="password" className="inp" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="আবার পাসওয়ার্ড দিন" />
+                  <label className="label">Confirm Password</label>
+                  <input type="password" className="inp" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="Re-enter password" />
                   {passwords.confirm && passwords.newPass && (
                     <div style={{ marginTop: '6px', fontSize: '12px', fontWeight: '600', color: passwords.confirm === passwords.newPass ? '#2f5f3f' : '#8c2f2f' }}>
-                      {passwords.confirm === passwords.newPass ? '✅ পাসওয়ার্ড মিলছে' : '❌ পাসওয়ার্ড মিলছে না'}
+                      {passwords.confirm === passwords.newPass ? '✅ Passwords match' : '❌ Passwords do not match'}
                     </div>
                   )}
                 </div>
                 <button className="btn-primary" onClick={changePassword} disabled={passLoading}>
-                  {passLoading ? 'পরিবর্তন হচ্ছে...' : 'পাসওয়ার্ড পরিবর্তন করুন'}
+                  {passLoading ? 'Updating...' : 'Change Password'}
                 </button>
               </div>
             </div>

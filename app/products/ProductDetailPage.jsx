@@ -143,7 +143,7 @@ export default function ProductDetailPage() {
         {/* Header */}
         <div style={{ background: '#fff', borderBottom: '1px solid #ebebeb', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 1px 8px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button className="back-btn" onClick={() => router.back()}>←</button>
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>পণ্যের বিবরণ</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>Product Description</span>
           {cartCount > 0 && (
             <button onClick={() => router.push('/cart')}
               style={{ background: '#111', border: 'none', borderRadius: 10, padding: '7px 14px', fontSize: 12, fontWeight: 700, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Hind Siliguri, sans-serif' }}>
@@ -166,10 +166,10 @@ export default function ProductDetailPage() {
         ) : !product ? (
           <div style={{ textAlign: 'center', padding: '100px 20px' }}>
             <div style={{ fontSize: 56, marginBottom: 16 }}>😕</div>
-            <p style={{ fontSize: 16, fontWeight: 700, color: '#555', marginBottom: 16 }}>পণ্য পাওয়া যায়নি</p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#555', marginBottom: 16 }}>Product Not Found</p>
             <button onClick={() => router.push('/products')}
               style={{ background: '#111', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Hind Siliguri, sans-serif' }}>
-              সব পণ্য দেখুন
+              View All Products
             </button>
           </div>
         ) : (
@@ -188,7 +188,7 @@ export default function ProductDetailPage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
                     <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                    <span style={{ fontSize: 12, color: '#ccc' }}>ছবি নেই</span>
+                    <span style={{ fontSize: 12, color: '#ccc' }}>No Image</span>
                   </div>
                 )}
                 {discount && !outOfStock && (
@@ -196,7 +196,7 @@ export default function ProductDetailPage() {
                 )}
                 {outOfStock && (
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ background: '#333', color: '#fff', fontSize: 14, fontWeight: 800, padding: '8px 20px', borderRadius: 20 }}>স্টক শেষ</span>
+                    <span style={{ background: '#333', color: '#fff', fontSize: 14, fontWeight: 800, padding: '8px 20px', borderRadius: 20 }}>Out of Stock</span>
                   </div>
                 )}
               </div>
@@ -234,20 +234,20 @@ export default function ProductDetailPage() {
               {/* Price */}
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 14 }}>
                 <span style={{ fontSize: 28, fontWeight: 800, color: outOfStock ? '#bbb' : '#e8192c' }}>
-                  ৳{product.price?.toLocaleString('bn-BD')}
+                  ৳{product.price?.toLocaleString('en-US')}
                 </span>
                 {product.mrp && product.mrp > product.price && (
                   <span style={{ fontSize: 15, color: '#bbb', textDecoration: 'line-through', fontWeight: 500 }}>
-                    ৳{product.mrp?.toLocaleString('bn-BD')}
+                    ৳{product.mrp?.toLocaleString('en-US')}
                   </span>
                 )}
-                {discount && <span style={{ fontSize: 13, color: '#22c55e', fontWeight: 700 }}>{discount}% ছাড়</span>}
+                {discount && <span style={{ fontSize: 13, color: '#22c55e', fontWeight: 700 }}>{discount}% Off</span>}
               </div>
 
               {/* Cart Action */}
               {outOfStock ? (
                 <div style={{ background: '#f3f4f6', borderRadius: 14, padding: 14, textAlign: 'center', color: '#aaa', fontWeight: 700, fontSize: 14 }}>
-                  স্টক শেষ হয়ে গেছে
+                  Out of Stock
                 </div>
               ) : inCart ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -258,12 +258,12 @@ export default function ProductDetailPage() {
                   </div>
                   <button onClick={() => router.push('/cart')}
                     style={{ background: '#f5f5f5', color: '#111', border: 'none', borderRadius: 14, height: 48, padding: '0 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Hind Siliguri, sans-serif' }}>
-                    কার্ট →
+                    Cart →
                   </button>
                 </div>
               ) : (
                 <button className="add-to-cart-btn" onClick={handleAdd}>
-                  <span>🛒</span> কার্টে যোগ করুন
+                  <span>🛒</span> Add to Cart
                 </button>
               )}
             </div>
@@ -271,7 +271,7 @@ export default function ProductDetailPage() {
             {/* Description */}
             {product.description && (
               <div style={{ background: '#fff', borderRadius: 18, padding: '16px', marginBottom: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-                <h2 style={{ fontSize: 14, fontWeight: 800, color: '#111', marginBottom: 10 }}>📋 বিস্তারিত</h2>
+                <h2 style={{ fontSize: 14, fontWeight: 800, color: '#111', marginBottom: 10 }}>📋 Details</h2>
                 <p style={{ fontSize: 13, color: '#555', lineHeight: 1.75, whiteSpace: 'pre-line' }}>{product.description}</p>
               </div>
             )}
@@ -279,13 +279,13 @@ export default function ProductDetailPage() {
             {/* Extra info */}
             {(product.sku || product.weight || product.unit || product.brand) && (
               <div style={{ background: '#fff', borderRadius: 18, padding: '16px', marginBottom: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-                <h2 style={{ fontSize: 14, fontWeight: 800, color: '#111', marginBottom: 12 }}>ℹ️ তথ্য</h2>
+                <h2 style={{ fontSize: 14, fontWeight: 800, color: '#111', marginBottom: 12 }}>ℹ️ Information</h2>
                 {[
-                  product.brand    && ['ব্র্যান্ড', product.brand],
-                  product.category && ['ক্যাটাগরি', product.category],
+                  product.brand    && ['Brand', product.brand],
+                  product.category && ['Category', product.category],
                   product.sku      && ['SKU', product.sku],
-                  product.weight   && ['ওজন', product.weight],
-                  product.unit     && ['ইউনিট', product.unit],
+                  product.weight   && ['Weight', product.weight],
+                  product.unit     && ['Unit', product.unit],
                 ].filter(Boolean).map(([label, value]) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
                     <span style={{ fontSize: 13, color: '#888' }}>{label}</span>
@@ -298,7 +298,7 @@ export default function ProductDetailPage() {
             {/* Related Products */}
             {related.length > 0 && (
               <div style={{ marginBottom: 20 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 800, color: '#111', marginBottom: 12 }}>🔗 একই ক্যাটাগরির পণ্য</h2>
+                <h2 style={{ fontSize: 15, fontWeight: 800, color: '#111', marginBottom: 12 }}>🔗 Related Products</h2>
                 <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
                   {related.map(rel => {
                     const relDisc = rel.mrp && rel.mrp > rel.price ? Math.round((1 - rel.price / rel.mrp) * 100) : null;
@@ -317,7 +317,7 @@ export default function ProductDetailPage() {
                         </div>
                         <div style={{ padding: '8px 10px 10px' }}>
                           <p style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.4, marginBottom: 5, minHeight: 34 }}>{rel.name}</p>
-                          <span style={{ fontSize: 13, fontWeight: 800, color: '#e8192c' }}>৳{rel.price?.toLocaleString('bn-BD')}</span>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: '#e8192c' }}>৳{rel.price?.toLocaleString('en-US')}</span>
                         </div>
                       </div>
                     );
@@ -336,11 +336,11 @@ export default function ProductDetailPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>🛒</div>
                 <div>
-                  <div style={{ fontSize: 10, opacity: 0.6 }}>{cartCount}টি পণ্য</div>
-                  <div style={{ fontSize: 15, fontWeight: 800 }}>৳{cartTotal.toLocaleString('bn-BD')}</div>
+                  <div style={{ fontSize: 10, opacity: 0.6 }}>{cartCount} Products</div>
+                  <div style={{ fontSize: 15, fontWeight: 800 }}>৳{cartTotal.toLocaleString('en-US')}</div>
                 </div>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>কার্ট দেখুন →</div>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>View Cart →</div>
             </button>
           </div>
         )}

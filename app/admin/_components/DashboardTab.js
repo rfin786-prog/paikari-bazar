@@ -48,7 +48,7 @@ export default function DashboardTab({ setTab }) {
     { label: 'মোট অর্ডার', value: stats.orders, icon: '🛒', color: '#818cf8', bg: 'rgba(129,140,248,.12)' },
     { label: 'মোট পণ্য', value: stats.products, icon: '📦', color: '#34d399', bg: 'rgba(52,211,153,.12)' },
     { label: 'মোট গ্রাহক', value: stats.users, icon: '👥', color: '#fbbf24', bg: 'rgba(251,191,36,.12)' },
-    { label: 'মোট বিক্রি', value: `৳${stats.revenue.toLocaleString('bn-BD')}`, icon: '💰', color: '#f472b6', bg: 'rgba(244,114,182,.12)' },
+    { label: 'মোট বিক্রি', value: `৳${stats.revenue.toLocaleString('en-US')}`, icon: '💰', color: '#f472b6', bg: 'rgba(244,114,182,.12)' },
   ];
 
   const getStatus = (val) => STATUS_OPTIONS.find(s => s.value === val) || { label: val, color: '#888', bg: '#eee' };
@@ -129,7 +129,7 @@ export default function DashboardTab({ setTab }) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{ fontSize: '13px', fontWeight: '700', color: '#34d399' }}>
-                      ৳{parseFloat(order.total || 0).toLocaleString('bn-BD')}
+                      ৳{parseFloat(order.total || 0).toLocaleString('en-US')}
                     </span>
                     <span style={{ fontSize: '11px', fontWeight: '600', color: st.color, background: st.bg, padding: '3px 10px', borderRadius: '20px' }}>
                       {st.label}

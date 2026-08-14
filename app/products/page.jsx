@@ -169,7 +169,7 @@ function ProductsPageContent() {
       const matched = subcategories.some(s => s.id === p.sub_category_id);
       if (!matched) noSubcat.push(p);
     });
-    if (noSubcat.length > 0) groups['অন্যান্য'] = { items: noSubcat, sub: null };
+    if (noSubcat.length > 0) groups['Others'] = { items: noSubcat, sub: null };
     return groups;
   }, [products, activeCategory, activeSubcat, activeAge, subcategories]);
 
@@ -340,7 +340,7 @@ function ProductsPageContent() {
           }
           {outOfStock && (
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ background: '#333', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 12px', borderRadius: 20 }}>Stock নই</span>
+              <span style={{ background: '#333', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 12px', borderRadius: 20 }}>Out of Stock</span>
             </div>
           )}
           {!outOfStock && (
@@ -373,9 +373,9 @@ function ProductsPageContent() {
         <div style={{ padding: '10px 10px 12px' }}>
           <div style={{ marginBottom: 5 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 16, fontWeight: 800, color: '#e8192c' }}>৳{p.price?.toLocaleString('bn-BD')}</span>
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#e8192c' }}>৳{p.price?.toLocaleString('en-US')}</span>
               {p.mrp && p.mrp > p.price && (
-                <span style={{ fontSize: 12, color: '#aaa', textDecoration: 'line-through', fontWeight: 500 }}>৳{p.mrp?.toLocaleString('bn-BD')}</span>
+                <span style={{ fontSize: 12, color: '#aaa', textDecoration: 'line-through', fontWeight: 500 }}>৳{p.mrp?.toLocaleString('en-US')}</span>
               )}
             </div>
             {discount && (
@@ -555,7 +555,7 @@ function ProductsPageContent() {
                   border: `1.5px solid ${!activeAge ? '#c9a961' : '#e0e0e0'}`,
                   background: !activeAge ? '#c9a961' : '#fff',
                   color: !activeAge ? '#111' : '#888' }}>
-                সব বয়স
+                All Ages
               </button>
               {ageOptions.map(age => (
                 <button key={age.id} className="subcat-chip" onClick={() => handleAgeClick(age)}
@@ -579,8 +579,8 @@ function ProductsPageContent() {
           ) : Object.keys(groupedProducts).length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeUp 0.4s ease' }}>
               <div style={{ fontSize: 48, marginBottom: 14 }}>📦</div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 6 }}>কোনো পণ্য পাওয়া যায়নি</p>
-              <p style={{ fontSize: 12, color: '#bbb' }}>অন্য ক্যাটাগরি চেষ্টা করুন</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 6 }}>No Products Found</p>
+              <p style={{ fontSize: 12, color: '#bbb' }}>Try a different category</p>
             </div>
           ) : (
             Object.entries(groupedProducts).map(([subcatName, { items }]) => (
@@ -589,7 +589,7 @@ function ProductsPageContent() {
                 style={{ marginBottom: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <h2 style={{ fontSize: 16, fontWeight: 800, color: '#111', letterSpacing: -0.3 }}>{subcatName}</h2>
-                  <span style={{ fontSize: 11, color: '#bbb', fontWeight: 600 }}>{items.length}টি পণ্য</span>
+                  <span style={{ fontSize: 11, color: '#bbb', fontWeight: 600 }}>{items.length} Products</span>
                 </div>
                 <div style={{
                   display: 'grid',
@@ -644,7 +644,7 @@ export default function ProductsPage() {
       <div style={{ minHeight: '100vh', background: '#f7f7f7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Hind Siliguri, sans-serif', color: '#bbb', fontSize: 14 }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 28, marginBottom: 10 }}>⏳</div>
-          <p>লোড হচ্ছে...</p>
+          <p>Loading...</p>
         </div>
       </div>
     }>

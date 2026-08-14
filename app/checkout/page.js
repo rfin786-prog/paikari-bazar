@@ -185,11 +185,11 @@ export default function CheckoutPage() {
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontSize: '13px', color: '#888' }}>Total</span>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: '#22c55e' }}>৳{Number(orderSuccess.total || grandTotal).toLocaleString()}</span>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: '#22c55e' }}>৳{Number(orderSuccess.total || grandTotal).toLocaleString('en-US')}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontSize: '13px', color: '#888' }}>Platform Fee</span>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: '#111' }}>৳{platformFee.toLocaleString()}</span>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: '#111' }}>৳{platformFee.toLocaleString('en-US')}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '13px', color: '#888' }}>Status</span>
@@ -300,7 +300,7 @@ export default function CheckoutPage() {
                 </button>
               </div>
               <div style={{ color: '#111', fontSize: '13px', fontWeight: '700', minWidth: '60px', textAlign: 'right' }}>
-                ৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString()}
+                ৳{(item.price * (item.qty || item.quantity || 1)).toLocaleString('en-US')}
               </div>
             </div>
           ))}
@@ -355,17 +355,17 @@ export default function CheckoutPage() {
         <div style={s.card}>
           <span style={s.label}>Order Summary</span>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '4px 0', color: '#888' }}>
-            <span>Subtotal</span><span>৳{subtotal.toLocaleString()}</span>
+            <span>Subtotal</span><span>৳{subtotal.toLocaleString('en-US')}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '4px 0', color: '#888' }}>
             <span>Delivery</span><span>{deliveryCost === 0 ? 'Free' : `৳${deliveryCost}`}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '4px 0', color: '#888' }}>
-            <span>Platform Fee</span><span>৳{platformFee.toLocaleString()}</span>
+            <span>Platform Fee</span><span>৳{platformFee.toLocaleString('en-US')}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '700', paddingTop: '10px', borderTop: '1px solid #f0f0f0', marginTop: '8px' }}>
             <span style={{ color: '#111' }}>Total</span>
-            <span style={{ color: '#111' }}>৳{grandTotal.toLocaleString()}</span>
+            <span style={{ color: '#111' }}>৳{grandTotal.toLocaleString('en-US')}</span>
           </div>
         </div>
 
@@ -387,7 +387,7 @@ export default function CheckoutPage() {
           {paymentMethod === 'bkash' && (
             <div style={{ background: '#fdf2f8', border: '1px solid #f0abcc', borderRadius: '10px', padding: '12px 14px', marginBottom: '12px', fontSize: '13px', color: '#9d174d' }}>
               📱 bKash Payment: <strong>01813888860</strong><br />
-              <span style={{ fontSize: '11px', color: '#be185d', marginTop: '4px', display: 'block' }}>Order confirm হলে আমরা আপনাকে কল করব।</span>
+              <span style={{ fontSize: '11px', color: '#be185d', marginTop: '4px', display: 'block' }}>We'll call you once your order is confirmed.</span>
             </div>
           )}
 
