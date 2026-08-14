@@ -53,14 +53,14 @@ function ImageDropzone({ file, onFileSelect, previewUrl, height = '160px' }) {
               background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '11px',
               padding: '4px 10px', borderRadius: '6px', fontWeight: '600',
             }}>
-              ছবি বদলাতে ক্লিক করো
+              Click to change image
             </div>
           </>
         ) : (
           <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
             <div style={{ fontSize: '28px', marginBottom: '6px' }}>🖼️</div>
-            <div style={{ fontSize: '13px', fontWeight: '600' }}>ছবি সিলেক্ট করতে ক্লিক করো</div>
-            <div style={{ fontSize: '11px', marginTop: '2px' }}>অথবা এখানে drag করে ছাড়ো</div>
+            <div style={{ fontSize: '13px', fontWeight: '600' }}>Click to select image</div>
+            <div style={{ fontSize: '11px', marginTop: '2px' }}>or drag and drop here</div>
           </div>
         )}
       </div>
@@ -68,8 +68,8 @@ function ImageDropzone({ file, onFileSelect, previewUrl, height = '160px' }) {
         fontSize: '11px', color: 'rgba(255,255,255,0.45)',
         marginTop: '6px', marginBottom: '12px', lineHeight: 1.5,
       }}>
-        সাইজ: <strong style={{ color: 'rgba(255,255,255,0.65)' }}>1920 × 700px</strong> (landscape, ratio ~2.7:1) —
-        JPG/PNG, ৫০০KB-এর কম হলে ভালো লোড হবে। ছোট সাইজের ছবি দিলে ঝাপসা দেখাবে।
+        Size: <strong style={{ color: 'rgba(255,255,255,0.65)' }}>1920 × 350px</strong> (landscape, ratio ~5.5:1) —
+        JPG/PNG, under 500KB loads fastest. A banner made for a different ratio will get cropped on the sides.
       </div>
     </div>
   );
