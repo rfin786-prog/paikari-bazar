@@ -304,7 +304,7 @@ export default function BrandsSection() {
               </div>
               <div>
                 <div className="bs-banner-text">সব {activeBrand.name} পণ্য দেখুন</div>
-                <div className="bs-banner-sub">সেরা পাইকারি দামে</div>
+                <div className="bs-banner-sub">সেরা কালেকশনে</div>
               </div>
             </div>
             <div className="bs-banner-arrow">→</div>
