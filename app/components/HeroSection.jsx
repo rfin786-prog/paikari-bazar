@@ -31,6 +31,9 @@ export default function HeroSection() {
   const heroHeight = isMobile ? '200px' : 'clamp(260px, 32vh, 380px)';
   const usingFallback = banners.length === 0;
   const banner = usingFallback ? null : banners[current];
+  const imageSrc = usingFallback
+    ? '/hero-babydress.jpg'
+    : (isMobile && banner.mobile_image_url) ? banner.mobile_image_url : banner.image_url;
 
   return (
     <div style={{ position: 'relative', width: '100%', height: heroHeight, overflow: 'hidden', background: '#0d0d0d' }}>
@@ -77,7 +80,7 @@ export default function HeroSection() {
       `}</style>
 
       <img
-        src={usingFallback ? '/hero-babydress.jpg' : ((isMobile && banner.mobile_image_url) ? banner.mobile_image_url : banner.image_url)}
+        src={imageSrc}
         alt={usingFallback ? 'Rupanjel — Baby & Kids Fashion' : (banner.title || 'Rupanjel banner')}
         style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.82 }}
       />
