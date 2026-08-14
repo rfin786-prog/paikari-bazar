@@ -6,301 +6,190 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const headers = {
- 'apikey': SUPABASE_ANON_KEY,
- 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+  'apikey': SUPABASE_ANON_KEY,
+  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
 };
 
-const CAT_META = {
- 'পোশাক':       { icon: '👕', color: '#f97316' },
- 'মুদি':        { icon: '🛒', color: '#16a34a' },
- 'খাদ্য':       { icon: '🍚', color: '#16a34a' },
- 'ইলেকট্রনিক':  { icon: '📱', color: '#2563eb' },
- 'গৃহস্থালি':   { icon: '🏠', color: '#db2777' },
- 'কৃষি':        { icon: '🌾', color: '#65a30d' },
- 'সৌন্দর্য':    { icon: '🧴', color: '#9333ea' },
- 'শিশ':         { icon: '👶', color: '#d97706' },
- 'প্যাকেজিং':   { icon: '📦', color: '#0891b2' },
- 'হর্ডওয়্যার': { icon: '🔧', color: '#dc2626' },
- 'অর্গানিক':    { icon: '🌿', color: '#65a30d' },
- 'পানীয়':      { icon: '🥤', color: '#0284c7' },
- 'default':     { icon: '🏷️', color: '#f97316' },
-};
-
-function getMeta(name) {
- const key = Object.keys(CAT_META).find(k => name?.includes(k));
- return key ? CAT_META[key] : CAT_META['default'];
+function monogram(name) {
+  return name ? name.trim().charAt(0) : '—';
 }
 
 export default function CategorySection() {
- const router = useRouter();
- const [categories, setCategories] = useState([]);
- const [subMap, setSubMap] = useState({});
- const [activeId, setActiveId] = useState(null);
- const [loading, setLoading] = useState(true);
- const [isMobile, setIsMobile] = useState(false);
- const [isDesktop, setIsDesktop] = useState(false);
- const rightPanelRef = useRef(null);
+  const router = useRouter();
+  const [categories, setCategories] = useState([]);
+  const [subMap, setSubMap] = useState({});
+  const [activeId, setActiveId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const rightPanelRef = useRef(null);
 
- useEffect(() => {
-   const check = () => {
-     setIsMobile(window.innerWidth < 768);
-     setIsDesktop(window.innerWidth >= 1024);
-   };
-   check();
-   window.addEventListener('resize', check);
-   return () => window.removeEventListener('resize', check);
- }, []);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
- useEffect(() => {
-   const fetchCategories = async () => {
-     try {
-       const res = await fetch(
-         `${SUPABASE_URL}/rest/v1/categories?select=*&order=sort_order.asc,created_at.asc`,
-         { headers }
-       );
-       const data = await res.json();
-       if (!Array.isArray(data)) return;
-       const parents = data.filter(c => !c.parent_id);
-       const children = data.filter(c => c.parent_id);
-       const map = {};
-       children.forEach(c => {
-         if (!map[c.parent_id]) map[c.parent_id] = [];
-         map[c.parent_id].push(c);
-       });
-       Object.keys(map).forEach(pid => {
-         map[pid].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-       });
-       setCategories(parents);
-       setSubMap(map);
-       if (parents.length > 0) setActiveId(parents[0].id);
-     } catch (e) {
-       console.error(e);
-     } finally {
-       setLoading(false);
-     }
-   };
-   fetchCategories();
- }, []);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/categories?select=*&order=sort_order.asc,created_at.asc`,
+          { headers }
+        );
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        const parents = data.filter(c => !c.parent_id);
+        const children = data.filter(c => c.parent_id);
+        const map = {};
+        children.forEach(c => {
+          if (!map[c.parent_id]) map[c.parent_id] = [];
+          map[c.parent_id].push(c);
+        });
+        Object.keys(map).forEach(pid => {
+          map[pid].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        });
+        setCategories(parents);
+        setSubMap(map);
+        if (parents.length > 0) setActiveId(parents[0].id);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
- useEffect(() => {
-   if (rightPanelRef.current) {
-     rightPanelRef.current.scrollTop = 0;
-   }
- }, [activeId]);
+  useEffect(() => {
+    if (rightPanelRef.current) rightPanelRef.current.scrollLeft = 0;
+  }, [activeId]);
 
- const activeCategory = categories.find(c => c.id === activeId);
- const activeSubs = subMap[activeId] || [];
+  const activeCategory = categories.find(c => c.id === activeId);
+  const activeSubs = subMap[activeId] || [];
 
- const handleSubClick = (sub) => {
-   router.push(`/products?cat=${encodeURIComponent(sub.name)}`);
- };
+  const handleSubClick = (sub) => router.push(`/products?cat=${encodeURIComponent(sub.name)}`);
+  const handleViewAll = () => {
+    if (activeCategory) router.push(`/products?cat=${encodeURIComponent(activeCategory.name)}`);
+  };
 
- const handleViewAll = () => {
-   if (activeCategory) {
-     router.push(`/products?cat=${encodeURIComponent(activeCategory.name)}`);
-   }
- };
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@400;500;600&display=swap');
 
- const subGridCols = isDesktop ? 'repeat(7, 1fr)' : isMobile ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)';
- const leftPanelWidth = isDesktop ? 130 : isMobile ? 88 : 100;
- const iconSize = isDesktop ? 52 : isMobile ? 40 : 44;
- const iconFontSize = isDesktop ? 24 : isMobile ? 18 : 20;
- const subIconFontSize = isDesktop ? 30 : isMobile ? 24 : 28;
- const LIMIT = isDesktop ? 14 : isMobile ? 5 : 7;
- const panelHeight = isDesktop ? 480 : 380;
+        @keyframes catFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
- return (
-   <>
-     <style>{`
-       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-       @keyframes slideRight { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
-       .cat-left-item {
-         cursor: pointer;
-         transition: all 0.18s ease;
-         -webkit-tap-highlight-color: transparent;
-         user-select: none;
-         position: relative;
-       }
-       .cat-left-item:active { opacity: 0.7; }
-       .cat-left-item:hover { background: #fff; }
-       .sub-grid-item {
-         cursor: pointer;
-         transition: transform 0.18s ease, box-shadow 0.18s ease;
-         -webkit-tap-highlight-color: transparent;
-         user-select: none;
-         animation: slideRight 0.25s ease forwards;
-       }
-       .sub-grid-item:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(249,115,22,0.15); }
-       .sub-grid-item:active { transform: scale(0.95); }
-       .right-panel::-webkit-scrollbar { display: none; }
-       .right-panel { -ms-overflow-style: none; scrollbar-width: none; }
-       .left-panel::-webkit-scrollbar { display: none; }
-       .left-panel { -ms-overflow-style: none; scrollbar-width: none; }
-     `}</style>
+        .cs-wrap { background: #ffffff; padding: ${isMobile ? '28px 16px' : '48px 40px'}; }
+        .cs-eyebrow {
+          font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 0.22em;
+          text-transform: uppercase; color: #c9a961; text-align: center; margin: 0 0 8px;
+        }
+        .cs-heading {
+          font-family: 'Cormorant Garamond', serif; font-weight: 600; color: #0d0d0d;
+          text-align: center; margin: 0 0 28px; font-size: ${isMobile ? '26px' : '38px'};
+        }
+        .cs-tabs {
+          display: flex; gap: ${isMobile ? '8px' : '14px'}; justify-content: ${isMobile ? 'flex-start' : 'center'};
+          overflow-x: auto; padding-bottom: 4px; margin-bottom: ${isMobile ? '20px' : '32px'};
+          scrollbar-width: none;
+        }
+        .cs-tabs::-webkit-scrollbar { display: none; }
+        .cs-tab {
+          font-family: 'Jost', sans-serif; font-size: ${isMobile ? '11px' : '12px'}; font-weight: 500;
+          letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+          padding: ${isMobile ? '9px 16px' : '11px 26px'}; cursor: pointer; border: 1px solid #e7e2d8;
+          color: #6b6558; background: #fff; transition: all 0.2s ease; flex-shrink: 0;
+        }
+        .cs-tab.active { background: #0d0d0d; color: #c9a961; border-color: #0d0d0d; }
+        .cs-tab:hover:not(.active) { border-color: #c9a961; color: #0d0d0d; }
 
-     <div style={{ background: '#fff', borderRadius: 0, overflow: 'hidden' }}>
-       <div style={{ display: 'flex', minHeight: panelHeight, maxHeight: isDesktop ? 520 : isMobile ? 380 : 440 }}>
+        .cs-grid {
+          display: grid;
+          grid-template-columns: repeat(${isMobile ? 3 : 6}, 1fr);
+          gap: ${isMobile ? '10px' : '18px'};
+        }
+        .cs-card { cursor: pointer; animation: catFadeUp 0.35s ease both; }
+        .cs-card-img {
+          position: relative; aspect-ratio: 3/4; overflow: hidden;
+          background: linear-gradient(135deg, #1a1a1a, #3a3a3a); margin-bottom: 8px;
+        }
+        .cs-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .cs-card:hover .cs-card-img img { transform: scale(1.06); }
+        .cs-card-mono {
+          position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+          font-family: 'Cormorant Garamond', serif; font-size: ${isMobile ? '26px' : '34px'}; color: #e3d3ab;
+        }
+        .cs-card-name {
+          font-family: 'Jost', sans-serif; font-size: ${isMobile ? '10.5px' : '12px'}; font-weight: 500;
+          letter-spacing: 0.03em; color: #333; text-align: center; line-height: 1.3;
+          overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        }
+        .cs-viewall {
+          font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+          color: #0d0d0d; text-align: center; margin-top: ${isMobile ? '20px' : '30px'};
+          cursor: pointer; border-bottom: 1px solid #c9a961; display: inline-block; padding-bottom: 3px;
+        }
+        .cs-viewall-wrap { text-align: center; }
+      `}</style>
 
-         {/* Left: Category List */}
-         <div
-           className="left-panel"
-           style={{ width: leftPanelWidth, flexShrink: 0, borderRight: '1px solid #f0f0f0', overflowY: 'auto', background: '#fafafa' }}
-         >
-           {loading
-             ? [...Array(6)].map((_, i) => (
-                 <div key={i} style={{ padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                   <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f0f0f0' }} />
-                   <div style={{ width: 50, height: 8, borderRadius: 4, background: '#f0f0f0' }} />
-                 </div>
-               ))
-             : categories.map((cat) => {
-                 const meta = getMeta(cat.name);
-                 const isActive = activeId === cat.id;
-                 return (
-                   <div
-                     key={cat.id}
-                     className="cat-left-item"
-                     onClick={() => setActiveId(cat.id)}
-                     style={{
-                       padding: isDesktop ? '16px 8px' : '12px 6px',
-                       textAlign: 'center',
-                       background: isActive ? '#fff' : 'transparent',
-                       borderLeft: isActive ? '3px solid #f97316' : '3px solid transparent',
-                       borderBottom: '1px solid #f0f0f0',
-                     }}
-                   >
-                     <div style={{
-                       width: iconSize, height: iconSize, borderRadius: 12,
-                       background: isActive ? `${meta.color}18` : '#f0f0f0',
-                       margin: '0 auto 6px',
-                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                       overflow: 'hidden', transition: 'background 0.2s',
-                       fontSize: iconFontSize,
-                     }}>
-                       {cat.image_url
-                         ? <img src={cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                         : meta.icon
-                       }
-                     </div>
-                     <p style={{
-                       fontSize: isDesktop ? 12 : 10, fontWeight: isActive ? 700 : 500,
-                       color: isActive ? '#f97316' : '#666',
-                       lineHeight: 1.3, margin: 0,
-                       overflow: 'hidden', display: '-webkit-box',
-                       WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                       transition: 'color 0.2s',
-                     }}>
-                       {cat.name}
-                     </p>
-                   </div>
-                 );
-               })
-           }
-         </div>
+      <div className="cs-wrap">
+        <p className="cs-eyebrow">Shop by Age</p>
+        <h2 className="cs-heading">Baby &amp; Kids Collections</h2>
 
-         {/* Right: Sub-category Grid */}
-         <div
-           className="right-panel"
-           ref={rightPanelRef}
-           style={{ flex: 1, overflowY: 'auto', padding: isDesktop ? '18px 20px' : '12px 10px', background: '#fff' }}
-         >
-           {loading ? (
-             <div style={{ display: 'grid', gridTemplateColumns: subGridCols, gap: 8 }}>
-               {[...Array(isDesktop ? 14 : 6)].map((_, i) => (
-                 <div key={i} style={{ borderRadius: 12, background: '#f5f5f5', height: isDesktop ? 120 : 100 }} />
-               ))}
-             </div>
-           ) : (
-             <>
-               {activeCategory && (
-                 <div
-                   onClick={handleViewAll}
-                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isDesktop ? '10px 14px' : '8px 10px', background: '#fff3eb', borderRadius: 10, marginBottom: isDesktop ? 16 : 10, cursor: 'pointer', border: '1px solid #ffe0cc' }}
-                 >
-                   <span style={{ fontSize: isDesktop ? 14 : 12, fontWeight: 700, color: '#f97316' }}>View all {activeCategory.name}</span>
-                   <span style={{ fontSize: isDesktop ? 15 : 13, color: '#f97316' }}>→</span>
-                 </div>
-               )}
+        {loading ? (
+          <div className="cs-grid">
+            {[...Array(isMobile ? 6 : 6)].map((_, i) => (
+              <div key={i}>
+                <div style={{ aspectRatio: '3/4', background: '#f0eee8', marginBottom: 8 }} />
+                <div style={{ height: 8, background: '#f0eee8', width: '70%', margin: '0 auto' }} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="cs-tabs">
+              {categories.map(cat => (
+                <div
+                  key={cat.id}
+                  className={`cs-tab${activeId === cat.id ? ' active' : ''}`}
+                  onClick={() => setActiveId(cat.id)}
+                >
+                  {cat.name}
+                </div>
+              ))}
+            </div>
 
-               {activeSubs.length > 0 ? (
-                 (() => {
-                   const hasMore = activeSubs.length > LIMIT;
-                   const visibleSubs = hasMore ? activeSubs.slice(0, LIMIT) : activeSubs;
+            <div className="cs-grid" ref={rightPanelRef}>
+              {activeSubs.map((sub, i) => (
+                <div
+                  key={sub.id}
+                  className="cs-card"
+                  style={{ animationDelay: `${i * 0.04}s` }}
+                  onClick={() => handleSubClick(sub)}
+                >
+                  <div className="cs-card-img">
+                    {sub.image_url ? (
+                      <img src={sub.image_url} alt={sub.name} />
+                    ) : (
+                      <div className="cs-card-mono">{monogram(sub.name)}</div>
+                    )}
+                  </div>
+                  <p className="cs-card-name">{sub.name}</p>
+                </div>
+              ))}
+            </div>
 
-                   return (
-                     <div style={{ display: 'grid', gridTemplateColumns: subGridCols, gap: isDesktop ? 14 : isMobile ? 7 : 10 }}>
-                       {visibleSubs.map((sub, i) => {
-                         const meta = getMeta(sub.name);
-                         return (
-                           <div
-                             key={sub.id}
-                             className="sub-grid-item"
-                             onClick={() => handleSubClick(sub)}
-                             style={{ animationDelay: `${i * 0.04}s`, opacity: 0 }}
-                           >
-                             <div style={{
-                               width: '100%', aspectRatio: '1', borderRadius: 10,
-                               background: sub.image_url ? '#f8f8f8' : `${meta.color}12`,
-                               overflow: 'hidden', marginBottom: 5,
-                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                               border: '1px solid #f0f0f0',
-                               fontSize: subIconFontSize,
-                             }}>
-                               {sub.image_url
-                                 ? <img src={sub.image_url} alt={sub.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                 : meta.icon
-                               }
-                             </div>
-                             <p style={{
-                               fontSize: isDesktop ? 12 : 10, fontWeight: 600, color: '#333',
-                               textAlign: 'center', lineHeight: 1.3, margin: 0,
-                               overflow: 'hidden', display: '-webkit-box',
-                               WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                             }}>
-                               {sub.name}
-                             </p>
-                           </div>
-                         );
-                       })}
-
-                       {hasMore && (
-                         <div
-                           className="sub-grid-item"
-                           onClick={handleViewAll}
-                           style={{ animationDelay: `${visibleSubs.length * 0.04}s`, opacity: 0 }}
-                         >
-                           <div style={{
-                             width: '100%', aspectRatio: '1', borderRadius: 10,
-                             background: '#f5f5f5', border: '1px solid #ebebeb',
-                             display: 'flex', flexDirection: 'column',
-                             alignItems: 'center', justifyContent: 'center', gap: 4,
-                             marginBottom: 5,
-                           }}>
-                             <span style={{ fontSize: 20, color: '#bbb' }}>•••</span>
-                           </div>
-                           <p style={{ fontSize: isDesktop ? 12 : 10, fontWeight: 600, color: '#aaa', textAlign: 'center', margin: 0 }}>View More</p>
-                         </div>
-                       )}
-                     </div>
-                   );
-                 })()
-               ) : (
-                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '70%', gap: 10 }}>
-                   <div style={{ fontSize: 42 }}>{getMeta(activeCategory?.name).icon}</div>
-                   <p style={{ fontSize: 13, color: '#888', textAlign: 'center', fontWeight: 600 }}>{activeCategory?.name}</p>
-                   <button
-                     onClick={handleViewAll}
-                     style={{ background: '#f97316', color: '#fff', border: 'none', borderRadius: 20, padding: '8px 20px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-                   >
-                     View All Products →
-                   </button>
-                 </div>
-               )}
-             </>
-           )}
-         </div>
-       </div>
-     </div>
-   </>
- );
+            {activeCategory && (
+              <div className="cs-viewall-wrap">
+                <span className="cs-viewall" onClick={handleViewAll}>
+                  Shop All {activeCategory.name} →
+                </span>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </>
+  );
 }
