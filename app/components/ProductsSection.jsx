@@ -6,30 +6,30 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const CAT_GRADIENT = {
-  'সৌন্দর্য':    'linear-gradient(135deg,#fff7ed,#ffedd5)',
-  'খাদ্য':       'linear-gradient(135deg,#f0fdf4,#dcfce7)',
-  'খাদ্যশস্য':   'linear-gradient(135deg,#f0fdf4,#dcfce7)',
-  'পানীয়':      'linear-gradient(135deg,#eff6ff,#dbeafe)',
-  'প্যাকেজিং':   'linear-gradient(135deg,#fdf4ff,#fae8ff)',
-  'পোশাক':       'linear-gradient(135deg,#fff1f2,#ffe4e6)',
-  'ইলেকট্রনিক':  'linear-gradient(135deg,#f0f9ff,#e0f2fe)',
-  'গৃহস্থালি':   'linear-gradient(135deg,#fdf2f8,#fce7f3)',
-  'কৃষি':        'linear-gradient(135deg,#f7fee7,#ecfccb)',
-  'মুদি':        'linear-gradient(135deg,#fffbeb,#fef3c7)',
+  'Beauty':    'linear-gradient(135deg,#fff7ed,#ffedd5)',
+  'Food':       'linear-gradient(135deg,#f0fdf4,#dcfce7)',
+  'Grains':   'linear-gradient(135deg,#f0fdf4,#dcfce7)',
+  'Beverages':      'linear-gradient(135deg,#eff6ff,#dbeafe)',
+  'Packaging':   'linear-gradient(135deg,#fdf4ff,#fae8ff)',
+  'Clothing':       'linear-gradient(135deg,#fff1f2,#ffe4e6)',
+  'Electronics':  'linear-gradient(135deg,#f0f9ff,#e0f2fe)',
+  'Household':   'linear-gradient(135deg,#fdf2f8,#fce7f3)',
+  'Agriculture':        'linear-gradient(135deg,#f7fee7,#ecfccb)',
+  'Grocery':        'linear-gradient(135deg,#fffbeb,#fef3c7)',
   'default':     'linear-gradient(135deg,#f8fafc,#f1f5f9)',
 };
 
 const CAT_COLOR = {
-  'সৌন্দর্য':    '#f97316',
-  'খাদ্য':       '#16a34a',
-  'খাদ্যশস্য':   '#16a34a',
-  'পানীয়':      '#3b82f6',
-  'প্যাকেজিং':   '#9333ea',
-  'পোশাক':       '#f43f5e',
-  'ইলেকট্রনিক':  '#0ea5e9',
-  'গৃহস্থালি':   '#ec4899',
-  'কৃষি':        '#65a30d',
-  'মুদি':        '#d97706',
+  'Beauty':    '#f97316',
+  'Food':       '#16a34a',
+  'Grains':   '#16a34a',
+  'Beverages':      '#3b82f6',
+  'Packaging':   '#9333ea',
+  'Clothing':       '#f43f5e',
+  'Electronics':  '#0ea5e9',
+  'Household':   '#ec4899',
+  'Agriculture':        '#65a30d',
+  'Grocery':        '#d97706',
   'default':     '#f97316',
 };
 
@@ -123,10 +123,10 @@ export default function ProductsSection() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <div style={{ fontSize: isMobile ? '15px' : '17px', fontWeight: '700', color: '#111', lineHeight: 1.2 }}>
-              ফিচার্ড পণ্য
+              Featured Products
             </div>
             <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px' }}>
-              সর্বশেষ যোগ হওয়া পণ্য
+              Newly Added Products
             </div>
           </div>
           <button
@@ -137,7 +137,7 @@ export default function ProductsSection() {
               borderRadius: '20px', cursor: 'pointer',
             }}
           >
-            সব দেখুন →
+            View All →
           </button>
         </div>
 
@@ -210,7 +210,7 @@ export default function ProductsSection() {
                       fontSize: '9px', fontWeight: '600',
                       padding: '3px 7px', borderRadius: '4px',
                     }}>
-                      নতুন
+                      New
                     </div>
                   )}
 
@@ -266,7 +266,7 @@ export default function ProductsSection() {
                         flexShrink: 0,
                         animation: isAdded ? 'popIn 0.2s ease' : 'none',
                       }}
-                      aria-label={isAdded ? 'যোগ হয়েছে' : 'কার্টে যোগ করুন'}
+                      aria-label={isAdded ? 'Added' : 'Add to Cart'}
                     >
                       {isAdded
                         ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>

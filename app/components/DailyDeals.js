@@ -5,20 +5,20 @@ import { useRouter } from 'next/navigation';
 
 // products.unit ইংরেজিতে সেভ থাকে (admin ফর্মের UNITS লিস্ট অনুযায়ী) — এখানে বাংলায় দেখানোর জন্য ম্যাপিং
 const UNIT_LABELS = {
-  KG: 'কেজি',
-  Gram: 'গ্রাম',
-  Litre: 'লিটার',
-  ML: 'মিলি লিটার',
-  Piece: 'পিস',
-  Dozen: 'ডজন',
-  Sack: 'বস্তা',
-  Packet: 'প্যাকেট',
-  Carton: 'কার্টন',
-  Box: 'বক্স',
+  KG: 'kg',
+  Gram: 'g',
+  Litre: 'L',
+  ML: 'mL',
+  Piece: 'pc',
+  Dozen: 'dozen',
+  Sack: 'sack',
+  Packet: 'packet',
+  Carton: 'carton',
+  Box: 'box',
 };
 
 function unitLabel(unit) {
-  if (!unit) return 'পিস';
+  if (!unit) return 'pc';
   return UNIT_LABELS[unit] || unit;
 }
 
@@ -131,9 +131,9 @@ export default function DailyDeals() {
     const exists = cart.find(i => i.id === product.id);
     if (!exists) {
       saveCart([...cart, { ...product, quantity: 1 }]);
-      showToast(`${product.name} কার্টে যোগ হয়েছে`);
+      showToast(`${product.name} added to cart`);
     } else {
-      showToast(`${product.name} আগে থেকেই কার্টে আছে`);
+      showToast(`${product.name} is already in the cart`);
     }
     setAddedIds(prev => ({ ...prev, [product.id]: true }));
     setTimeout(() => setAddedIds(prev => ({ ...prev, [product.id]: false })), 1800);
@@ -152,10 +152,10 @@ export default function DailyDeals() {
     async function fetchDeals() {
       try {
         const res = await fetch('/api/products', { cache: 'no-store' });
-        if (!res.ok) throw new Error('ডেটা আনতে সমস্যা হয়েছে');
+        if (!res.ok) throw new Error('Failed to fetch data');
 
         const data = await res.json();
-        if (!Array.isArray(data)) throw new Error('অপ্রত্যাশিত রেসপন্স');
+        if (!Array.isArray(data)) throw new Error('Unexpected response');
 
         // যেসব প্রোডাক্টে mrp > price (মানে আসল ছাড় আছে) সেগুলো বাছাই করে,
         // সবচেয়ে বেশি ছাড়ের হারওয়ালা প্রথম ৪টা দেখানো হচ্ছে
@@ -194,11 +194,11 @@ export default function DailyDeals() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
         <h2 style={{ color: '#111111', fontFamily: 'Hind Siliguri', fontSize: '1.3rem', margin: 0 }}>
-          🔥 আজকের অফার
+          🔥 Today's Deals
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ color: '#666666', fontSize: '0.85rem' }}>শেষ হবে:</span>
+            <span style={{ color: '#666666', fontSize: '0.85rem' }}>Ends in:</span>
             <Countdown />
           </div>
           <button
@@ -210,7 +210,7 @@ export default function DailyDeals() {
               whiteSpace: 'nowrap',
             }}
           >
-            সব দেখুন →
+            View All →
           </button>
         </div>
       </div>
@@ -235,7 +235,7 @@ export default function DailyDeals() {
                   background: '#111111', color: '#ffffff', fontSize: '0.7rem',
                   fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px'
                 }}>
-                  {deal._discountPct}% ছাড়
+                  {deal._discountPct}% Off
                 </span>
 
                 {deal.image_url ? (
@@ -268,7 +268,7 @@ export default function DailyDeals() {
                       background: parseInt(deal.stock) > 0 ? '#dcfce7' : '#fee2e2',
                       padding: '2px 6px', borderRadius: '4px',
                     }}>
-                      {parseInt(deal.stock) > 0 ? `স্টকে আছে ${deal.stock}` : 'স্টক শেষ'}
+                      {parseInt(deal.stock) > 0 ? `In Stock: ${deal.stock}` : 'Out of Stock'}
                     </span>
                   </div>
                 ) : null}
@@ -286,7 +286,7 @@ export default function DailyDeals() {
 
                   <button
                     onClick={(e) => addToCart(e, deal)}
-                    aria-label={addedIds[deal.id] ? 'যোগ হয়েছে' : 'কার্টে যোগ করুন'}
+                    aria-label={addedIds[deal.id] ? 'Added' : 'Add to Cart'}
                     disabled={deal.stock !== undefined && deal.stock !== null && parseInt(deal.stock) <= 0}
                     style={{
                       width: isDesktop ? '34px' : '30px',

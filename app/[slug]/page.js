@@ -17,7 +17,7 @@ export default async function DynamicPage({ params }) {
   if (error || !data) {
     return (
       <div style={{ minHeight: '100vh', background: '#0f2442', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: '#fff', fontSize: '18px' }}>পেজ পাওয়া যায়নি।</div>
+        <div style={{ color: '#fff', fontSize: '18px' }}>Page not found.</div>
       </div>
     );
   }
@@ -32,7 +32,7 @@ export default async function DynamicPage({ params }) {
           {data.content}
         </div>
         <div style={{ marginTop: '16px', fontSize: '12px', color: 'rgba(255,255,255,0.2)' }}>
-          সর্বশেষ আপডেট: {new Date(data.updated_at).toLocaleDateString('bn-BD')}
+          Last updated: {new Date(data.updated_at).toLocaleDateString('en-US')}
         </div>
       </div>
     </div>

@@ -21,7 +21,7 @@ export default function FeaturesSection() {
   const cards = [
     {
       icon: '🛍️',
-      title: 'পণ্য দেখুন',
+      title: 'View Products',
       desc: '',
       href: '/products',
       highlight: true,
